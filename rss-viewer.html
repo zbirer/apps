@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS Feed Reader</title>
     <style>
@@ -72,16 +72,12 @@
         }
         .back-to-top, .next-post {
             display: inline-block;
-            margin-top: 15px;
             font-size: 14px;
             color: #0066cc;
             cursor: pointer;
             margin-right: 10px;
         }
         .next-post {
-            font-size: 14px;
-            color: #0066cc;
-            cursor: pointer;
             margin-left: 10px;
         }
         #throbber {
@@ -99,7 +95,7 @@
     <div class="rss-feed">
         <div class="controls">
             <div>
-                <label for="fontSize">בחר גודל גופן:</label>
+                <label for="fontSize">גופן:</label>
                 <select id="fontSize">
                     <option value="normal">רגיל</option>
                     <option value="big">גדול</option>
@@ -107,7 +103,7 @@
                 </select>
             </div>
             <div>
-                <label for="imageSize">גודל תמונות:</label>
+                <label for="imageSize">תמונות:</label>
                 <select id="imageSize">
                     <option value="hide">הסתר</option>
                     <option value="normal">רגיל</option>
@@ -116,7 +112,7 @@
                 </select>
             </div>
             <div>
-                <label for="categorySelect">בחר קטגוריה:</label>
+                <label for="categorySelect">קטגוריה:</label>
                 <select id="categorySelect">
                     <option value="news">חדשות</option>
                     <option value="tech">טכנולוגיה</option>
@@ -208,15 +204,6 @@
                 const title = document.createElement('h2');
                 title.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a>`;
                 itemElement.appendChild(title);
-                
-                const date = document.createElement('div');
-                date.classList.add('date');
-                date.textContent = `${formattedDate} ${formattedTime}`;
-                itemElement.appendChild(date);
-                
-                const description = document.createElement('p');
-                description.innerHTML = item.description; // Use innerHTML to render HTML content correctly
-                itemElement.appendChild(description);
 
                 // Add "Next Post" button
                 if (index < items.length - 1) {
@@ -228,6 +215,15 @@
                     });
                     itemElement.appendChild(nextPostButton);
                 }
+                
+                const date = document.createElement('div');
+                date.classList.add('date');
+                date.textContent = `${formattedDate} ${formattedTime}`;
+                itemElement.appendChild(date);
+                
+                const description = document.createElement('p');
+                description.innerHTML = item.description; // Use innerHTML to render HTML content correctly
+                itemElement.appendChild(description);
 
                 // Add "Back to Top" button
                 const backToTop = document.createElement('div');
