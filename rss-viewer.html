@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RSS Feed Reader</title>
     <style>
+        /* Basic styles for the page */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -12,7 +13,11 @@
             padding: 20px;
             direction: rtl;
             text-align: right;
+            -webkit-text-size-adjust: 100%; /* Prevent Chrome from adjusting text size */
+            text-size-adjust: 100%;
         }
+
+        /* Container for the RSS feed */
         .rss-feed {
             max-width: 600px;
             margin: 0 auto;
@@ -21,55 +26,75 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
         }
+
+        /* Styles for the controls (dropdowns and buttons) */
         .controls {
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+
+        /* Styles for each RSS item */
         .rss-item {
             margin-bottom: 20px;
         }
+
+        /* Styles for the title of each RSS item */
         .rss-item h2 {
             font-size: 20px;
             margin-bottom: 5px;
             color: #333;
             display: inline-block;
         }
+
+        /* Styles for the description of each RSS item */
         .rss-item p {
             font-size: 16px;
             line-height: 1.6;
             color: #555;
         }
+
+        /* Styles for the date of each RSS item */
         .rss-item .date {
             font-size: 14px;
             color: #888;
             margin-bottom: 10px;
         }
+
+        /* Styles for links */
         a {
             text-decoration: none;
             color: #0066cc;
         }
+
         a:hover {
             text-decoration: underline;
         }
+
+        /* Styles for images within the RSS items */
         img {
             max-width: 100%;
             height: auto;
             margin-top: 10px;
         }
+
+        /* Styles for the Table of Contents (TOC) */
         .toc {
-            font-size: 16px;
+            font-size: 1rem; /* Set to rem for consistency */
             margin-bottom: 20px;
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
         }
+
         .toc a {
             display: block;
             margin-bottom: 5px;
-            font-size: 16px; /* Ensure consistent font size */
+            font-size: 1rem !important; /* Force consistent font size */
             color: #0066cc;
         }
+
+        /* Styles for "Back to Top" and "Next Post" buttons */
         .back-to-top, .next-post {
             display: inline-block;
             font-size: 14px;
@@ -77,14 +102,18 @@
             cursor: pointer;
             margin-right: 10px;
         }
+
         .next-post {
             margin-left: 10px;
         }
+
+        /* Styles for the throbber (loading spinner) */
         #throbber {
             display: none;
             margin-top: 10px;
             text-align: center;
         }
+
         #throbber img {
             width: 50px;
             height: 50px;
@@ -93,6 +122,7 @@
 </head>
 <body>
     <div class="rss-feed">
+        <!-- Controls for adjusting font size, image size, category selection, and refreshing the feed -->
         <div class="controls">
             <div>
                 <label for="fontSize">גופן:</label>
@@ -122,20 +152,24 @@
                 <button id="refreshButton">רענן</button>
             </div>
         </div>
-        
+
+        <!-- Throbber (loading spinner) shown when fetching data -->
         <div id="throbber">
             <img src="https://i.imgur.com/4L7fj1m.gif" alt="Loading...">
         </div>
-        
+
+        <!-- Table of Contents (TOC) section -->
         <div class="toc" id="toc">
             <h2>תוכן עניינים</h2>
             <div id="tocContent"></div>
         </div>
-        
+
+        <!-- Container where RSS feed content will be displayed -->
         <div id="rssContent"></div>
     </div>
 
     <script>
+        // Arrays of RSS feed URLs for news and tech categories
         const newsFeeds = [
             'https://rss.walla.co.il/feed/1?type=main',
             'https://www.maariv.co.il/Rss/RssChadashot',
@@ -153,6 +187,7 @@
             'https://www.ynet.co.il/Integration/StoryRss544.xml'
         ];
 
+        // Function to fetch RSS feeds based on selected category
         async function fetchRSSFeeds() {
             showThrobber();
 
@@ -177,6 +212,7 @@
             hideThrobber();
         }
 
+        // Function to display RSS items on the page
         function displayRSSItems(items) {
             const rssContent = document.getElementById('rssContent');
             const tocContent = document.getElementById('tocContent');
@@ -184,7 +220,7 @@
             // Clear previous content
             rssContent.innerHTML = '';
             tocContent.innerHTML = '';
-            
+
             items.forEach((item, index) => {
                 const pubDate = new Date(item.pubDate);
                 const formattedDate = pubDate.toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -195,12 +231,12 @@
                 tocItem.href = `#post-${index}`;
                 tocItem.textContent = `${formattedTime} - ${item.title}`;
                 tocContent.appendChild(tocItem);
-                
+
                 // Create RSS item element
                 const itemElement = document.createElement('div');
                 itemElement.classList.add('rss-item');
                 itemElement.id = `post-${index}`;
-                
+
                 const title = document.createElement('h2');
                 title.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a>`;
                 itemElement.appendChild(title);
@@ -215,12 +251,12 @@
                     });
                     itemElement.appendChild(nextPostButton);
                 }
-                
+
                 const date = document.createElement('div');
                 date.classList.add('date');
                 date.textContent = `${formattedDate} ${formattedTime}`;
                 itemElement.appendChild(date);
-                
+
                 const description = document.createElement('p');
                 description.innerHTML = item.description; // Use innerHTML to render HTML content correctly
                 itemElement.appendChild(description);
@@ -233,13 +269,14 @@
                     window.scrollTo(0, 0); // Jump instantly to the top of the page
                 });
                 itemElement.appendChild(backToTop);
-                
+
                 rssContent.appendChild(itemElement);
             });
 
             applySettings();
         }
 
+        // Function to apply settings for font size and image size
         function applySettings() {
             const fontSize = document.getElementById('fontSize').value;
             const imageSize = document.getElementById('imageSize').value;
@@ -277,20 +314,23 @@
             });
         }
 
+        // Function to show the throbber (loading spinner)
         function showThrobber() {
             document.getElementById('throbber').style.display = 'block';
         }
 
+        // Function to hide the throbber (loading spinner)
         function hideThrobber() {
             document.getElementById('throbber').style.display = 'none';
         }
 
+        // Event listeners for category change, refresh button, and other settings
         document.getElementById('categorySelect').addEventListener('change', fetchRSSFeeds);
         document.getElementById('refreshButton').addEventListener('click', fetchRSSFeeds);
         document.getElementById('fontSize').addEventListener('change', applySettings);
         document.getElementById('imageSize').addEventListener('change', applySettings);
 
-        // Initial load
+        // Initial load of the RSS feeds
         fetchRSSFeeds();
     </script>
 </body>
