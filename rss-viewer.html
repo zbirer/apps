@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS Feed Reader</title>
     <style>
@@ -34,6 +34,7 @@
             font-size: 20px;
             margin-bottom: 5px;
             color: #333;
+            display: inline-block;
         }
         .rss-item p {
             font-size: 16px;
@@ -58,7 +59,7 @@
             margin-top: 10px;
         }
         .toc {
-            font-size: 14px;
+            font-size: 16px;
             margin-bottom: 20px;
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
@@ -66,16 +67,31 @@
         .toc a {
             display: block;
             margin-bottom: 5px;
-            font-size: 14px; /* Ensure consistent font size */
+            font-size: 16px; /* Ensure consistent font size */
             color: #0066cc;
         }
-        .back-to-top {
-            display: block;
+        .back-to-top, .next-post {
+            display: inline-block;
             margin-top: 15px;
-            text-align: right;
             font-size: 14px;
             color: #0066cc;
             cursor: pointer;
+            margin-right: 10px;
+        }
+        .next-post {
+            font-size: 14px;
+            color: #0066cc;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        #throbber {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+        #throbber img {
+            width: 50px;
+            height: 50px;
         }
     </style>
 </head>
@@ -100,8 +116,19 @@
                 </select>
             </div>
             <div>
+                <label for="categorySelect">בחר קטגוריה:</label>
+                <select id="categorySelect">
+                    <option value="news">חדשות</option>
+                    <option value="tech">טכנולוגיה</option>
+                </select>
+            </div>
+            <div>
                 <button id="refreshButton">רענן</button>
             </div>
+        </div>
+        
+        <div id="throbber">
+            <img src="https://i.imgur.com/4L7fj1m.gif" alt="Loading...">
         </div>
         
         <div class="toc" id="toc">
@@ -113,13 +140,28 @@
     </div>
 
     <script>
+        const newsFeeds = [
+            'https://rss.walla.co.il/feed/1?type=main',
+            'https://www.maariv.co.il/Rss/RssChadashot',
+            'https://rcs.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',
+            'https://www.ynet.co.il/Integration/StoryRss2.xml'
+        ];
+
+        const techFeeds = [
+            'https://www.askpavel.co.il/feed',
+            'https://www.tgspot.co.il/feed/',
+            'https://www.maariv.co.il/Rss/RssFeedsTechnologeya',
+            'https://rss.walla.co.il/feed/4703',
+            'https://rss.walla.co.il/feed/6?type=main',
+            'https://www.themarker.com/srv/tm-technation',
+            'https://www.ynet.co.il/Integration/StoryRss544.xml'
+        ];
+
         async function fetchRSSFeeds() {
-            const feeds = [
-                'https://rss.walla.co.il/feed/1?type=main',
-                'https://www.maariv.co.il/Rss/RssChadashot',
-                'https://rcs.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',
-                'https://www.ynet.co.il/Integration/StoryRss2.xml'
-            ];
+            showThrobber();
+
+            const category = document.getElementById('categorySelect').value;
+            const feeds = category === 'tech' ? techFeeds : newsFeeds;
 
             const feedPromises = feeds.map(feed => 
                 fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feed}`).then(response => response.json())
@@ -136,6 +178,7 @@
             allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
             displayRSSItems(allItems);
+            hideThrobber();
         }
 
         function displayRSSItems(items) {
@@ -174,6 +217,17 @@
                 const description = document.createElement('p');
                 description.innerHTML = item.description; // Use innerHTML to render HTML content correctly
                 itemElement.appendChild(description);
+
+                // Add "Next Post" button
+                if (index < items.length - 1) {
+                    const nextPostButton = document.createElement('div');
+                    nextPostButton.classList.add('next-post');
+                    nextPostButton.textContent = 'הפוסט הבא';
+                    nextPostButton.addEventListener('click', () => {
+                        document.getElementById(`post-${index + 1}`).scrollIntoView();
+                    });
+                    itemElement.appendChild(nextPostButton);
+                }
 
                 // Add "Back to Top" button
                 const backToTop = document.createElement('div');
@@ -227,9 +281,18 @@
             });
         }
 
+        function showThrobber() {
+            document.getElementById('throbber').style.display = 'block';
+        }
+
+        function hideThrobber() {
+            document.getElementById('throbber').style.display = 'none';
+        }
+
+        document.getElementById('categorySelect').addEventListener('change', fetchRSSFeeds);
+        document.getElementById('refreshButton').addEventListener('click', fetchRSSFeeds);
         document.getElementById('fontSize').addEventListener('change', applySettings);
         document.getElementById('imageSize').addEventListener('change', applySettings);
-        document.getElementById('refreshButton').addEventListener('click', fetchRSSFeeds);
 
         // Initial load
         fetchRSSFeeds();
