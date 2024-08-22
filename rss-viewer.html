@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS Feed Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+            text-align: right;
+        }
+        .rss-feed {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .rss-item {
+            margin-bottom: 20px;
+        }
+        .rss-item h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .rss-item p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555;
+        }
+        .rss-item .date {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        a {
+            text-decoration: none;
+            color: #0066cc;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        .toc {
+            font-size: 14px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .toc a {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px; /* Ensure consistent font size */
+            color: #0066cc;
+        }
+        .back-to-top {
+            display: block;
+            margin-top: 15px;
+            text-align: right;
+            font-size: 14px;
+            color: #0066cc;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="rss-feed">
+        <div class="controls">
+            <div>
+                <label for="fontSize">בחר גודל גופן:</label>
+                <select id="fontSize">
+                    <option value="normal">רגיל</option>
+                    <option value="big">גדול</option>
+                    <option value="biggest">הכי גדול</option>
+                </select>
+            </div>
+            <div>
+                <label for="imageSize">גודל תמונות:</label>
+                <select id="imageSize">
+                    <option value="hide">הסתר</option>
+                    <option value="normal">רגיל</option>
+                    <option value="medium">בינוני</option>
+                    <option value="big">גדול</option>
+                </select>
+            </div>
+            <div>
+                <button id="refreshButton">רענן</button>
+            </div>
+        </div>
+        
+        <div class="toc" id="toc">
+            <h2>תוכן עניינים</h2>
+            <div id="tocContent"></div>
+        </div>
+        
+        <div id="rssContent"></div>
+    </div>
+
+    <script>
+        async function fetchRSSFeeds() {
+            const feeds = [
+                'https://rss.walla.co.il/feed/1?type=main',
+                'https://www.maariv.co.il/Rss/RssChadashot',
+                'https://rcs.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',
+                'https://www.ynet.co.il/Integration/StoryRss2.xml'
+            ];
+
+            const feedPromises = feeds.map(feed => 
+                fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feed}`).then(response => response.json())
+            );
+
+            const feedResults = await Promise.all(feedPromises);
+
+            let allItems = [];
+            feedResults.forEach(feed => {
+                allItems = allItems.concat(feed.items);
+            });
+
+            // Sort all items by publication date
+            allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+            displayRSSItems(allItems);
+        }
+
+        function displayRSSItems(items) {
+            const rssContent = document.getElementById('rssContent');
+            const tocContent = document.getElementById('tocContent');
+
+            // Clear previous content
+            rssContent.innerHTML = '';
+            tocContent.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                const pubDate = new Date(item.pubDate);
+                const formattedDate = pubDate.toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
+                const formattedTime = pubDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+                // Add item to Table of Contents with timestamp
+                const tocItem = document.createElement('a');
+                tocItem.href = `#post-${index}`;
+                tocItem.textContent = `${formattedTime} - ${item.title}`;
+                tocContent.appendChild(tocItem);
+                
+                // Create RSS item element
+                const itemElement = document.createElement('div');
+                itemElement.classList.add('rss-item');
+                itemElement.id = `post-${index}`;
+                
+                const title = document.createElement('h2');
+                title.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a>`;
+                itemElement.appendChild(title);
+                
+                const date = document.createElement('div');
+                date.classList.add('date');
+                date.textContent = `${formattedDate} ${formattedTime}`;
+                itemElement.appendChild(date);
+                
+                const description = document.createElement('p');
+                description.innerHTML = item.description; // Use innerHTML to render HTML content correctly
+                itemElement.appendChild(description);
+
+                // Add "Back to Top" button
+                const backToTop = document.createElement('div');
+                backToTop.classList.add('back-to-top');
+                backToTop.textContent = 'חזור למעלה';
+                backToTop.addEventListener('click', () => {
+                    window.scrollTo(0, 0); // Jump instantly to the top of the page
+                });
+                itemElement.appendChild(backToTop);
+                
+                rssContent.appendChild(itemElement);
+            });
+
+            applySettings();
+        }
+
+        function applySettings() {
+            const fontSize = document.getElementById('fontSize').value;
+            const imageSize = document.getElementById('imageSize').value;
+            const rssItems = document.querySelectorAll('.rss-item p');
+
+            rssItems.forEach(item => {
+                switch (fontSize) {
+                    case 'big':
+                        item.style.fontSize = '20px';
+                        break;
+                    case 'biggest':
+                        item.style.fontSize = '24px';
+                        break;
+                    default:
+                        item.style.fontSize = '16px';
+                }
+
+                const images = item.querySelectorAll('img');
+                images.forEach(img => {
+                    switch (imageSize) {
+                        case 'medium':
+                            img.style.width = '50%';
+                            break;
+                        case 'big':
+                            img.style.width = '100%';
+                            break;
+                        case 'hide':
+                            img.style.display = 'none';
+                            break;
+                        default:
+                            img.style.width = '25%';
+                    }
+                    img.style.display = (imageSize === 'hide') ? 'none' : 'block';
+                });
+            });
+        }
+
+        document.getElementById('fontSize').addEventListener('change', applySettings);
+        document.getElementById('imageSize').addEventListener('change', applySettings);
+        document.getElementById('refreshButton').addEventListener('click', fetchRSSFeeds);
+
+        // Initial load
+        fetchRSSFeeds();
+    </script>
+</body>
+</html>
