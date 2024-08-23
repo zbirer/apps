@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RSS Feed Reader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS Feed Viewer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
+            margin: 0;
             direction: rtl;
             text-align: right;
-            -webkit-text-size-adjust: 100%;
-            text-size-adjust: 100%;
         }
 
-        .rss-feed {
-            width: 100%; /* Use entire screen width */
-            margin: 0 auto;
+        .container {
+            width: 100%;
+            max-width: 600px;
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -27,291 +28,219 @@
         }
 
         .controls {
-            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-
-        .rss-item {
             margin-bottom: 20px;
         }
 
-        .rss-item h2 {
-            font-size: 20px;
-            margin-bottom: 5px;
-            color: #333;
-            cursor: pointer;
-            display: inline-block;
-        }
-
-        .rss-item p {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #555;
-            overflow: hidden;
-            height: auto; /* Show by default */
-            transition: height 0.3s ease;
-        }
-
-        .rss-item .date {
+        .controls select, .controls button {
             font-size: 14px;
-            color: #888;
-            margin-bottom: 10px;
+            padding: 5px;
         }
 
-        a {
-            text-decoration: none;
-            color: #0066cc;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            margin-top: 10px;
-        }
-
-        .toggle-icon {
-            cursor: pointer;
-            margin-left: 10px;
-            font-size: 20px;
-            vertical-align: middle;
-            display: inline-block;
-        }
-
-        .jump-to-article {
-            display: inline-block;
-            font-size: 14px;
-            color: #0066cc;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-
-        #throbber {
+        .throbber {
             display: none;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        /* Throbber (animated loading icon) embedded using CSS */
-        #throbber::before {
-            content: '';
-            display: inline-block;
+            margin: 0 auto 20px;
             width: 40px;
             height: 40px;
             border: 4px solid #0066cc;
-            border-top: 4px solid transparent;
+            border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .rss-item {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+            text-align: right;
+        }
+
+        .rss-item:last-child {
+            border-bottom: none;
+        }
+
+        .rss-item h2 {
+            font-size: 18px;
+            margin: 0;
+            cursor: pointer;
+            text-align: right;
+        }
+
+        .rss-item .meta {
+            font-size: 12px;
+            color: #777;
+            text-align: right;
+        }
+
+        .rss-item .description {
+            display: none;
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .rss-item h2 a {
+            font-size: 14px;
+            color: #0066cc;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+
+        .rss-item h2 a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="rss-feed">
-        <!-- Controls for adjusting font size, image size, category selection, and refreshing the feed -->
+    <div class="container">
         <div class="controls">
-            <div>
-                <label for="fontSize">גופן:</label>
-                <select id="fontSize">
-                    <option value="normal">רגיל</option>
-                    <option value="big">גדול</option>
-                    <option value="biggest">הכי גדול</option>
-                </select>
-            </div>
-            <div>
-                <label for="imageSize">תמונות:</label>
-                <select id="imageSize">
-                    <option value="hide">הסתר</option>
-                    <option value="normal">רגיל</option>
-                    <option value="medium">בינוני</option>
-                    <option value="big">גדול</option>
-                </select>
-            </div>
-            <div>
-                <label for="categorySelect">קטגוריה:</label>
-                <select id="categorySelect">
-                    <option value="news">חדשות</option>
-                    <option value="tech">טכנולוגיה</option>
-                </select>
-            </div>
-            <div>
-                <button id="refreshButton">רענן</button>
-            </div>
+            <select id="font-size">
+                <option value="normal">רגיל</option>
+                <option value="big">גדול</option>
+                <option value="biggest">הכי גדול</option>
+            </select>
+            <select id="image-size">
+                <option value="hide">הסתר</option>
+                <option value="normal">רגיל</option>
+                <option value="medium">בינוני</option>
+                <option value="big">גדול</option>
+            </select>
+            <select id="category">
+                <option value="news">חדשות</option>
+                <option value="tech">טכנולוגיה</option>
+            </select>
+            <button id="refresh">רענן</button>
         </div>
 
-        <!-- Throbber (loading spinner) shown when fetching data -->
-        <div id="throbber"></div>
+        <div class="throbber"></div>
 
-        <!-- Container where RSS feed content will be displayed -->
-        <div id="rssContent"></div>
+        <div id="rss-content"></div>
     </div>
 
     <script>
-        const newsFeeds = [
-            'https://rss.walla.co.il/feed/1?type=main',
-            'https://www.maariv.co.il/Rss/RssChadashot',
-            'https://rcs.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',
-            'https://www.ynet.co.il/Integration/StoryRss2.xml'
-        ];
+        const feedUrls = {
+            news: [
+                'https://rss.walla.co.il/feed/1?type=main',
+                'https://www.maariv.co.il/Rss/RssChadashot',
+                'https://rcs.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',
+                'https://www.ynet.co.il/Integration/StoryRss2.xml'
+            ],
+            tech: [
+                'https://www.askpavel.co.il/feed',
+                'https://www.tgspot.co.il/feed/',
+                'https://www.maariv.co.il/Rss/RssFeedsTechnologeya',
+                'https://rss.walla.co.il/feed/4703',
+                'https://rss.walla.co.il/feed/6?type=main',
+                'https://www.themarker.com/srv/tm-technation',
+                'https://www.ynet.co.il/Integration/StoryRss544.xml'
+            ]
+        };
 
-        const techFeeds = [
-            'https://www.askpavel.co.il/feed',
-            'https://www.tgspot.co.il/feed/',
-            'https://www.maariv.co.il/Rss/RssFeedsTechnologeya',
-            'https://rss.walla.co.il/feed/4703',
-            'https://rss.walla.co.il/feed/6?type=main',
-            'https://www.themarker.com/srv/tm-technation',
-            'https://www.ynet.co.il/Integration/StoryRss544.xml'
-        ];
+        document.getElementById('refresh').addEventListener('click', loadRSS);
+        document.getElementById('category').addEventListener('change', loadRSS);
 
-        async function fetchRSSFeeds() {
-            showThrobber();
-
-            const category = document.getElementById('categorySelect').value;
-            const feeds = category === 'tech' ? techFeeds : newsFeeds;
-
-            const feedPromises = feeds.map(feed => 
-                fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feed}`).then(response => response.json())
-            );
-
-            const feedResults = await Promise.all(feedPromises);
-
-            let allItems = [];
-            feedResults.forEach(feed => {
-                allItems = allItems.concat(feed.items);
-            });
-
-            // Sort all items by publication date
-            allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-
-            displayRSSItems(allItems);
-            hideThrobber();
-        }
-
-        function displayRSSItems(items) {
-            const rssContent = document.getElementById('rssContent');
-
-            // Clear previous content
+        function loadRSS() {
+            const category = document.getElementById('category').value;
+            const urls = feedUrls[category];
+            const rssContent = document.getElementById('rss-content');
+            const throbber = document.querySelector('.throbber');
             rssContent.innerHTML = '';
+            throbber.style.display = 'block';
 
-            items.forEach((item, index) => {
-                const pubDate = new Date(item.pubDate);
-                const formattedDate = pubDate.toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
-                const formattedTime = pubDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+            Promise.all(urls.map(url => fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
+                .then(response => response.json())))
+                .then(feeds => {
+                    throbber.style.display = 'none';
+                    feeds.forEach(feed => {
+                        feed.items.forEach(item => {
+                            const rssItem = document.createElement('div');
+                            rssItem.className = 'rss-item';
 
-                // Create RSS item element
-                const itemElement = document.createElement('div');
-                itemElement.classList.add('rss-item');
-                itemElement.id = `post-${index}`;
+                            const title = document.createElement('h2');
+                            title.textContent = item.title;
+                            title.addEventListener('click', () => {
+                                const description = rssItem.querySelector('.description');
+                                const isVisible = description.style.display === 'block';
+                                description.style.display = isVisible ? 'none' : 'block';
+                            });
 
-                // Toggle icon
-                const toggleIcon = document.createElement('span');
-                toggleIcon.classList.add('toggle-icon');
-                toggleIcon.textContent = '-';
-                toggleIcon.addEventListener('click', () => {
-                    const description = itemElement.querySelector('p');
-                    const isHidden = description.style.height === '0px';
-                    description.style.height = isHidden ? 'auto' : '0px';
-                    toggleIcon.textContent = isHidden ? '-' : '+';
+                            const link = document.createElement('a');
+                            link.href = item.link;
+                            link.target = '_blank';
+                            link.textContent = 'לכתבה המלאה';
+
+                            title.appendChild(link);
+
+                            const meta = document.createElement('div');
+                            meta.className = 'meta';
+                            const pubDate = new Date(item.pubDate);
+                            meta.textContent = `${pubDate.getDate()}/${pubDate.getMonth() + 1}/${pubDate.getFullYear()} ${pubDate.getHours()}:${pubDate.getMinutes()} | ${new URL(item.link).hostname}`;
+
+                            const description = document.createElement('p');
+                            description.className = 'description';
+                            description.innerHTML = item.description;
+
+                            rssItem.appendChild(title);
+                            rssItem.appendChild(meta);
+                            rssItem.appendChild(description);
+                            rssContent.appendChild(rssItem);
+                        });
+                    });
+
+                    adjustFontSize();
+                    adjustImageSize();
                 });
-                itemElement.appendChild(toggleIcon);
-
-                // Title
-                const title = document.createElement('h2');
-                title.textContent = item.title;
-                itemElement.appendChild(title);
-
-                // Button to jump to the original article
-                const jumpToArticle = document.createElement('a');
-                jumpToArticle.classList.add('jump-to-article');
-                jumpToArticle.textContent = 'מעבר לכתבה';
-                jumpToArticle.href = item.link;
-                jumpToArticle.target = '_blank';
-                itemElement.appendChild(jumpToArticle);
-
-                // Date of the post
-                const date = document.createElement('div');
-                date.classList.add('date');
-                date.textContent = `${formattedDate} ${formattedTime}`;
-                itemElement.appendChild(date);
-
-                // Description of the post (shown by default)
-                const description = document.createElement('p');
-                description.innerHTML = item.description;
-                description.style.height = 'auto'; // Show by default
-                itemElement.appendChild(description);
-
-                rssContent.appendChild(itemElement);
-            });
-
-            applySettings();
         }
 
-        function applySettings() {
-            const fontSize = document.getElementById('fontSize').value;
-            const imageSize = document.getElementById('imageSize').value;
-            const rssItems = document.querySelectorAll('.rss-item p');
+        document.getElementById('font-size').addEventListener('change', adjustFontSize);
+        document.getElementById('image-size').addEventListener('change', adjustImageSize);
 
-            rssItems.forEach(item => {
-                switch (fontSize) {
-                    case 'big':
-                        item.style.fontSize = '20px';
-                        break;
-                    case 'biggest':
-                        item.style.fontSize = '24px';
-                        break;
-                    default:
-                        item.style.fontSize = '16px';
-                }
+        function adjustFontSize() {
+            const size = document.getElementById('font-size').value;
+            let fontSize;
+            switch (size) {
+                case 'big':
+                    fontSize = '18px';
+                    break;
+                case 'biggest':
+                    fontSize = '22px';
+                    break;
+                default:
+                    fontSize = '14px';
+                    break;
+            }
+            document.querySelectorAll('.rss-item h2, .rss-item .description').forEach(el => el.style.fontSize = fontSize);
+        }
 
-                const images = item.querySelectorAll('img');
-                images.forEach(img => {
-                    switch (imageSize) {
-                        case 'medium':
-                            img.style.width = '50%';
-                            break;
-                        case 'big':
-                            img.style.width = '100%';
-                            break;
-                        case 'hide':
-                            img.style.display = 'none';
-                            break;
-                        default:
-                            img.style.width = '25%';
-                    }
-                    img.style.display = (imageSize === 'hide') ? 'none' : 'block';
-                });
+        function adjustImageSize() {
+            const size = document.getElementById('image-size').value;
+            let maxWidth;
+            switch (size) {
+                case 'hide':
+                    maxWidth = '0';
+                    break;
+                case 'medium':
+                    maxWidth = '50%';
+                    break;
+                case 'big':
+                    maxWidth = '100%';
+                    break;
+                default:
+                    maxWidth = '30%';
+                    break;
+            }
+            document.querySelectorAll('.rss-item img').forEach(img => {
+                img.style.maxWidth = maxWidth;
+                img.style.display = size === 'hide' ? 'none' : 'block';
             });
         }
 
-        function showThrobber() {
-            document.getElementById('throbber').style.display = 'block';
-        }
-
-        function hideThrobber() {
-            document.getElementById('throbber').style.display = 'none';
-        }
-
-        document.getElementById('categorySelect').addEventListener('change', fetchRSSFeeds);
-        document.getElementById('refreshButton').addEventListener('click', fetchRSSFeeds);
-        document.getElementById('fontSize').addEventListener('change', applySettings);
-        document.getElementById('imageSize').addEventListener('change', applySettings);
-
-        // Initial load of the RSS feeds
-        fetchRSSFeeds();
+        loadRSS();
     </script>
 </body>
 </html>
