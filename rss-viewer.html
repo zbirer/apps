@@ -169,6 +169,13 @@
                         title.addEventListener('click', () => {
                             const description = rssItem.querySelector('.description');
                             const isVisible = description.style.display === 'block';
+
+                            // Hide all other descriptions
+                            document.querySelectorAll('.rss-item .description').forEach(desc => {
+                                desc.style.display = 'none';
+                            });
+
+                            // Toggle the clicked description
                             description.style.display = isVisible ? 'none' : 'block';
                         });
 
