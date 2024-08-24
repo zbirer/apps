@@ -155,41 +155,43 @@
             Promise.all(urls.map(url => fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
                 .then(response => response.json())))
                 .then(feeds => {
+                    const allItems = feeds.flatMap(feed => feed.items);
+                    allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
                     throbber.style.display = 'none';
-                    feeds.forEach(feed => {
-                        feed.items.forEach(item => {
-                            const rssItem = document.createElement('div');
-                            rssItem.className = 'rss-item';
 
-                            const title = document.createElement('h2');
-                            title.textContent = item.title;
-                            title.addEventListener('click', () => {
-                                const description = rssItem.querySelector('.description');
-                                const isVisible = description.style.display === 'block';
-                                description.style.display = isVisible ? 'none' : 'block';
-                            });
+                    allItems.forEach(item => {
+                        const rssItem = document.createElement('div');
+                        rssItem.className = 'rss-item';
 
-                            const link = document.createElement('a');
-                            link.href = item.link;
-                            link.target = '_blank';
-                            link.textContent = 'לכתבה המלאה';
-
-                            title.appendChild(link);
-
-                            const meta = document.createElement('div');
-                            meta.className = 'meta';
-                            const pubDate = new Date(item.pubDate);
-                            meta.textContent = `${pubDate.getDate()}/${pubDate.getMonth() + 1}/${pubDate.getFullYear()} ${pubDate.getHours()}:${pubDate.getMinutes()} | ${new URL(item.link).hostname}`;
-
-                            const description = document.createElement('p');
-                            description.className = 'description';
-                            description.innerHTML = item.description;
-
-                            rssItem.appendChild(title);
-                            rssItem.appendChild(meta);
-                            rssItem.appendChild(description);
-                            rssContent.appendChild(rssItem);
+                        const title = document.createElement('h2');
+                        title.textContent = item.title;
+                        title.addEventListener('click', () => {
+                            const description = rssItem.querySelector('.description');
+                            const isVisible = description.style.display === 'block';
+                            description.style.display = isVisible ? 'none' : 'block';
                         });
+
+                        const link = document.createElement('a');
+                        link.href = item.link;
+                        link.target = '_blank';
+                        link.textContent = 'לכתבה המלאה';
+
+                        title.appendChild(link);
+
+                        const meta = document.createElement('div');
+                        meta.className = 'meta';
+                        const pubDate = new Date(item.pubDate);
+                        meta.textContent = `${pubDate.getDate()}/${pubDate.getMonth() + 1}/${pubDate.getFullYear()} ${pubDate.getHours()}:${pubDate.getMinutes()} | ${new URL(item.link).hostname}`;
+
+                        const description = document.createElement('p');
+                        description.className = 'description';
+                        description.innerHTML = item.description;
+
+                        rssItem.appendChild(title);
+                        rssItem.appendChild(meta);
+                        rssItem.appendChild(description);
+                        rssContent.appendChild(rssItem);
                     });
 
                     adjustFontSize();
