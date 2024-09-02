@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .timer, .keypad, .input, .result {
+            margin-bottom: 20px;
+        }
+        .timer {
+            font-size: 24px;
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .control-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #playBtn {
+            background-color: #4CAF50;
+        }
+        #playBtn::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 15px solid white;
+            margin-left: 5px;
+        }
+        #stopBtn {
+            background-color: #f44336;
+        }
+        #stopBtn::after {
+            content: '';
+            width: 15px;
+            height: 15px;
+            background-color: white;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        .keypad button {
+            padding: 10px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .input-group, .result-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .input-group label, .result-group label {
+            width: 100px;
+            font-weight: bold;
+        }
+        input {
+            flex-grow: 1;
+            padding: 5px;
+            font-size: 18px;
+        }
+        #resetBtn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #333;
+            border: 3px solid #ccc;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto 0;
+        }
+        #resetBtn::after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border: 3px solid #0f0;
+            border-radius: 50%;
+            position: relative;
+        }
+        #resetBtn::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #0f0;
+            transform: translateY(-8px);
+        }
+        #seconds {
+            font-size: 40px;
+            font-weight: bold;
+            border: 2px solid black;
+            padding: 5px;
+        }
+        #seconds-label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="timer">
+            <div id="seconds-label">Seconds</div>
+            <div id="seconds">0</div>
+            <div class="controls">
+                <button id="playBtn" class="control-button"></button>
+                <button id="stopBtn" class="control-button"></button>
+            </div>
+        </div>
+        <div class="keypad">
+            <button>1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>4</button>
+            <button>5</button>
+            <button>6</button>
+            <button>7</button>
+            <button>8</button>
+            <button>9</button>
+            <button>0</button>
+            <button>C</button>
+        </div>
+        <div class="input-group">
+            <label for="inputField">Number:</label>
+            <input type="text" id="inputField" readonly>
+        </div>
+        <div class="result-group">
+            <label for="resultField">Number x4:</label>
+            <input type="text" id="resultField" readonly>
+        </div>
+        <div class="result-group">
+            <label for="resultField2">Number x2:</label>
+            <input type="text" id="resultField2" readonly>
+        </div>
+        <button id="resetBtn"></button>
+    </div>
+
+    <script>
+        let timer;
+        let seconds = 0;
+        const secondsDisplay = document.getElementById('seconds');
+        const secondsLabel = document.getElementById('seconds-label');
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const inputField = document.getElementById('inputField');
+        const resultField = document.getElementById('resultField');
+        const resultField2 = document.getElementById('resultField2');
+        const keypadButtons = document.querySelectorAll('.keypad button');
+
+        playBtn.addEventListener('click', startTimer);
+        stopBtn.addEventListener('click', stopTimer);
+        resetBtn.addEventListener('click', resetAll);
+
+        keypadButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.textContent === 'C') {
+                    inputField.value = '';
+                    updateResult();
+                } else {
+                    inputField.value += button.textContent;
+                    updateResult();
+                }
+            });
+        });
+
+        function startTimer() {
+            if (!timer) {
+                timer = setInterval(() => {
+                    seconds++;
+                    secondsDisplay.textContent = seconds;
+                    if (seconds === 60) {
+                        stopTimer();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        function resetAll() {
+            stopTimer();
+            seconds = 0;
+            secondsDisplay.textContent = '0';
+            inputField.value = '';
+            updateResult();
+        }
+
+        function updateResult() {
+            const inputValue = parseInt(inputField.value) || 0;
+            const result = inputValue * 4;
+            const result2 = inputValue * 2;
+            resultField.value = result;
+            resultField2.value = result2;
+        }
+    </script>
+</body>
+</html>
