@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JSON Viewer Tool</title>
+<style>
+  /* General Styles */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f5f5f5;
+  }
+  h2 {
+    margin-top: 0;
+    color: #333;
+  }
+  /* Top Container */
+  #topContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  #jsonInput, #searchValue {
+    width: 100%;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  #searchValue {
+    width: calc(100% - 110px);
+    display: inline-block;
+  }
+  /* Buttons */
+  button {
+    padding: 10px 15px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background-color: #0056b3;
+  }
+  /* Path Display */
+  .path {
+    font-weight: bold;
+    margin-top: 10px;
+    color: #555;
+  }
+  /* JSON Tree Container */
+  #jsonTreeContainer {
+    margin-top: 380px; /* Adjust this value to match the height of the fixed top container */
+    padding: 20px;
+  }
+  /* JSON Tree Styles */
+  #jsonTree ul {
+    list-style-type: none;
+    padding-left: 20px;
+  }
+  #jsonTree li {
+    margin: 5px 0;
+    position: relative;
+  }
+  /* Collapsible Nodes */
+  .collapsible {
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
+    padding: 5px;
+  }
+  .collapsible::before {
+    content: '\25B6'; /* Right-pointing triangle */
+    display: inline-block;
+    margin-right: 5px;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+  }
+  .collapsible.expanded::before {
+    transform: rotate(90deg); /* Downward-pointing triangle */
+  }
+  .content {
+    margin-left: 20px;
+  }
+  /* Highlighted Text */
+  .highlight {
+    background-color: #fff3cd;
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+  /* Node Buttons */
+  .node-buttons {
+    display: inline-block;
+    margin-left: 10px;
+    visibility: hidden;
+  }
+  li:hover .node-buttons {
+    visibility: visible;
+  }
+  .node-buttons button {
+    font-size: 12px;
+    padding: 5px 8px;
+    margin-right: 2px;
+    background-color: #28a745;
+    border: none;
+    border-radius: 3px;
+    color: #fff;
+    cursor: pointer;
+  }
+  .node-buttons button.collapse-btn {
+    background-color: #dc3545;
+  }
+  .node-buttons button.show-path-btn {
+    background-color: #17a2b8;
+  }
+  .node-buttons button:hover {
+    opacity: 0.8;
+  }
+  /* Scrollbar Styles */
+  #jsonTreeContainer {
+    max-height: calc(100vh - 380px);
+    overflow-y: auto;
+  }
+  /* Responsive Design */
+  @media (max-width: 600px) {
+    #topContainer {
+      padding: 15px;
+    }
+    #jsonInput, #searchValue {
+      width: 100%;
+    }
+    button {
+      width: 100%;
+      margin-bottom: 5px;
+    }
+    #jsonTreeContainer {
+      margin-top: 460px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="topContainer">
+  <h2>JSON Viewer Tool</h2>
+  <label for="jsonInput">JSON Input:</label>
+  <textarea id="jsonInput" rows="8" placeholder="Enter JSON string here"></textarea>
+  
+  <label for="searchValue">Search Value:</label>
+  <input type="text" id="searchValue" placeholder="Enter value to search">
+  <button id="searchBtn">Search</button>
+  <button id="prevBtn" disabled>Search Prev</button>
+  <button id="nextBtn" disabled>Search Next</button>
+  <div class="path" id="pathDisplay"></div>
+  <div class="path" id="nodePathDisplay"></div>
+</div>
+
+<div id="jsonTreeContainer">
+  <div id="jsonTree"></div>
+</div>
+
+<script>
+document.getElementById('searchBtn').addEventListener('click', search);
+document.getElementById('nextBtn').addEventListener('click', searchNext);
+document.getElementById('prevBtn').addEventListener('click', searchPrev);
+
+// Trigger search when Enter key is pressed in the search input
+document.getElementById('searchValue').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        search();
+    }
+});
+
+let occurrences = [];
+let currentIndex = -1;
+let jsonObject = null;
+let currentHoveredNode = null; // Keep track of the current hovered node
+
+function search() {
+    console.clear();
+    console.log('Search button clicked');
+    const jsonStr = document.getElementById('jsonInput').value;
+    const searchValue = document.getElementById('searchValue').value;
+    console.log('JSON Input:', jsonStr);
+    console.log('Search Value:', searchValue);
+    if (searchValue === '') {
+        alert('Please enter a value to search.');
+        console.warn('Search value is empty.');
+        return;
+    }
+    try {
+        jsonObject = JSON.parse(jsonStr);
+        console.log('Parsed JSON Object:', jsonObject);
+    } catch (e) {
+        alert('Invalid JSON');
+        console.error('Invalid JSON:', e);
+        return;
+    }
+    occurrences = [];
+    currentIndex = -1;
+    searchJSON(jsonObject, '', searchValue);
+    console.log('Occurrences found:', occurrences);
+    if (occurrences.length > 0) {
+        currentIndex = 0;
+        displayTree();
+    } else {
+        document.getElementById('jsonTree').innerHTML = '';
+        document.getElementById('pathDisplay').innerHTML = 'Value not found.';
+    }
+    updateButtons();
+}
+
+function searchJSON(obj, path, searchValue) {
+    if (obj !== null && obj !== undefined) {
+        const objStr = String(obj).toLowerCase();
+        const searchStr = searchValue.toLowerCase();
+        if (objStr.includes(searchStr)) {
+            occurrences.push({ path: path, value: obj });
+            console.log('Match found:', { path: path, value: obj });
+        }
+    }
+    if (typeof obj === 'object' && obj !== null) {
+        if (Array.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+                let newPath = path ? path + '.' + i : i.toString();
+                searchJSON(obj[i], newPath, searchValue);
+            }
+        } else {
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    let newPath = path ? path + '.' + key : key;
+                    searchJSON(obj[key], newPath, searchValue);
+                }
+            }
+        }
+    }
+}
+
+function displayTree() {
+    console.log('Displaying tree for occurrence index:', currentIndex);
+    document.getElementById('jsonTree').innerHTML = '';
+    let container = document.getElementById('jsonTree');
+    let pathArray = [];
+    if (occurrences[currentIndex]) {
+        pathArray = occurrences[currentIndex].path.split('.');
+        console.log('Current path array:', pathArray);
+    }
+    buildTree(jsonObject, container, '', pathArray);
+    if (occurrences[currentIndex]) {
+        document.getElementById('pathDisplay').innerHTML = 'Path: ' + occurrences[currentIndex].path;
+    } else {
+        document.getElementById('pathDisplay').innerHTML = '';
+    }
+}
+
+function buildTree(obj, parentElement, currentPath, pathArray) {
+    if (typeof obj === 'object' && obj !== null) {
+        let isArray = Array.isArray(obj);
+        let keys = isArray ? obj.map((_, idx) => idx) : Object.keys(obj);
+        let ul = document.createElement('ul');
+        parentElement.appendChild(ul);
+
+        keys.forEach((key) => {
+            let li = document.createElement('li');
+            let newPath = currentPath ? currentPath + '.' + key : key.toString();
+            let value = obj[key];
+
+            if (typeof value === 'object' && value !== null) {
+                let span = document.createElement('span');
+                span.classList.add('collapsible');
+
+                let isExpanded = false;
+                let contentDiv = document.createElement('div');
+                contentDiv.classList.add('content');
+                li.appendChild(span);
+                li.appendChild(contentDiv);
+
+                // Function to update the node label
+                function updateNodeLabel() {
+                    let label;
+                    if (isArray) {
+                        label = '[' + key + ']';
+                        if (!isExpanded && (typeof value === 'object' && value !== null)) {
+                            if ('id' in value || 'name' in value) {
+                                let displayName = value['name'] || value['id'];
+                                label += ' ' + displayName;
+                            }
+                        }
+                        // Append the number of children for array nodes when collapsed
+                        if (!isExpanded && Array.isArray(value)) {
+                            label += ': (' + value.length + ' children)';
+                            span.textContent = label;
+                            return;
+                        }
+                        label += ': ';
+                    } else {
+                        label = key;
+                        if (!isExpanded && (typeof value === 'object' && value !== null)) {
+                            if ('id' in value || 'name' in value) {
+                                let displayName = value['name'] || value['id'];
+                                label += ' [' + displayName + ']';
+                            }
+                            // Append the number of children for array nodes when collapsed
+                            if (Array.isArray(value)) {
+                                label += ': (' + value.length + ' children)';
+                                span.textContent = label;
+                                return;
+                            }
+                        }
+                        label += ': ';
+                    }
+                    span.textContent = label;
+                }
+
+                updateNodeLabel();
+
+                buildTree(value, contentDiv, newPath, pathArray);
+
+                // Check if this node is in the pathArray to occurrence
+                let pathSoFar = newPath.split('.');
+                let match = pathSoFar.every((p, idx) => p === pathArray[idx]);
+
+                if (match) {
+                    contentDiv.style.display = 'block';
+                    isExpanded = true;
+                    span.classList.add('expanded');
+                } else {
+                    contentDiv.style.display = 'none';
+                    isExpanded = false;
+                    span.classList.remove('expanded');
+                }
+
+                // Update the label after setting isExpanded
+                updateNodeLabel();
+
+                span.addEventListener('click', function() {
+                    if (contentDiv.style.display === 'none') {
+                        contentDiv.style.display = 'block';
+                        isExpanded = true;
+                        span.classList.add('expanded');
+                        console.log('Expanded node:', newPath);
+                    } else {
+                        contentDiv.style.display = 'none';
+                        isExpanded = false;
+                        span.classList.remove('expanded');
+                        console.log('Collapsed node:', newPath);
+                    }
+                    updateNodeLabel();
+                });
+
+                // Hover functionality for expand/collapse/show path buttons
+                li.addEventListener('mouseenter', function() {
+                    // Remove buttons from any previously hovered node
+                    if (currentHoveredNode && currentHoveredNode !== li) {
+                        let prevButtonContainer = currentHoveredNode.querySelector('.node-buttons');
+                        if (prevButtonContainer) {
+                            prevButtonContainer.parentElement.removeChild(prevButtonContainer);
+                        }
+                    }
+                    currentHoveredNode = li;
+
+                    if (typeof value === 'object' && value !== null) {
+                        let buttonContainer = document.createElement('span');
+                        buttonContainer.classList.add('node-buttons');
+                        let expandButton = document.createElement('button');
+                        expandButton.textContent = 'Expand';
+                        let collapseButton = document.createElement('button');
+                        collapseButton.textContent = 'Collapse';
+                        collapseButton.classList.add('collapse-btn');
+                        let showPathButton = document.createElement('button');
+                        showPathButton.textContent = 'Show Path';
+                        showPathButton.classList.add('show-path-btn');
+
+                        buttonContainer.appendChild(expandButton);
+                        buttonContainer.appendChild(collapseButton);
+                        buttonContainer.appendChild(showPathButton);
+                        span.appendChild(buttonContainer);
+
+                        expandButton.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            contentDiv.style.display = 'block';
+                            isExpanded = true;
+                            span.classList.add('expanded');
+                            updateNodeLabel();
+                            console.log('Expanded node via button:', newPath);
+                        });
+
+                        collapseButton.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            contentDiv.style.display = 'none';
+                            isExpanded = false;
+                            span.classList.remove('expanded');
+                            updateNodeLabel();
+                            console.log('Collapsed node via button:', newPath);
+                        });
+
+                        showPathButton.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            document.getElementById('nodePathDisplay').innerHTML = 'Node Path: ' + newPath;
+                            console.log('Show path for node:', newPath);
+                        });
+                    }
+                });
+
+                li.addEventListener('mouseleave', function() {
+                    let buttonContainer = li.querySelector('.node-buttons');
+                    if (buttonContainer) {
+                        buttonContainer.parentElement.removeChild(buttonContainer);
+                    }
+                    currentHoveredNode = null;
+                });
+            } else {
+                let span = document.createElement('span');
+                span.textContent = isArray ? '[' + key + ']: ' + value : key + ': ' + value;
+                const valueStr = String(value).toLowerCase();
+                const searchStr = occurrences[currentIndex] ? occurrences[currentIndex].value.toString().toLowerCase() : '';
+                if (occurrences[currentIndex] && occurrences[currentIndex].path === newPath && valueStr.includes(searchStr)) {
+                    span.classList.add('highlight');
+                    console.log('Highlighting value at path:', newPath);
+                }
+                li.appendChild(span);
+
+                // Hover functionality for 'Show Path' button on leaf nodes
+                li.addEventListener('mouseenter', function() {
+                    // Remove buttons from any previously hovered node
+                    if (currentHoveredNode && currentHoveredNode !== li) {
+                        let prevButtonContainer = currentHoveredNode.querySelector('.node-buttons');
+                        if (prevButtonContainer) {
+                            prevButtonContainer.parentElement.removeChild(prevButtonContainer);
+                        }
+                    }
+                    currentHoveredNode = li;
+
+                    let buttonContainer = document.createElement('span');
+                    buttonContainer.classList.add('node-buttons');
+                    let showPathButton = document.createElement('button');
+                    showPathButton.textContent = 'Show Path';
+                    showPathButton.classList.add('show-path-btn');
+
+                    buttonContainer.appendChild(showPathButton);
+                    span.appendChild(buttonContainer);
+
+                    showPathButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        document.getElementById('nodePathDisplay').innerHTML = 'Node Path: ' + newPath;
+                        console.log('Show path for node:', newPath);
+                    });
+                });
+
+                li.addEventListener('mouseleave', function() {
+                    let buttonContainer = li.querySelector('.node-buttons');
+                    if (buttonContainer) {
+                        buttonContainer.parentElement.removeChild(buttonContainer);
+                    }
+                    currentHoveredNode = null;
+                });
+            }
+            ul.appendChild(li);
+        });
+    } else {
+        let span = document.createElement('span');
+        span.textContent = obj;
+        const objStr = String(obj).toLowerCase();
+        const searchStr = occurrences[currentIndex] ? occurrences[currentIndex].value.toString().toLowerCase() : '';
+        if (occurrences[currentIndex] && occurrences[currentIndex].path === currentPath && objStr.includes(searchStr)) {
+            span.classList.add('highlight');
+            console.log('Highlighting value at path:', currentPath);
+        }
+        parentElement.appendChild(span);
+
+        // Hover functionality for 'Show Path' button on leaf nodes
+        parentElement.addEventListener('mouseenter', function() {
+            // Remove buttons from any previously hovered node
+            if (currentHoveredNode && currentHoveredNode !== parentElement) {
+                let prevButtonContainer = currentHoveredNode.querySelector('.node-buttons');
+                if (prevButtonContainer) {
+                    prevButtonContainer.parentElement.removeChild(prevButtonContainer);
+                }
+            }
+            currentHoveredNode = parentElement;
+
+            let buttonContainer = document.createElement('span');
+            buttonContainer.classList.add('node-buttons');
+            let showPathButton = document.createElement('button');
+            showPathButton.textContent = 'Show Path';
+            showPathButton.classList.add('show-path-btn');
+
+            buttonContainer.appendChild(showPathButton);
+            span.appendChild(buttonContainer);
+
+            showPathButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('nodePathDisplay').innerHTML = 'Node Path: ' + currentPath;
+                console.log('Show path for node:', currentPath);
+            });
+        });
+
+        parentElement.addEventListener('mouseleave', function() {
+            let buttonContainer = parentElement.querySelector('.node-buttons');
+            if (buttonContainer) {
+                buttonContainer.parentElement.removeChild(buttonContainer);
+            }
+            currentHoveredNode = null;
+        });
+    }
+}
+
+function updateButtons() {
+    const hasMultipleOccurrences = occurrences.length > 1;
+    document.getElementById('nextBtn').disabled = !hasMultipleOccurrences;
+    document.getElementById('prevBtn').disabled = !hasMultipleOccurrences;
+    console.log('Update navigation buttons:', {
+        nextDisabled: document.getElementById('nextBtn').disabled,
+        prevDisabled: document.getElementById('prevBtn').disabled
+    });
+}
+
+function searchNext() {
+    if (occurrences.length > 0) {
+        currentIndex = (currentIndex + 1) % occurrences.length;
+        console.log('Search Next clicked, new index:', currentIndex);
+        displayTree();
+    } else {
+        console.warn('No occurrences to navigate.');
+    }
+}
+
+function searchPrev() {
+    if (occurrences.length > 0) {
+        currentIndex = (currentIndex - 1 + occurrences.length) % occurrences.length;
+        console.log('Search Prev clicked, new index:', currentIndex);
+        displayTree();
+    } else {
+        console.warn('No occurrences to navigate.');
+    }
+}
+</script>
+
+</body>
+</html>
