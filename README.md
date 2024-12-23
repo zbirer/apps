@@ -6,6 +6,8 @@ https://zbirer.github.io/apps/pulse-calculator-webpage.html
 
 https://zbirer.github.io/apps/json-viewer.html
 
+https://zbirer.github.io/apps/timer.html
+
 
 # prompt for json viewer
 
