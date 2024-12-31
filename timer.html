@@ -122,10 +122,12 @@
     </div>
 
     <script>
-        let seconds = 0;
-        let minutes = 0;
-        let timerId = null;
-        
+        // Variables to track the timer state
+        let startTime = null; // The timestamp when the timer was started
+        let elapsedTime = 0; // The total elapsed time in milliseconds
+        let timerId = null; // ID of the active timer interval
+
+        // DOM elements for timer display and buttons
         const timerDisplay = document.getElementById('timer');
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -134,63 +136,73 @@
         const confirmResetBtn = document.getElementById('confirmReset');
         const cancelResetBtn = document.getElementById('cancelReset');
 
+        // Function to update the timer display
         function updateDisplay() {
+            // Calculate total seconds and split into minutes and seconds
+            const totalSeconds = Math.floor(elapsedTime / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            // Update the timer text content with formatted time
             timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
 
+        // Function to start the timer
         function startTimer() {
-            if (timerId) return;
-            
+            if (timerId) return; // Prevent multiple intervals
+
+            // Adjust startTime to account for paused elapsed time
+            startTime = Date.now() - elapsedTime;
+            // Start an interval to update elapsed time and display
+            timerId = setInterval(() => {
+                elapsedTime = Date.now() - startTime;
+                updateDisplay(); // Update the display on each tick
+            }, 100);
+
+            // Update button states
             startBtn.disabled = true;
             pauseBtn.disabled = false;
-            
-            timerId = setInterval(() => {
-                seconds++;
-                if (seconds >= 60) {
-                    seconds = 0;
-                    minutes++;
-                }
-                if (minutes >= 60) {
-                    clearInterval(timerId);
-                    timerId = null;
-                    startBtn.disabled = true;
-                    pauseBtn.disabled = true;
-                }
-                updateDisplay();
-            }, 1000);
         }
 
+        // Function to pause the timer
         function pauseTimer() {
-            clearInterval(timerId);
-            timerId = null;
+            clearInterval(timerId); // Stop the interval
+            timerId = null; // Clear the timer ID
             startBtn.disabled = false;
             pauseBtn.disabled = true;
         }
 
+        // Function to show the reset confirmation modal
         function showResetModal() {
-            resetModal.style.display = 'flex';
+            resetModal.style.display = 'flex'; // Make the modal visible
         }
 
+        // Function to hide the reset confirmation modal
         function hideResetModal() {
-            resetModal.style.display = 'none';
+            resetModal.style.display = 'none'; // Hide the modal
         }
 
+        // Function to reset the timer
         function resetTimer() {
-            clearInterval(timerId);
-            timerId = null;
-            seconds = 0;
-            minutes = 0;
-            updateDisplay();
+            clearInterval(timerId); // Stop any active timer interval
+            timerId = null; // Clear the timer ID
+            elapsedTime = 0; // Reset elapsed time to zero
+            updateDisplay(); // Reset the display
+
+            // Reset button states
             startBtn.disabled = false;
             pauseBtn.disabled = true;
-            hideResetModal();
+            hideResetModal(); // Close the reset confirmation modal
         }
 
-        startBtn.addEventListener('click', startTimer);
-        pauseBtn.addEventListener('click', pauseTimer);
-        resetBtn.addEventListener('click', showResetModal);
-        confirmResetBtn.addEventListener('click', resetTimer);
-        cancelResetBtn.addEventListener('click', hideResetModal);
+        // Event listeners for button clicks
+        startBtn.addEventListener('click', startTimer); // Start button
+        pauseBtn.addEventListener('click', pauseTimer); // Pause button
+        resetBtn.addEventListener('click', showResetModal); // Show reset modal
+        confirmResetBtn.addEventListener('click', resetTimer); // Confirm reset
+        cancelResetBtn.addEventListener('click', hideResetModal); // Cancel reset
+
+        // Initialize the display when the page loads
+        updateDisplay();
     </script>
 </body>
 </html>
