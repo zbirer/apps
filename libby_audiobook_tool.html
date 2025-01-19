@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parse Audiobook Chapters</title>
+    <style>
+        .chapter-container {
+            padding: 5px;
+            margin: 5px 0;
+            transition: background-color 0.3s, font-size 0.3s;
+        }
+        .chapter-container:hover {
+            background-color: #f0f0f0;
+            font-size: 1.2em;
+        }
+        .chapter-container.checked {
+            background-color: #d3d3d3;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <h1>Parse Audiobook Chapters</h1>
+    <textarea id="chapterInput" rows="20" cols="100" placeholder="Paste your HTML here..."></textarea>
+    <br>
+    <button id="parseButton">Parse</button>
+    <div id="output"></div>
+
+    <script>
+        document.getElementById("parseButton").addEventListener("click", () => {
+            const input = document.getElementById("chapterInput").value;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(input, "text/html");
+            const chapters = doc.querySelectorAll(".chapter-dialog-row");
+
+            if (!chapters) {
+                alert("No chapters found. Please check the input.");
+                return;
+            }
+
+            const outputDiv = document.getElementById("output");
+            outputDiv.innerHTML = ""; // Clear previous output
+
+            const toSeconds = (time) => {
+                const parts = time.split(":").map(Number);
+                return parts.reduce((acc, part) => acc * 60 + part, 0);
+            };
+
+            const chapterData = [];
+
+            for (let i = 0; i < chapters.length; i++) {
+                const chapterElement = chapters[i];
+                const numberElement = chapterElement.querySelector(".chapter-dialog-row-button .chapter-dialog-row-title");
+                const timeElement = chapterElement.querySelector(".chapter-dialog-row-place .place-phrase-visual");
+
+                if (numberElement && timeElement) {
+                    let chapterNumber = numberElement.textContent.split("-")[1].trim();
+                    chapterNumber = chapterNumber.padStart(2, "0"); // Ensure two digits
+                    const startTime = timeElement.textContent.trim();
+                    let duration;
+
+                    try {
+                        duration = i < chapters.length - 1
+                            ? toSeconds(chapters[i + 1].querySelector(".place-phrase-visual").textContent) -
+                              toSeconds(startTime)
+                            : "Unknown (last chapter)";
+                    } catch (error) {
+                        console.error(`Error calculating duration for chapter ${chapterNumber}:`, error);
+                        duration = "Invalid duration";
+                    }
+
+                    let durationText;
+                    if (typeof duration === "number" && duration >= 0) {
+                        durationText = new Date(duration * 1000).toISOString().substr(11, 8);
+                    } else {
+                        durationText = duration;
+                    }
+
+                    chapterData.push({ chapterNumber, startTime, durationText, duration });
+                }
+            }
+
+            // List chapters in original order
+            const originalOrderDiv = document.createElement("div");
+            originalOrderDiv.innerHTML = "<h2>Chapters (Original Order)</h2>";
+
+            chapterData.forEach((chapter) => {
+                const container = document.createElement("div");
+                container.className = "chapter-container";
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.addEventListener("change", (e) => {
+                    container.classList.toggle("checked", e.target.checked);
+                });
+
+                const label = document.createElement("label");
+                label.textContent = ` Chapter ${chapter.chapterNumber}: starts at ${chapter.startTime}, duration: ${chapter.durationText}`;
+
+                container.appendChild(checkbox);
+                container.appendChild(label);
+                originalOrderDiv.appendChild(container);
+            });
+
+            outputDiv.appendChild(originalOrderDiv);
+
+            // Sort chapters by duration and list them
+            const sortedOrderDiv = document.createElement("div");
+            sortedOrderDiv.innerHTML = "<h2>Chapters (Sorted by Duration)</h2>";
+
+            chapterData.sort((a, b) => a.duration - b.duration);
+
+            chapterData.forEach((chapter) => {
+                const container = document.createElement("div");
+                container.className = "chapter-container";
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.addEventListener("change", (e) => {
+                    container.classList.toggle("checked", e.target.checked);
+                });
+
+                const label = document.createElement("label");
+                label.textContent = ` Chapter ${chapter.chapterNumber}: starts at ${chapter.startTime}, duration: ${chapter.durationText}`;
+
+                container.appendChild(checkbox);
+                container.appendChild(label);
+                sortedOrderDiv.appendChild(container);
+            });
+
+            outputDiv.appendChild(sortedOrderDiv);
+        });
+    </script>
+</body>
+</html>
