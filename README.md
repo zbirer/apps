@@ -8,6 +8,11 @@ https://zbirer.github.io/apps/json-viewer.html
 
 https://zbirer.github.io/apps/timer.html
 
+https://zbirer.github.io/apps/libby_audiobook_tool.html
+
+https://zbirer.github.io/apps/time-difference-calculator.html
+
+
 
 # prompt for json viewer
 
