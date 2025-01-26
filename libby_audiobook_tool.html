@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parse Audiobook Chapters</title>
+    <title>Audiobook Duration Calculator</title>
     <style>
         .chapter-container {
             padding: 5px;
@@ -21,70 +21,96 @@
     </style>
 </head>
 <body>
-    <h1>Parse Audiobook Chapters</h1>
+    <h1>Audiobook Duration Calculator</h1>
     <textarea id="chapterInput" rows="20" cols="100" placeholder="Paste your HTML here..."></textarea>
     <br>
     <button id="parseButton">Parse</button>
+    <button id="copyButton">Copy Python Script</button>
     <div id="output"></div>
+
+    <h3>Python Script:</h3>
+    <textarea id="pythonScript" rows="20" cols="100" readonly></textarea>
 
     <script>
         document.getElementById("parseButton").addEventListener("click", () => {
             const input = document.getElementById("chapterInput").value;
             const parser = new DOMParser();
             const doc = parser.parseFromString(input, "text/html");
-            const chapters = doc.querySelectorAll(".chapter-dialog-row");
 
-            if (!chapters) {
-                alert("No chapters found. Please check the input.");
-                return;
-            }
-
-            const outputDiv = document.getElementById("output");
-            outputDiv.innerHTML = ""; // Clear previous output
-
-            const toSeconds = (time) => {
-                const parts = time.split(":").map(Number);
-                return parts.reduce((acc, part) => acc * 60 + part, 0);
+            // Helper functions
+            const toSeconds = (hhmmss) => {
+                const parts = hhmmss.split(':').map(Number);
+                return parts.reduce((acc, val) => acc * 60 + val, 0);
             };
 
-            const chapterData = [];
+            const toHHMMSS = (seconds) => {
+                const hrs = Math.floor(seconds / 3600).toString().padStart(2, '0');
+                const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                return `${hrs}:${mins}:${secs}`;
+            };
 
-            for (let i = 0; i < chapters.length; i++) {
-                const chapterElement = chapters[i];
-                const numberElement = chapterElement.querySelector(".chapter-dialog-row-button .chapter-dialog-row-title");
-                const timeElement = chapterElement.querySelector(".chapter-dialog-row-place .place-phrase-visual");
+            // Calculate total audiobook duration
+            const timelineClocks = doc.querySelector(".timeline-clocks");
+            let totalDuration = 0;
 
-                if (numberElement && timeElement) {
-                    let chapterNumber = numberElement.textContent.split("-")[1].trim();
-                    chapterNumber = chapterNumber.padStart(2, "0"); // Ensure two digits
-                    const startTime = timeElement.textContent.trim();
-                    let duration;
+            if (timelineClocks) {
+                const startSpan = timelineClocks.querySelector(".timeline-start-minutes .place-phrase-visual");
+                const endSpan = timelineClocks.querySelector(".timeline-end-minutes .place-phrase-visual");
 
-                    try {
-                        duration = i < chapters.length - 1
-                            ? toSeconds(chapters[i + 1].querySelector(".place-phrase-visual").textContent) -
-                              toSeconds(startTime)
-                            : "Unknown (last chapter)";
-                    } catch (error) {
-                        console.error(`Error calculating duration for chapter ${chapterNumber}:`, error);
-                        duration = "Invalid duration";
-                    }
-
-                    let durationText;
-                    if (typeof duration === "number" && duration >= 0) {
-                        durationText = new Date(duration * 1000).toISOString().substr(11, 8);
-                    } else {
-                        durationText = duration;
-                    }
-
-                    chapterData.push({ chapterNumber, startTime, durationText, duration });
+                if (startSpan && endSpan) {
+                    const startTime = toSeconds(startSpan.textContent.trim());
+                    const endTime = Math.abs(toSeconds(endSpan.textContent.trim())); // Convert negative end time to positive
+                    totalDuration = startTime + endTime;
                 }
             }
 
-            // List chapters in original order
-            const originalOrderDiv = document.createElement("div");
-            originalOrderDiv.innerHTML = "<h2>Chapters (Original Order)</h2>";
+            // Extract chapters and calculate durations
+            const chapters = doc.querySelectorAll(".chapter-dialog-row");
+            const chapterData = [];
 
+            chapters.forEach((chapter, index) => {
+                const titleElement = chapter.querySelector(".chapter-dialog-row-title");
+                const timeElement = chapter.querySelector(".place-phrase-visual");
+
+                if (titleElement && timeElement) {
+                    chapterData.push({
+                        title: titleElement.textContent.trim(),
+                        start: toSeconds(timeElement.textContent.trim()),
+                        number: index + 1,
+                        duration: 0, // Placeholder for duration
+                        end: 0 // Placeholder for end time
+                    });
+                }
+            });
+
+            // Calculate durations and end times
+            for (let i = 0; i < chapterData.length; i++) {
+                if (i < chapterData.length - 1) {
+                    chapterData[i].duration = chapterData[i + 1].start - chapterData[i].start;
+                    chapterData[i].end = chapterData[i + 1].start;
+                } else {
+                    chapterData[i].duration = totalDuration - chapterData[i].start;
+                    chapterData[i].end = chapterData[i].start + chapterData[i].duration;
+                }
+            }
+
+            // Sort chapters by duration
+            const sortedByDuration = [...chapterData].sort((a, b) => a.duration - b.duration);
+
+            // Add boolean field for duplicate durations
+            sortedByDuration.forEach((chapter, _, array) => {
+                chapter.hasSameDuration = array.some((ch) => ch !== chapter && ch.duration === chapter.duration);
+            });
+
+            // Generate lists of chapters
+            const outputDiv = document.getElementById("output");
+
+            // Display total audiobook duration
+            outputDiv.innerHTML = `<h3>Total Audiobook Duration: ${toHHMMSS(totalDuration)}</h3>`;
+
+            // Display chapters in original order
+            outputDiv.innerHTML += "<h3>Chapters in Original Order:</h3>";
             chapterData.forEach((chapter) => {
                 const container = document.createElement("div");
                 container.className = "chapter-container";
@@ -96,40 +122,69 @@
                 });
 
                 const label = document.createElement("label");
-                label.textContent = ` Chapter ${chapter.chapterNumber}: starts at ${chapter.startTime}, duration: ${chapter.durationText}`;
+                label.textContent = `#${chapter.number}: ${toHHMMSS(chapter.start)} ... ${toHHMMSS(chapter.end)} = ${toHHMMSS(chapter.duration)},   ${chapter.title}`;
 
                 container.appendChild(checkbox);
                 container.appendChild(label);
-                originalOrderDiv.appendChild(container);
+                outputDiv.appendChild(container);
             });
 
-            outputDiv.appendChild(originalOrderDiv);
-
-            // Sort chapters by duration and list them
-            const sortedOrderDiv = document.createElement("div");
-            sortedOrderDiv.innerHTML = "<h2>Chapters (Sorted by Duration)</h2>";
-
-            chapterData.sort((a, b) => a.duration - b.duration);
-
-            chapterData.forEach((chapter) => {
+            outputDiv.innerHTML += "<h3>Chapters Sorted by Duration:</h3>";
+            sortedByDuration.forEach((chapter, index) => {
                 const container = document.createElement("div");
                 container.className = "chapter-container";
-
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.addEventListener("change", (e) => {
-                    container.classList.toggle("checked", e.target.checked);
-                });
-
-                const label = document.createElement("label");
-                label.textContent = ` Chapter ${chapter.chapterNumber}: starts at ${chapter.startTime}, duration: ${chapter.durationText}`;
-
-                container.appendChild(checkbox);
-                container.appendChild(label);
-                sortedOrderDiv.appendChild(container);
+                container.textContent = `${index + 1}. ${chapter.title} - Duration: ${toHHMMSS(chapter.duration)}`;
+                outputDiv.appendChild(container);
             });
 
-            outputDiv.appendChild(sortedOrderDiv);
+            // Generate Python script
+            const pythonScript = `import os
+from mutagen.mp3 import MP3
+
+# Set working directory
+# os.chdir(r"c:\\Users\\zbirer\\OneDrive - Kramer Electronics Ltd\\Documents\\audiobooks\\זה שהיה פה קודם")
+
+# Sort MP3 files by duration
+mp3_files_sorted_by_duration = sorted(
+    [f for f in os.listdir('.') if f.endswith('.mp3')],
+    key=lambda x: MP3(x).info.length
+)
+
+# Chapters sorted by duration
+chapters_sorted_by_duration = [
+    ${sortedByDuration.map((ch, index) => `{
+        "chapter_number": ${ch.number},
+        "chapter_order_by_duration": ${index + 1},
+        "chapter_duration": "${toHHMMSS(ch.duration)}",
+        "has_same_duration": ${ch.hasSameDuration ? "True" : "False"}
+    }`).join(',\n    ')}
+]
+
+# Print chapter information and rename files
+try:
+    for i, chapter in enumerate(chapters_sorted_by_duration):
+        if i >= len(mp3_files_sorted_by_duration):
+            print(f"Error: More chapters ({len(chapters_sorted_by_duration)}) than MP3 files ({len(mp3_files_sorted_by_duration)}). Check file and chapter counts.")
+            break
+        suffix = "XXXX" if chapter['has_same_duration'] == True else ""
+        new_filename = f"{chapter['chapter_number']:03d}{suffix} {mp3_files_sorted_by_duration[i]}"
+        os.rename(mp3_files_sorted_by_duration[i], new_filename)
+        print(f"Chapter {chapter['chapter_number']} (Order: {chapter['chapter_order_by_duration']}): Duration: {chapter['chapter_duration']}, File: {new_filename}")
+except Exception as e:
+    print(f"An error occurred: {str(e)}")
+    print("Troubleshooting:")
+    print(f"Number of chapters: {len(chapters_sorted_by_duration)}")
+    print(f"Number of MP3 files: {len(mp3_files_sorted_by_duration)}")
+    print("Ensure the number of MP3 files matches the number of chapters.")`;
+
+            document.getElementById("pythonScript").value = pythonScript;
+        });
+
+        document.getElementById("copyButton").addEventListener("click", () => {
+            const scriptContent = document.getElementById("pythonScript");
+            scriptContent.select();
+            document.execCommand("copy");
+            alert("Python script copied to clipboard!");
         });
     </script>
 </body>
