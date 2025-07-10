@@ -94,6 +94,19 @@
         .rss-item h2 a:hover {
             text-decoration: underline;
         }
+
+        .back-to-top {
+            display: block;
+            margin-top: 10px;
+            text-align: center;
+            color: #0066cc;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-to-top:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -102,7 +115,7 @@
             <select id="font-size">
                 <option value="normal">רגיל</option>
                 <option value="big">גדול</option>
-                <option value="biggest">הכי גדול</option>
+                <option value="biggest" selected>הכי גדול</option>
             </select>
             <select id="image-size">
                 <option value="hide">הסתר</option>
@@ -173,15 +186,20 @@
                         title.textContent = item.title;
                         title.addEventListener('click', () => {
                             const description = rssItem.querySelector('.description');
+                            const backToTopLink = rssItem.querySelector('.back-to-top');
                             const isVisible = description.style.display === 'block';
 
-                            // Hide all other descriptions
+                            // Hide all other descriptions and their "back to top" links
                             document.querySelectorAll('.rss-item .description').forEach(desc => {
                                 desc.style.display = 'none';
                             });
+                            document.querySelectorAll('.rss-item .back-to-top').forEach(link => {
+                                link.style.display = 'none';
+                            });
 
-                            // Toggle the clicked description
+                            // Toggle the clicked description and its "back to top" link
                             description.style.display = isVisible ? 'none' : 'block';
+                            backToTopLink.style.display = isVisible ? 'none' : 'block';
                         });
 
                         const link = document.createElement('a');
@@ -200,9 +218,20 @@
                         description.className = 'description';
                         description.innerHTML = item.description;
 
+                        const backToTopLink = document.createElement('a');
+                        backToTopLink.href = '#'; // Link to the top of the page
+                        backToTopLink.className = 'back-to-top';
+                        backToTopLink.textContent = 'חזרה למעלה';
+                        backToTopLink.style.display = 'none'; // Initially hidden
+                        backToTopLink.addEventListener('click', (event) => {
+                            event.preventDefault(); // Prevent default anchor link behavior
+                            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top smoothly
+                        });
+
                         rssItem.appendChild(title);
                         rssItem.appendChild(meta);
                         rssItem.appendChild(description);
+                        rssItem.appendChild(backToTopLink); // Append the "back to top" link
                         rssContent.appendChild(rssItem);
                     });
 
@@ -254,7 +283,11 @@
             });
         }
 
-        loadRSS();
+        // Set 'biggest' as the default font size on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('font-size').value = 'biggest';
+            loadRSS();
+        });
     </script>
 </body>
 </html>
