@@ -80,12 +80,12 @@
         .rss-item .description {
             display: none;
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 26px;
             text-align: right;
         }
 
         .rss-item h2 a {
-            font-size: 14px;
+            font-size: 22px;
             color: #0066cc;
             text-decoration: none;
             margin-right: 10px;
@@ -248,13 +248,13 @@
             let fontSize;
             switch (size) {
                 case 'big':
-                    fontSize = '18px';
-                    break;
-                case 'biggest':
                     fontSize = '22px';
                     break;
+                case 'biggest':
+                    fontSize = '26px';
+                    break;
                 default:
-                    fontSize = '14px';
+                    fontSize = '18px';
                     break;
             }
             document.querySelectorAll('.rss-item h2, .rss-item .description').forEach(el => el.style.fontSize = fontSize);
@@ -291,3 +291,4 @@
     </script>
 </body>
 </html>
+
