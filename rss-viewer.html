@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS Feed Viewer</title>
     <style>
+        /* Default Dark Mode Styles */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -15,27 +17,41 @@
             margin: 0;
             direction: rtl;
             text-align: right;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
             width: 100%;
             max-width: 600px;
-            background-color: #fff;
+            background-color: #2d2d2d;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             padding: 20px;
             box-sizing: border-box;
+        }
+
+        /* Light Mode Overrides */
+        body.light-mode {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        body.light-mode .container {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .controls {
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
         .controls select, .controls button {
             font-size: 14px;
             padding: 5px;
+            cursor: pointer;
         }
 
         .throbber {
@@ -55,9 +71,12 @@
         }
 
         .rss-item {
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #444;
             padding: 10px 0;
             text-align: right;
+        }
+        body.light-mode .rss-item {
+            border-bottom: 1px solid #ddd;
         }
 
         .rss-item:last-child {
@@ -67,42 +86,51 @@
         .rss-item h2 {
             margin: 0;
             cursor: pointer;
-            text-align: right;
+            color: #4da3ff;
+        }
+        body.light-mode .rss-item h2 {
+            color: #0066cc;
         }
 
         .rss-item .meta {
+            color: #aaa;
+            margin-top: 5px;
+        }
+        body.light-mode .rss-item .meta {
             color: #777;
-            text-align: right;
         }
 
         .rss-item .description {
             display: none;
             margin-top: 10px;
-            text-align: right;
-			font-size: 22px
+            font-size: 22px;
+            line-height: 1.5;
         }
 
         .rss-item h2 a {
-            color: #0066cc;
+            color: #ff9f43;
             text-decoration: none;
             margin-right: 10px;
+            font-size: 0.7em;
         }
-
-        .rss-item h2 a:hover {
-            text-decoration: underline;
+        body.light-mode .rss-item h2 a {
+            color: #e67e22;
         }
 
         .back-to-top {
             display: block;
             margin-top: 10px;
             text-align: center;
-            color: #0066cc;
+            color: #4da3ff;
             text-decoration: none;
             font-size: 14px;
         }
 
-        .back-to-top:hover {
-            text-decoration: underline;
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -115,8 +143,8 @@
                 <option value="biggest" selected>הכי גדול</option>
             </select>
             <select id="image-size">
-                <option value="hide">הסתר</option>
-                <option value="normal">רגיל</option>
+                <option value="hide">הסתר תמונות</option>
+                <option value="normal">תמונה קטנה</option>
                 <option value="medium">בינוני</option>
                 <option value="big">גדול</option>
             </select>
@@ -124,11 +152,11 @@
                 <option value="news">חדשות</option>
                 <option value="tech">טכנולוגיה</option>
             </select>
+            <button id="theme-toggle">מצב בהיר</button>
             <button id="refresh">רענן</button>
         </div>
 
         <div class="throbber"></div>
-
         <div id="rss-content"></div>
     </div>
 
@@ -168,6 +196,20 @@
             ]
         };
 
+        // Theme Toggle Logic
+        const themeBtn = document.getElementById('theme-toggle');
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            themeBtn.textContent = isLight ? 'מצב כהה' : 'מצב בהיר';
+        });
+
+        // Auto Refresh (Every 10 minutes)
+        setInterval(() => {
+            console.log("Auto-refreshing feed...");
+            loadRSS();
+        }, 10 * 60 * 1000);
+
         document.getElementById('refresh').addEventListener('click', loadRSS);
         document.getElementById('category').addEventListener('change', loadRSS);
 
@@ -180,9 +222,10 @@
             throbber.style.display = 'block';
 
             Promise.all(urls.map(url => fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
-                .then(response => response.json())))
+                .then(response => response.json())
+                .catch(err => ({ items: [] }))))
                 .then(feeds => {
-                    const allItems = feeds.flatMap(feed => feed.items);
+                    const allItems = feeds.flatMap(feed => feed.items || []);
                     allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
                     throbber.style.display = 'none';
@@ -198,13 +241,6 @@
                             const backToTopLink = rssItem.querySelector('.back-to-top');
                             const isVisible = description.style.display === 'block';
 
-                            document.querySelectorAll('.rss-item .description').forEach(desc => {
-                                desc.style.display = 'none';
-                            });
-                            document.querySelectorAll('.rss-item .back-to-top').forEach(link => {
-                                link.style.display = 'none';
-                            });
-
                             description.style.display = isVisible ? 'none' : 'block';
                             backToTopLink.style.display = isVisible ? 'none' : 'block';
                         });
@@ -212,13 +248,14 @@
                         const link = document.createElement('a');
                         link.href = item.link;
                         link.target = '_blank';
-                        link.textContent = 'לכתבה המלאה';
+                        link.textContent = ' (לכתבה)';
                         title.appendChild(link);
 
                         const meta = document.createElement('div');
                         meta.className = 'meta';
                         const pubDate = new Date(item.pubDate);
-                        meta.textContent = `${pubDate.getDate()}/${pubDate.getMonth() + 1}/${pubDate.getFullYear()} ${pubDate.getHours()}:${pubDate.getMinutes()} | ${new URL(item.link).hostname}`;
+                        const host = item.link ? new URL(item.link).hostname.replace('www.', '') : 'RSS';
+                        meta.textContent = `${pubDate.toLocaleDateString('he-IL')} ${pubDate.getHours()}:${String(pubDate.getMinutes()).padStart(2, '0')} | ${host}`;
 
                         const description = document.createElement('p');
                         description.className = 'description';
@@ -227,10 +264,10 @@
                         const backToTopLink = document.createElement('a');
                         backToTopLink.href = '#';
                         backToTopLink.className = 'back-to-top';
-                        backToTopLink.textContent = 'חזרה למעלה';
+                        backToTopLink.textContent = '↑ חזרה למעלה';
                         backToTopLink.style.display = 'none';
-                        backToTopLink.addEventListener('click', (event) => {
-                            event.preventDefault();
+                        backToTopLink.addEventListener('click', (e) => {
+                            e.preventDefault();
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         });
 
@@ -255,19 +292,13 @@
 
             switch (size) {
                 case 'big':
-                    fontTitle = FONT_SIZE_BIG_TITLE;
-                    fontDesc = FONT_SIZE_BIG_DESC;
-                    fontMeta = FONT_SIZE_BIG_META;
+                    fontTitle = FONT_SIZE_BIG_TITLE; fontDesc = FONT_SIZE_BIG_DESC; fontMeta = FONT_SIZE_BIG_META;
                     break;
                 case 'biggest':
-                    fontTitle = FONT_SIZE_BIGGEST_TITLE;
-                    fontDesc = FONT_SIZE_BIGGEST_DESC;
-                    fontMeta = FONT_SIZE_BIGGEST_META;
+                    fontTitle = FONT_SIZE_BIGGEST_TITLE; fontDesc = FONT_SIZE_BIGGEST_DESC; fontMeta = FONT_SIZE_BIGGEST_META;
                     break;
                 default:
-                    fontTitle = FONT_SIZE_NORMAL_TITLE;
-                    fontDesc = FONT_SIZE_NORMAL_DESC;
-                    fontMeta = FONT_SIZE_NORMAL_META;
+                    fontTitle = FONT_SIZE_NORMAL_TITLE; fontDesc = FONT_SIZE_NORMAL_DESC; fontMeta = FONT_SIZE_NORMAL_META;
                     break;
             }
 
@@ -278,34 +309,22 @@
 
         function adjustImageSize() {
             const size = document.getElementById('image-size').value;
-            let maxWidth;
+            let maxWidth, display;
             switch (size) {
-                case 'hide':
-                    maxWidth = '0';
-                    break;
-                case 'medium':
-                    maxWidth = '50%';
-                    break;
-                case 'big':
-                    maxWidth = '100%';
-                    break;
-                default:
-                    maxWidth = '30%';
-                    break;
+                case 'hide': maxWidth = '0'; display = 'none'; break;
+                case 'medium': maxWidth = '60%'; display = 'block'; break;
+                case 'big': maxWidth = '100%'; display = 'block'; break;
+                default: maxWidth = '30%'; display = 'block'; break;
             }
             document.querySelectorAll('.rss-item img').forEach(img => {
                 img.style.maxWidth = maxWidth;
-                img.style.display = size === 'hide' ? 'none' : 'block';
+                img.style.display = display;
             });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('font-size').value = 'biggest';
-            adjustFontSize(); // Apply biggest font to title, description, and meta immediately
             loadRSS();
         });
-		
-		adjustFontSize();
     </script>
 </body>
 </html>
