@@ -151,6 +151,7 @@
             <select id="category">
                 <option value="news">חדשות</option>
                 <option value="tech">טכנולוגיה</option>
+                <option value="flash">מבזקים</option>
             </select>
             <button id="theme-toggle">מצב בהיר</button>
             <button id="refresh">רענן</button>
@@ -193,6 +194,10 @@
                 'https://www.themarker.com/srv/tm-technation',
                 'https://www.ynet.co.il/Integration/StoryRss544.xml',
                 'https://theverifier.co.il/rss'
+            ],
+            flash: [
+                'https://www.ynet.co.il/Integration/StoryRss1854.xml',
+                'https://rss.walla.co.il/feed/22'
             ]
         };
 
@@ -215,72 +220,82 @@
 
         function loadRSS() {
             const category = document.getElementById('category').value;
-            const urls = feedUrls[category];
+            const urls = feedUrls[category] || [];
             const rssContent = document.getElementById('rss-content');
             const throbber = document.querySelector('.throbber');
             rssContent.innerHTML = '';
             throbber.style.display = 'block';
 
-            Promise.all(urls.map(url => fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
-                .then(response => response.json())
-                .catch(err => ({ items: [] }))))
-                .then(feeds => {
-                    const allItems = feeds.flatMap(feed => feed.items || []);
-                    allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+            Promise.all(urls.map(url =>
+                fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
+                    .then(response => response.json())
+                    .catch(err => ({ items: [] }))
+            ))
+            .then(feeds => {
+                const allItems = feeds.flatMap(feed => feed.items || []);
+                allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-                    throbber.style.display = 'none';
+                throbber.style.display = 'none';
 
-                    allItems.forEach(item => {
-                        const rssItem = document.createElement('div');
-                        rssItem.className = 'rss-item';
+                allItems.forEach(item => {
+                    const rssItem = document.createElement('div');
+                    rssItem.className = 'rss-item';
 
-                        const title = document.createElement('h2');
-                        title.textContent = item.title;
-                        title.addEventListener('click', () => {
-                            const description = rssItem.querySelector('.description');
-                            const backToTopLink = rssItem.querySelector('.back-to-top');
-                            const isVisible = description.style.display === 'block';
+                    const title = document.createElement('h2');
+                    title.textContent = item.title;
+                    title.addEventListener('click', () => {
+                        const description = rssItem.querySelector('.description');
+                        const backToTopLink = rssItem.querySelector('.back-to-top');
+                        const isVisible = description.style.display === 'block';
 
-                            description.style.display = isVisible ? 'none' : 'block';
-                            backToTopLink.style.display = isVisible ? 'none' : 'block';
-                        });
-
-                        const link = document.createElement('a');
-                        link.href = item.link;
-                        link.target = '_blank';
-                        link.textContent = ' (לכתבה)';
-                        title.appendChild(link);
-
-                        const meta = document.createElement('div');
-                        meta.className = 'meta';
-                        const pubDate = new Date(item.pubDate);
-                        const host = item.link ? new URL(item.link).hostname.replace('www.', '') : 'RSS';
-                        meta.textContent = `${pubDate.toLocaleDateString('he-IL')} ${pubDate.getHours()}:${String(pubDate.getMinutes()).padStart(2, '0')} | ${host}`;
-
-                        const description = document.createElement('p');
-                        description.className = 'description';
-                        description.innerHTML = item.description;
-
-                        const backToTopLink = document.createElement('a');
-                        backToTopLink.href = '#';
-                        backToTopLink.className = 'back-to-top';
-                        backToTopLink.textContent = '↑ חזרה למעלה';
-                        backToTopLink.style.display = 'none';
-                        backToTopLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        });
-
-                        rssItem.appendChild(title);
-                        rssItem.appendChild(meta);
-                        rssItem.appendChild(description);
-                        rssItem.appendChild(backToTopLink);
-                        rssContent.appendChild(rssItem);
+                        description.style.display = isVisible ? 'none' : 'block';
+                        backToTopLink.style.display = isVisible ? 'none' : 'block';
                     });
 
-                    adjustFontSize();
-                    adjustImageSize();
+                    const link = document.createElement('a');
+                    link.href = item.link;
+                    link.target = '_blank';
+                    link.textContent = ' (לכתבה)';
+                    title.appendChild(link);
+
+                    const meta = document.createElement('div');
+                    meta.className = 'meta';
+
+                    const pubDate = new Date(item.pubDate);
+                    const hours = String(pubDate.getHours()).padStart(2, '0');
+                    const minutes = String(pubDate.getMinutes()).padStart(2, '0');
+
+                    const host = item.link ? new URL(item.link).hostname.replace('www.', '') : 'RSS';
+                    meta.textContent = `${pubDate.toLocaleDateString('he-IL')} ${hours}:${minutes} | ${host}`;
+
+                    const description = document.createElement('p');
+                    description.className = 'description';
+                    description.innerHTML = item.description;
+
+                    const backToTopLink = document.createElement('a');
+                    backToTopLink.href = '#';
+                    backToTopLink.className = 'back-to-top';
+                    backToTopLink.textContent = '↑ חזרה למעלה';
+                    backToTopLink.style.display = 'none';
+                    backToTopLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+
+                    rssItem.appendChild(title);
+                    rssItem.appendChild(meta);
+                    rssItem.appendChild(description);
+                    rssItem.appendChild(backToTopLink);
+                    rssContent.appendChild(rssItem);
                 });
+
+                adjustFontSize();
+                adjustImageSize();
+            })
+            .catch(() => {
+                throbber.style.display = 'none';
+                rssContent.innerHTML = '<div class="rss-item"><h2>שגיאה בטעינת הפידים</h2></div>';
+            });
         }
 
         document.getElementById('font-size').addEventListener('change', adjustFontSize);
