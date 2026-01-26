@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rectangle Placer - Physics Push</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; /* Prevents scrolling while dragging */
+        }
+        #canvas-container {
+            position: relative;
+            width: 100vw;
+            height: calc(100vh - 80px);
+            overflow: hidden;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .rectangle {
+            position: absolute;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            user-select: none;
+            touch-action: none;
+            cursor: grab;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+        }
+        .rectangle:active {
+            cursor: grabbing;
+            z-index: 50;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            transform: scale(1.02);
+        }
+        #message-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            background: #1e293b;
+            color: white;
+            border-radius: 9999px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Header UI -->
+    <header class="h-20 bg-white border-b flex items-center justify-between px-8 shadow-sm z-50">
+        <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">RectStacker <span class="text-indigo-600">Pro</span></h1>
+            <span id="counter" class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold border border-indigo-100">0 Items</span>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <p class="hidden md:block text-sm text-slate-400">Drag to push others!</p>
+            <div class="flex gap-2">
+                <button id="clear-btn" class="px-4 py-2 text-slate-500 hover:text-red-500 font-medium transition-colors">
+                    Clear
+                </button>
+                <button id="add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform active:scale-90 transition-all text-2xl font-bold">
+                    +
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Game Canvas -->
+    <main id="canvas-container" class="bg-slate-50">
+        <!-- Rectangles will be injected here -->
+    </main>
+
+    <div id="message-toast"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas-container');
+        const addBtn = document.getElementById('add-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const counterEl = document.getElementById('counter');
+        const toast = document.getElementById('message-toast');
+
+        let rectangles = [];
+        const MIN_SIZE = 80;
+        const MAX_SIZE = 160;
+        const MAX_ATTEMPTS = 100;
+
+        // --- Interaction State ---
+        let activeRect = null;
+        let offset = { x: 0, y: 0 };
+
+        function getRandomColor() {
+            const h = Math.floor(Math.random() * 360);
+            return `hsl(${h}, 70%, 55%)`;
+        }
+
+        function updateCounter() {
+            counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'Item' : 'Items'}`;
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        }
+
+        // --- Core Physics & Collision ---
+
+        function getIntersection(r1, r2) {
+            const overlapX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
+            const overlapY = Math.min(r1.y + r1.h, r2.y + r2.h) - Math.max(r1.y, r2.y);
+            return (overlapX > 0 && overlapY > 0) ? { x: overlapX, y: overlapY } : null;
+        }
+
+        function resolvePush(mover, all, movedSet = new Set()) {
+            movedSet.add(mover);
+
+            all.forEach(target => {
+                if (target === mover || movedSet.has(target)) return;
+
+                const intersection = getIntersection(mover, target);
+                if (intersection) {
+                    // Decide which axis to push on based on smallest overlap
+                    if (intersection.x < intersection.y) {
+                        // Push Horizontal
+                        const direction = (mover.x + mover.w / 2) < (target.x + target.w / 2) ? 1 : -1;
+                        target.x += intersection.x * direction;
+                    } else {
+                        // Push Vertical
+                        const direction = (mover.y + mover.h / 2) < (target.y + target.h / 2) ? 1 : -1;
+                        target.y += intersection.y * direction;
+                    }
+
+                    // Constrain target to canvas
+                    const canvasW = canvas.clientWidth;
+                    const canvasH = canvas.clientHeight;
+                    target.x = Math.max(0, Math.min(target.x, canvasW - target.w));
+                    target.y = Math.max(0, Math.min(target.y, canvasH - target.h));
+
+                    // Update DOM element
+                    target.el.style.left = `${target.x}px`;
+                    target.el.style.top = `${target.y}px`;
+
+                    // Chain reaction push
+                    resolvePush(target, all, movedSet);
+                }
+            });
+        }
+
+        function createRectElement(data) {
+            const div = document.createElement('div');
+            div.className = 'rectangle';
+            div.style.width = `${data.w}px`;
+            div.style.height = `${data.h}px`;
+            div.style.left = `${data.x}px`;
+            div.style.top = `${data.y}px`;
+            div.style.backgroundColor = getRandomColor();
+            
+            // Interaction logic
+            div.addEventListener('pointerdown', (e) => {
+                activeRect = data;
+                const rect = div.getBoundingClientRect();
+                const containerRect = canvas.getBoundingClientRect();
+                offset.x = e.clientX - rect.left;
+                offset.y = e.clientY - rect.top;
+                div.setPointerCapture(e.pointerId);
+                e.stopPropagation();
+            });
+
+            div.addEventListener('pointermove', (e) => {
+                if (!activeRect || activeRect !== data) return;
+
+                const containerRect = canvas.getBoundingClientRect();
+                let newX = e.clientX - containerRect.left - offset.x;
+                let newY = e.clientY - containerRect.top - offset.y;
+
+                // Canvas boundaries for the active rect
+                newX = Math.max(0, Math.min(newX, containerRect.width - data.w));
+                newY = Math.max(0, Math.min(newY, containerRect.height - data.h));
+
+                data.x = newX;
+                data.y = newY;
+                div.style.left = `${newX}px`;
+                div.style.top = `${newY}px`;
+
+                // Run the push physics
+                resolvePush(data, rectangles);
+            });
+
+            div.addEventListener('pointerup', (e) => {
+                activeRect = null;
+            });
+
+            canvas.appendChild(div);
+            data.el = div;
+        }
+
+        function addRectangle() {
+            const canvasWidth = canvas.clientWidth;
+            const canvasHeight = canvas.clientHeight;
+
+            let placed = false;
+            let attempts = 0;
+
+            while (!placed && attempts < MAX_ATTEMPTS) {
+                const w = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
+                const h = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
+                const x = Math.floor(Math.random() * (canvasWidth - w));
+                const y = Math.floor(Math.random() * (canvasHeight - h));
+
+                const newRect = { x, y, w, h };
+
+                // Reuse intersection check for initial placement
+                let collision = false;
+                for (let r of rectangles) {
+                    if (getIntersection(newRect, r)) {
+                        collision = true;
+                        break;
+                    }
+                }
+
+                if (!collision) {
+                    createRectElement(newRect);
+                    rectangles.push(newRect);
+                    placed = true;
+                    updateCounter();
+                }
+                attempts++;
+            }
+
+            if (!placed) showToast("No room left! Try moving some blocks.");
+        }
+
+        function clearAll() {
+            canvas.innerHTML = '';
+            rectangles = [];
+            updateCounter();
+        }
+
+        addBtn.addEventListener('click', addRectangle);
+        clearBtn.addEventListener('click', clearAll);
+
+        // Initial creation
+        updateCounter();
+    </script>
+</body>
+</html>
