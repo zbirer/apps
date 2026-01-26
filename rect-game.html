@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolidStack - Momentum Physics</title>
+    <title>SolidStack - מלבנים מוצקים</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -27,7 +27,7 @@
         .rectangle {
             position: absolute;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -37,9 +37,8 @@
             touch-action: none;
             cursor: grab;
             border: 2px solid rgba(255,255,255,0.25);
-            /* Visual only transitions */
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, border-color 0.2s ease;
-            will-change: left, top, transform;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+            will-change: left, top;
         }
         .rectangle.dragging {
             cursor: grabbing;
@@ -54,7 +53,7 @@
             left: 50%;
             transform: translateX(-50%);
             padding: 0.85rem 1.5rem;
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(8px);
             color: white;
             border-radius: 16px;
@@ -62,38 +61,39 @@
             transition: opacity 0.3s ease;
             pointer-events: none;
             z-index: 100;
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             text-align: center;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+            min-width: 220px;
         }
-        /* Mobile specific adjustments for Poco X3 sized screens */
         @media (max-width: 640px) {
-            header { padding: 0 1.5rem; height: 70px; }
+            header { padding: 0 1.25rem; height: 70px; }
             #canvas-container { height: calc(100vh - 70px); }
-            .text-xl { font-size: 1.15rem; }
         }
     </style>
 </head>
 <body class="flex flex-col h-screen">
 
+    <!-- ממשק כותרת -->
     <header class="bg-white border-b flex items-center justify-between shadow-sm z-50">
-        <div class="flex flex-col">
+        <div class="flex flex-col items-start px-4">
             <h1 class="text-xl font-black text-slate-800 uppercase tracking-tighter">Solid<span class="text-indigo-600">Stack</span></h1>
-            <span id="counter" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">0 Objects</span>
+            <span id="counter" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">0 אובייקטים</span>
         </div>
         
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 px-4">
             <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest p-2">
-                Reset
+                איפוס
             </button>
-            <button id="add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center shadow-lg transform active:scale-90 transition-all text-2xl font-bold">
+            <button id="add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform active:scale-90 transition-all text-3xl font-bold">
                 +
             </button>
         </div>
     </header>
 
+    <!-- אזור המשחק -->
     <main id="canvas-container">
-        <!-- Interactive Elements -->
+        <!-- המלבנים ייווצרו כאן -->
     </main>
 
     <div id="message-toast"></div>
@@ -108,46 +108,58 @@
         let rectangles = [];
         const MIN_SIZE = 70;
         const MAX_SIZE = 140;
-        const PLACEMENT_ATTEMPTS = 100;
-        const FRICTION = 0.94; // Velocity multiplier per frame (0.94 = smooth slow down)
-        const MIN_VELOCITY = 0.2; // Speed at which inertia stops
+        const PLACEMENT_ATTEMPTS = 200; // הגדלת כמות הניסיונות למציאת מקום פנוי
+        const FRICTION = 0.90; 
+        const MIN_VELOCITY = 0.3;
         
         let activeRect = null;
         let offset = { x: 0, y: 0 };
         
-        // Track movement for momentum
         let lastMoveTime = 0;
         let lastX = 0;
         let lastY = 0;
 
         function updateCounter() {
-            counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'Object' : 'Objects'}`;
+            counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'אובייקט' : 'אובייקטים'}`;
         }
 
         function showToast(msg) {
             toast.textContent = msg;
             toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
         }
 
+        // בדיקת חפיפה - הוספתי מרווח ביטחון קטן של 0.5 פיקסל
         function hasOverlap(r1, r2) {
             return (
-                r1.x < r2.x + r2.w &&
-                r1.x + r1.w > r2.x &&
-                r1.y < r2.y + r2.h &&
-                r1.y + r1.h > r2.y
+                r1.x < r2.x + r2.w - 0.5 &&
+                r1.x + r1.w > r2.x + 0.5 &&
+                r1.y < r2.y + r2.h - 0.5 &&
+                r1.y + r1.h > r2.y + 0.5
             );
         }
 
+        // בדיקה מחמירה של גבולות וחפיפות בכל המסך
         function isStateInvalid(all) {
             const canvasW = canvas.clientWidth;
             const canvasH = canvas.clientHeight;
 
             for (let i = 0; i < all.length; i++) {
                 const r = all[i];
-                if (r.x < 0 || r.y < 0 || (r.x + r.w) > canvasW || (r.y + r.h) > canvasH) return true;
+                
+                // בדיקת גבולות מחמירה - שימוש ב-Math.ceil כדי למנוע זליגה של שברי פיקסלים
+                if (r.x < 0 || 
+                    r.y < 0 || 
+                    Math.ceil(r.x + r.w) > canvasW || 
+                    Math.ceil(r.y + r.h) > canvasH) {
+                    return true;
+                }
+
+                // בדיקת חפיפה מול כל שאר המלבנים
                 for (let j = i + 1; j < all.length; j++) {
-                    if (hasOverlap(r, all[j])) return true;
+                    if (hasOverlap(r, all[j])) {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -156,7 +168,7 @@
         function getIntersection(r1, r2) {
             const overlapX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
             const overlapY = Math.min(r1.y + r1.h, r2.y + r2.h) - Math.max(r1.y, r2.y);
-            return (overlapX > 0 && overlapY > 0) ? { x: overlapX, y: overlapY } : null;
+            return (overlapX > 0.5 && overlapY > 0.5) ? { x: overlapX, y: overlapY } : null;
         }
 
         function resolvePush(mover, all, movedSet = new Set()) {
@@ -186,40 +198,32 @@
             });
         }
 
-        // The momentum animation loop
         function applyInertia() {
             let stillMoving = false;
 
             rectangles.forEach(r => {
-                // If user is dragging or velocity is negligible, skip
-                if (r === activeRect || (Math.abs(r.vx) < MIN_VELOCITY && Math.abs(r.vy) < MIN_VELOCITY)) {
-                    r.vx = 0;
-                    r.vy = 0;
+                if (r === activeRect) return;
+                if (Math.abs(r.vx) < MIN_VELOCITY && Math.abs(r.vy) < MIN_VELOCITY) {
+                    r.vx = 0; r.vy = 0;
                     return;
                 }
 
                 stillMoving = true;
                 const snapshot = rectangles.map(orig => ({ x: orig.x, y: orig.y }));
 
-                // Apply velocity
                 r.x += r.vx;
                 r.y += r.vy;
 
-                // Push neighbors
                 resolvePush(r, rectangles);
 
-                // Collision/Bounds validation
                 if (isStateInvalid(rectangles)) {
-                    // Revert positions
                     rectangles.forEach((orig, idx) => {
                         orig.x = snapshot[idx].x;
                         orig.y = snapshot[idx].y;
                     });
-                    // Kill velocity on hit
                     r.vx = 0;
                     r.vy = 0;
                 } else {
-                    // Apply friction
                     r.vx *= FRICTION;
                     r.vy *= FRICTION;
                 }
@@ -234,9 +238,8 @@
             div.className = 'rectangle';
             div.style.width = `${data.w}px`;
             div.style.height = `${data.h}px`;
-            div.style.backgroundColor = `hsl(${Math.floor(Math.random() * 360)}, 70%, 55%)`;
+            div.style.backgroundColor = `hsl(${Math.floor(Math.random() * 360)}, 65%, 50%)`;
             
-            // Initial velocity state
             data.vx = 0;
             data.vy = 0;
 
@@ -252,7 +255,6 @@
                 lastY = data.y;
                 lastMoveTime = Date.now();
                 
-                // Clear any existing velocity
                 data.vx = 0;
                 data.vy = 0;
 
@@ -267,21 +269,17 @@
                 const containerRect = canvas.getBoundingClientRect();
                 const now = Date.now();
                 const dt = now - lastMoveTime;
-
+                
                 const snapshot = rectangles.map(r => ({ x: r.x, y: r.y }));
 
                 let nextX = e.clientX - containerRect.left - offset.x;
                 let nextY = e.clientY - containerRect.top - offset.y;
 
-                // Calculate current instantaneous velocity
                 if (dt > 0) {
-                    data.vx = (nextX - lastX);
-                    data.vy = (nextY - lastY);
-                    
-                    // Cap velocity to prevent "tunneling" (jumping through walls)
-                    const speedLimit = 30;
-                    data.vx = Math.max(-speedLimit, Math.min(data.vx, speedLimit));
-                    data.vy = Math.max(-speedLimit, Math.min(data.vy, speedLimit));
+                    const newVx = (nextX - lastX);
+                    const newVy = (nextY - lastY);
+                    data.vx = data.vx * 0.3 + newVx * 0.7;
+                    data.vy = data.vy * 0.3 + newVy * 0.7;
                 }
 
                 data.x = nextX;
@@ -309,7 +307,6 @@
                 if (activeRect) {
                     activeRect.el.classList.remove('dragging');
                     activeRect = null;
-                    // Kick off the physics loop
                     requestAnimationFrame(applyInertia);
                 }
             });
@@ -323,9 +320,13 @@
             const canvasW = canvas.clientWidth;
             const canvasH = canvas.clientHeight;
             
+            if (canvasW === 0 || canvasH === 0) return;
+
             for (let i = 0; i < PLACEMENT_ATTEMPTS; i++) {
                 const w = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
                 const h = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
+                
+                // הגבלת היצירה בדיוק בתוך גבולות המסך
                 const x = Math.floor(Math.random() * (canvasW - w));
                 const y = Math.floor(Math.random() * (canvasH - h));
 
@@ -343,10 +344,11 @@
                     createRectElement(candidate);
                     rectangles.push(candidate);
                     updateCounter();
-                    return;
+                    return; 
                 }
             }
-            showToast("No space found for a new rectangle!");
+            
+            showToast("אין מקום פנוי למלבן חדש!");
         }
 
         addBtn.addEventListener('click', addRectangle);
@@ -356,11 +358,20 @@
             updateCounter();
         });
 
-        // Initial setup
         window.onload = () => {
             updateCounter();
-            addRectangle();
+            setTimeout(addRectangle, 100); // השהייה קלה לוודא שהקנבס נטען במלואו
         };
+
+        window.addEventListener('resize', () => {
+            rectangles.forEach(r => {
+                const canvasW = canvas.clientWidth;
+                const canvasH = canvas.clientHeight;
+                r.x = Math.max(0, Math.min(r.x, canvasW - r.w));
+                r.y = Math.max(0, Math.min(r.y, canvasH - r.h));
+            });
+            syncDOM();
+        });
     </script>
 </body>
 </html>
