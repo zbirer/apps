@@ -37,8 +37,8 @@
             touch-action: none;
             cursor: grab;
             border: 2px solid rgba(255,255,255,0.25);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-            will-change: left, top;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, width 0.2s ease, height 0.2s ease;
+            will-change: left, top, width, height;
         }
         .rectangle.dragging {
             cursor: grabbing;
@@ -67,7 +67,7 @@
             min-width: 220px;
         }
         /* Modal Styles */
-        #delete-modal {
+        #action-modal {
             position: fixed;
             inset: 0;
             background: rgba(15, 23, 42, 0.4);
@@ -79,11 +79,11 @@
         }
         .modal-content {
             background: white;
-            padding: 2rem;
-            border-radius: 20px;
+            padding: 1.5rem;
+            border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             max-width: 90vw;
-            width: 320px;
+            width: 280px;
             text-align: center;
         }
         @media (max-width: 640px) {
@@ -119,14 +119,23 @@
     <!-- הודעות טוסט -->
     <div id="message-toast"></div>
 
-    <!-- מודל מחיקה -->
-    <div id="delete-modal">
+    <!-- מודל אפשרויות -->
+    <div id="action-modal">
         <div class="modal-content">
-            <h3 class="text-lg font-bold text-slate-800 mb-2">למחוק את המלבן?</h3>
-            <p class="text-slate-500 text-sm mb-6">לא ניתן לבטל פעולה זו.</p>
-            <div class="flex gap-3 justify-center">
-                <button id="cancel-delete" class="px-5 py-2 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors">ביטול</button>
-                <button id="confirm-delete" class="px-5 py-2 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 shadow-md transition-colors">מחק</button>
+            <div class="grid grid-cols-1 gap-2">
+                <button id="enlarge-btn" class="w-full py-3 rounded-xl font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors">
+                    הגדל
+                </button>
+                <button id="shrink-btn" class="w-full py-3 rounded-xl font-bold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors">
+                    הקטן
+                </button>
+                <button id="confirm-delete" class="w-full py-3 rounded-xl font-bold bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+                    מחק
+                </button>
+                <div class="h-px bg-slate-100 my-1"></div>
+                <button id="close-modal" class="w-full py-3 rounded-xl font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                    ביטול
+                </button>
             </div>
         </div>
     </div>
@@ -137,9 +146,11 @@
         const clearBtn = document.getElementById('clear-btn');
         const counterEl = document.getElementById('counter');
         const toast = document.getElementById('message-toast');
-        const deleteModal = document.getElementById('delete-modal');
+        const actionModal = document.getElementById('action-modal');
         const confirmDeleteBtn = document.getElementById('confirm-delete');
-        const cancelDeleteBtn = document.getElementById('cancel-delete');
+        const enlargeBtn = document.getElementById('enlarge-btn');
+        const shrinkBtn = document.getElementById('shrink-btn');
+        const closeModalBtn = document.getElementById('close-modal');
 
         let rectangles = [];
         const MIN_SIZE = 70;
@@ -147,17 +158,17 @@
         const PLACEMENT_ATTEMPTS = 200;
         const FRICTION = 0.90; 
         const MIN_VELOCITY = 0.3;
-        const LONG_PRESS_DURATION = 600; // 0.6 seconds
+        const LONG_PRESS_DURATION = 600; 
         
         let activeRect = null;
-        let rectToDelete = null;
+        let selectedRect = null;
         let offset = { x: 0, y: 0 };
         let longPressTimer = null;
         
         let lastMoveTime = 0;
         let lastX = 0;
         let lastY = 0;
-        let dragDistance = 0; // לביטול לחיצה ארוכה אם הייתה גרירה משמעותית
+        let dragDistance = 0;
 
         function updateCounter() {
             counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'אובייקט' : 'אובייקטים'}`;
@@ -225,6 +236,8 @@
             rectangles.forEach(r => {
                 r.el.style.left = `${r.x}px`;
                 r.el.style.top = `${r.y}px`;
+                r.el.style.width = `${r.w}px`;
+                r.el.style.height = `${r.h}px`;
             });
         }
 
@@ -281,12 +294,11 @@
                 data.vx = 0;
                 data.vy = 0;
 
-                // התחלת טיימר לחיצה ארוכה
                 longPressTimer = setTimeout(() => {
-                    if (dragDistance < 10) { // רק אם לא זז הרבה
-                        rectToDelete = data;
-                        deleteModal.style.display = 'flex';
-                        div.releasePointerCapture(e.pointerId); // שחרור המלבן
+                    if (dragDistance < 10) { 
+                        selectedRect = data;
+                        actionModal.style.display = 'flex';
+                        div.releasePointerCapture(e.pointerId);
                         activeRect = null;
                         div.classList.remove('dragging');
                     }
@@ -309,7 +321,6 @@
                 let nextX = e.clientX - containerRect.left - offset.x;
                 let nextY = e.clientY - containerRect.top - offset.y;
 
-                // חישוב מרחק גרירה לביטול לחיצה ארוכה
                 dragDistance += Math.sqrt(Math.pow(nextX - lastX, 2) + Math.pow(nextY - lastY, 2));
                 if (dragDistance > 10) {
                     clearTimeout(longPressTimer);
@@ -357,22 +368,49 @@
             syncDOM();
         }
 
-        // לוגיקת המודל
-        confirmDeleteBtn.addEventListener('click', () => {
-            if (rectToDelete) {
-                // הסרה מהמערך
-                rectangles = rectangles.filter(r => r !== rectToDelete);
-                // הסרה מה-DOM
-                rectToDelete.el.remove();
-                rectToDelete = null;
-                updateCounter();
+        enlargeBtn.addEventListener('click', () => {
+            if (!selectedRect) return;
+            const factor = 1.05;
+            const oldW = selectedRect.w;
+            const oldH = selectedRect.h;
+            
+            selectedRect.w *= factor;
+            selectedRect.h *= factor;
+
+            if (isStateInvalid(rectangles)) {
+                selectedRect.w = oldW;
+                selectedRect.h = oldH;
+                showToast("אין מספיק מקום פנוי להגדלה!");
+            } else {
+                syncDOM();
             }
-            deleteModal.style.display = 'none';
+            actionModal.style.display = 'none';
+            selectedRect = null;
         });
 
-        cancelDeleteBtn.addEventListener('click', () => {
-            rectToDelete = null;
-            deleteModal.style.display = 'none';
+        shrinkBtn.addEventListener('click', () => {
+            if (!selectedRect) return;
+            const factor = 0.95;
+            selectedRect.w *= factor;
+            selectedRect.h *= factor;
+            syncDOM();
+            actionModal.style.display = 'none';
+            selectedRect = null;
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (selectedRect) {
+                rectangles = rectangles.filter(r => r !== selectedRect);
+                selectedRect.el.remove();
+                selectedRect = null;
+                updateCounter();
+            }
+            actionModal.style.display = 'none';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            selectedRect = null;
+            actionModal.style.display = 'none';
         });
 
         function addRectangle() {
