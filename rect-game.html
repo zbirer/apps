@@ -3,85 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rectangle Placer - Physics Push</title>
+    <title>SolidStack - Momentum Physics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Prevents scrolling while dragging */
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
         }
         #canvas-container {
             position: relative;
             width: 100vw;
             height: calc(100vh - 80px);
             overflow: hidden;
-            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
-            background-size: 30px 30px;
+            background-image: 
+                linear-gradient(to right, #e2e8f0 1px, transparent 1px),
+                linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+            background-size: 40px 40px;
         }
         .rectangle {
             position: absolute;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
+            font-weight: 800;
             user-select: none;
             touch-action: none;
             cursor: grab;
-            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            border: 2px solid rgba(255,255,255,0.25);
+            /* Visual only transitions */
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, border-color 0.2s ease;
+            will-change: left, top, transform;
         }
-        .rectangle:active {
+        .rectangle.dragging {
             cursor: grabbing;
             z-index: 50;
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-            transform: scale(1.02);
+            box-shadow: 0 25px 30px -5px rgb(0 0 0 / 0.2);
+            transform: scale(1.05);
+            border-color: rgba(255,255,255,0.9);
         }
         #message-toast {
             position: fixed;
-            bottom: 2rem;
+            bottom: 3rem;
             left: 50%;
             transform: translateX(-50%);
-            padding: 1rem 2rem;
-            background: #1e293b;
+            padding: 0.85rem 1.5rem;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
             color: white;
-            border-radius: 9999px;
+            border-radius: 16px;
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
             z-index: 100;
+            font-size: 0.875rem;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        /* Mobile specific adjustments for Poco X3 sized screens */
+        @media (max-width: 640px) {
+            header { padding: 0 1.5rem; height: 70px; }
+            #canvas-container { height: calc(100vh - 70px); }
+            .text-xl { font-size: 1.15rem; }
         }
     </style>
 </head>
 <body class="flex flex-col h-screen">
 
-    <!-- Header UI -->
-    <header class="h-20 bg-white border-b flex items-center justify-between px-8 shadow-sm z-50">
-        <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">RectStacker <span class="text-indigo-600">Pro</span></h1>
-            <span id="counter" class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold border border-indigo-100">0 Items</span>
+    <header class="bg-white border-b flex items-center justify-between shadow-sm z-50">
+        <div class="flex flex-col">
+            <h1 class="text-xl font-black text-slate-800 uppercase tracking-tighter">Solid<span class="text-indigo-600">Stack</span></h1>
+            <span id="counter" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">0 Objects</span>
         </div>
         
-        <div class="flex items-center gap-6">
-            <p class="hidden md:block text-sm text-slate-400">Drag to push others!</p>
-            <div class="flex gap-2">
-                <button id="clear-btn" class="px-4 py-2 text-slate-500 hover:text-red-500 font-medium transition-colors">
-                    Clear
-                </button>
-                <button id="add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform active:scale-90 transition-all text-2xl font-bold">
-                    +
-                </button>
-            </div>
+        <div class="flex items-center gap-3">
+            <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest p-2">
+                Reset
+            </button>
+            <button id="add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center shadow-lg transform active:scale-90 transition-all text-2xl font-bold">
+                +
+            </button>
         </div>
     </header>
 
-    <!-- Game Canvas -->
-    <main id="canvas-container" class="bg-slate-50">
-        <!-- Rectangles will be injected here -->
+    <main id="canvas-container">
+        <!-- Interactive Elements -->
     </main>
 
     <div id="message-toast"></div>
@@ -94,30 +106,52 @@
         const toast = document.getElementById('message-toast');
 
         let rectangles = [];
-        const MIN_SIZE = 80;
-        const MAX_SIZE = 160;
-        const MAX_ATTEMPTS = 100;
-
-        // --- Interaction State ---
+        const MIN_SIZE = 70;
+        const MAX_SIZE = 140;
+        const PLACEMENT_ATTEMPTS = 100;
+        const FRICTION = 0.94; // Velocity multiplier per frame (0.94 = smooth slow down)
+        const MIN_VELOCITY = 0.2; // Speed at which inertia stops
+        
         let activeRect = null;
         let offset = { x: 0, y: 0 };
-
-        function getRandomColor() {
-            const h = Math.floor(Math.random() * 360);
-            return `hsl(${h}, 70%, 55%)`;
-        }
+        
+        // Track movement for momentum
+        let lastMoveTime = 0;
+        let lastX = 0;
+        let lastY = 0;
 
         function updateCounter() {
-            counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'Item' : 'Items'}`;
+            counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'Object' : 'Objects'}`;
         }
 
         function showToast(msg) {
             toast.textContent = msg;
             toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+            setTimeout(() => { toast.style.opacity = '0'; }, 2500);
         }
 
-        // --- Core Physics & Collision ---
+        function hasOverlap(r1, r2) {
+            return (
+                r1.x < r2.x + r2.w &&
+                r1.x + r1.w > r2.x &&
+                r1.y < r2.y + r2.h &&
+                r1.y + r1.h > r2.y
+            );
+        }
+
+        function isStateInvalid(all) {
+            const canvasW = canvas.clientWidth;
+            const canvasH = canvas.clientHeight;
+
+            for (let i = 0; i < all.length; i++) {
+                const r = all[i];
+                if (r.x < 0 || r.y < 0 || (r.x + r.w) > canvasW || (r.y + r.h) > canvasH) return true;
+                for (let j = i + 1; j < all.length; j++) {
+                    if (hasOverlap(r, all[j])) return true;
+                }
+            }
+            return false;
+        }
 
         function getIntersection(r1, r2) {
             const overlapX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
@@ -131,33 +165,68 @@
             all.forEach(target => {
                 if (target === mover || movedSet.has(target)) return;
 
-                const intersection = getIntersection(mover, target);
-                if (intersection) {
-                    // Decide which axis to push on based on smallest overlap
-                    if (intersection.x < intersection.y) {
-                        // Push Horizontal
-                        const direction = (mover.x + mover.w / 2) < (target.x + target.w / 2) ? 1 : -1;
-                        target.x += intersection.x * direction;
+                const inter = getIntersection(mover, target);
+                if (inter) {
+                    if (inter.x < inter.y) {
+                        const dir = (mover.x + mover.w / 2) < (target.x + target.w / 2) ? 1 : -1;
+                        target.x += inter.x * dir;
                     } else {
-                        // Push Vertical
-                        const direction = (mover.y + mover.h / 2) < (target.y + target.h / 2) ? 1 : -1;
-                        target.y += intersection.y * direction;
+                        const dir = (mover.y + mover.h / 2) < (target.y + target.h / 2) ? 1 : -1;
+                        target.y += inter.y * dir;
                     }
-
-                    // Constrain target to canvas
-                    const canvasW = canvas.clientWidth;
-                    const canvasH = canvas.clientHeight;
-                    target.x = Math.max(0, Math.min(target.x, canvasW - target.w));
-                    target.y = Math.max(0, Math.min(target.y, canvasH - target.h));
-
-                    // Update DOM element
-                    target.el.style.left = `${target.x}px`;
-                    target.el.style.top = `${target.y}px`;
-
-                    // Chain reaction push
                     resolvePush(target, all, movedSet);
                 }
             });
+        }
+
+        function syncDOM() {
+            rectangles.forEach(r => {
+                r.el.style.left = `${r.x}px`;
+                r.el.style.top = `${r.y}px`;
+            });
+        }
+
+        // The momentum animation loop
+        function applyInertia() {
+            let stillMoving = false;
+
+            rectangles.forEach(r => {
+                // If user is dragging or velocity is negligible, skip
+                if (r === activeRect || (Math.abs(r.vx) < MIN_VELOCITY && Math.abs(r.vy) < MIN_VELOCITY)) {
+                    r.vx = 0;
+                    r.vy = 0;
+                    return;
+                }
+
+                stillMoving = true;
+                const snapshot = rectangles.map(orig => ({ x: orig.x, y: orig.y }));
+
+                // Apply velocity
+                r.x += r.vx;
+                r.y += r.vy;
+
+                // Push neighbors
+                resolvePush(r, rectangles);
+
+                // Collision/Bounds validation
+                if (isStateInvalid(rectangles)) {
+                    // Revert positions
+                    rectangles.forEach((orig, idx) => {
+                        orig.x = snapshot[idx].x;
+                        orig.y = snapshot[idx].y;
+                    });
+                    // Kill velocity on hit
+                    r.vx = 0;
+                    r.vy = 0;
+                } else {
+                    // Apply friction
+                    r.vx *= FRICTION;
+                    r.vy *= FRICTION;
+                }
+            });
+
+            syncDOM();
+            if (stillMoving) requestAnimationFrame(applyInertia);
         }
 
         function createRectElement(data) {
@@ -165,18 +234,30 @@
             div.className = 'rectangle';
             div.style.width = `${data.w}px`;
             div.style.height = `${data.h}px`;
-            div.style.left = `${data.x}px`;
-            div.style.top = `${data.y}px`;
-            div.style.backgroundColor = getRandomColor();
+            div.style.backgroundColor = `hsl(${Math.floor(Math.random() * 360)}, 70%, 55%)`;
             
-            // Interaction logic
+            // Initial velocity state
+            data.vx = 0;
+            data.vy = 0;
+
             div.addEventListener('pointerdown', (e) => {
                 activeRect = data;
                 const rect = div.getBoundingClientRect();
                 const containerRect = canvas.getBoundingClientRect();
+                
                 offset.x = e.clientX - rect.left;
                 offset.y = e.clientY - rect.top;
+                
+                lastX = data.x;
+                lastY = data.y;
+                lastMoveTime = Date.now();
+                
+                // Clear any existing velocity
+                data.vx = 0;
+                data.vy = 0;
+
                 div.setPointerCapture(e.pointerId);
+                div.classList.add('dragging');
                 e.stopPropagation();
             });
 
@@ -184,77 +265,102 @@
                 if (!activeRect || activeRect !== data) return;
 
                 const containerRect = canvas.getBoundingClientRect();
-                let newX = e.clientX - containerRect.left - offset.x;
-                let newY = e.clientY - containerRect.top - offset.y;
+                const now = Date.now();
+                const dt = now - lastMoveTime;
 
-                // Canvas boundaries for the active rect
-                newX = Math.max(0, Math.min(newX, containerRect.width - data.w));
-                newY = Math.max(0, Math.min(newY, containerRect.height - data.h));
+                const snapshot = rectangles.map(r => ({ x: r.x, y: r.y }));
 
-                data.x = newX;
-                data.y = newY;
-                div.style.left = `${newX}px`;
-                div.style.top = `${newY}px`;
+                let nextX = e.clientX - containerRect.left - offset.x;
+                let nextY = e.clientY - containerRect.top - offset.y;
 
-                // Run the push physics
+                // Calculate current instantaneous velocity
+                if (dt > 0) {
+                    data.vx = (nextX - lastX);
+                    data.vy = (nextY - lastY);
+                    
+                    // Cap velocity to prevent "tunneling" (jumping through walls)
+                    const speedLimit = 30;
+                    data.vx = Math.max(-speedLimit, Math.min(data.vx, speedLimit));
+                    data.vy = Math.max(-speedLimit, Math.min(data.vy, speedLimit));
+                }
+
+                data.x = nextX;
+                data.y = nextY;
+
                 resolvePush(data, rectangles);
+
+                if (isStateInvalid(rectangles)) {
+                    rectangles.forEach((r, idx) => {
+                        r.x = snapshot[idx].x;
+                        r.y = snapshot[idx].y;
+                    });
+                    data.vx = 0;
+                    data.vy = 0;
+                }
+
+                lastX = data.x;
+                lastY = data.y;
+                lastMoveTime = now;
+
+                syncDOM();
             });
 
-            div.addEventListener('pointerup', (e) => {
-                activeRect = null;
+            div.addEventListener('pointerup', () => {
+                if (activeRect) {
+                    activeRect.el.classList.remove('dragging');
+                    activeRect = null;
+                    // Kick off the physics loop
+                    requestAnimationFrame(applyInertia);
+                }
             });
 
-            canvas.appendChild(div);
             data.el = div;
+            canvas.appendChild(div);
+            syncDOM();
         }
 
         function addRectangle() {
-            const canvasWidth = canvas.clientWidth;
-            const canvasHeight = canvas.clientHeight;
-
-            let placed = false;
-            let attempts = 0;
-
-            while (!placed && attempts < MAX_ATTEMPTS) {
+            const canvasW = canvas.clientWidth;
+            const canvasH = canvas.clientHeight;
+            
+            for (let i = 0; i < PLACEMENT_ATTEMPTS; i++) {
                 const w = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
                 const h = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
-                const x = Math.floor(Math.random() * (canvasWidth - w));
-                const y = Math.floor(Math.random() * (canvasHeight - h));
+                const x = Math.floor(Math.random() * (canvasW - w));
+                const y = Math.floor(Math.random() * (canvasH - h));
 
-                const newRect = { x, y, w, h };
-
-                // Reuse intersection check for initial placement
+                const candidate = { x, y, w, h };
+                
                 let collision = false;
                 for (let r of rectangles) {
-                    if (getIntersection(newRect, r)) {
+                    if (hasOverlap(candidate, r)) {
                         collision = true;
                         break;
                     }
                 }
 
                 if (!collision) {
-                    createRectElement(newRect);
-                    rectangles.push(newRect);
-                    placed = true;
+                    createRectElement(candidate);
+                    rectangles.push(candidate);
                     updateCounter();
+                    return;
                 }
-                attempts++;
             }
-
-            if (!placed) showToast("No room left! Try moving some blocks.");
-        }
-
-        function clearAll() {
-            canvas.innerHTML = '';
-            rectangles = [];
-            updateCounter();
+            showToast("No space found for a new rectangle!");
         }
 
         addBtn.addEventListener('click', addRectangle);
-        clearBtn.addEventListener('click', clearAll);
+        clearBtn.addEventListener('click', () => {
+            canvas.innerHTML = '';
+            rectangles = [];
+            updateCounter();
+        });
 
-        // Initial creation
-        updateCounter();
+        // Initial setup
+        window.onload = () => {
+            updateCounter();
+            addRectangle();
+        };
     </script>
 </body>
 </html>
