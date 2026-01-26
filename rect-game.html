@@ -22,7 +22,6 @@
         }
         .shape {
             position: absolute;
-            /* Force origin to top-left regardless of RTL/LTR to sync with physics engine */
             left: 0;
             top: 0;
             cursor: grab;
@@ -34,9 +33,6 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             transform-origin: center;
-        }
-        .shape:active {
-            cursor: grabbing;
         }
         .shape-triangle {
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
@@ -64,8 +60,8 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(2px);
             z-index: 200;
             align-items: center;
             justify-content: center;
@@ -77,11 +73,6 @@
     <!-- Header UI -->
     <header class="fixed top-0 left-0 right-0 z-50 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 pointer-events-none">
         <div class="flex items-center gap-4 pointer-events-auto bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white">
-            <h1 class="text-xl font-extrabold text-blue-600 ml-2">SolidStack</h1>
-            <div class="flex flex-col border-r pr-4">
-                <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">אובייקטים</span>
-                <span id="obj-count" class="text-lg font-mono font-bold leading-tight">0</span>
-            </div>
             <button id="add-btn" class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
@@ -102,28 +93,25 @@
 
     <div id="game-container"></div>
 
-    <!-- Toast Message -->
     <div id="toast" class="toast">אין מקום פנוי כרגע!</div>
 
-    <!-- Context Modal -->
+    <!-- Context Modal - Icons Only -->
     <div id="modal-overlay">
-        <div class="bg-white rounded-3xl p-6 w-80 shadow-2xl scale-110 border border-gray-100">
-            <h3 class="text-xl font-bold mb-4 text-center text-gray-800">פעולות צורה</h3>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <button onclick="modifyActiveShape('scale', 1.05)" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100">
-                    <span class="text-2xl mb-1">➕</span>
-                    <span class="text-sm font-bold">הגדל</span>
-                </button>
-                <button onclick="modifyActiveShape('scale', 0.95)" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100">
-                    <span class="text-2xl mb-1">➖</span>
-                    <span class="text-sm font-bold">הקטן</span>
-                </button>
-                <button onclick="modifyActiveShape('delete')" class="col-span-2 flex items-center justify-center gap-2 p-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl transition-all border border-red-100">
-                    <span class="text-xl">🗑️</span>
-                    <span class="font-bold">מחק צורה</span>
-                </button>
-            </div>
-            <button onclick="closeModal()" class="w-full py-3 text-gray-500 font-bold hover:text-gray-700 transition-colors">ביטול</button>
+        <div class="bg-white rounded-3xl p-3 shadow-2xl border border-gray-100 flex items-center gap-2">
+            <button onclick="modifyActiveShape('scale', 1.1)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100 text-2xl">
+                ➕
+            </button>
+            <button onclick="modifyActiveShape('scale', 0.9)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100 text-2xl">
+                ➖
+            </button>
+            <div class="w-px h-8 bg-gray-200 mx-1"></div>
+            <button onclick="modifyActiveShape('delete')" class="w-14 h-14 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl transition-all border border-red-100 text-2xl">
+                🗑️
+            </button>
+            <div class="w-px h-8 bg-gray-200 mx-1"></div>
+            <button onclick="closeModal()" class="w-14 h-14 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors text-2xl">
+                ✕
+            </button>
         </div>
     </div>
 
@@ -139,7 +127,6 @@
         const SLOP = 0.5;               
 
         const container = document.getElementById('game-container');
-        const objCountEl = document.getElementById('obj-count');
         const gravitySlider = document.getElementById('gravity-slider');
         const gravityVal = document.getElementById('gravity-val');
         const addBtn = document.getElementById('add-btn');
@@ -153,22 +140,7 @@
         let dragOffset = { x: 0, y: 0 };
         let lastMousePos = { x: 0, y: 0 };
         let longPressTimer = null;
-        let frameCount = 0;
 
-        /** DEBUG LOGGER **/
-        function debugLog(tag, message, level = 'log') {
-            const styles = {
-                'PHYSICS': 'color: #3b82f6; font-weight: bold;',
-                'COLLISION': 'color: #ef4444; font-weight: bold;',
-                'INTERACTION': 'color: #10b981; font-weight: bold;',
-                'LIFECYCLE': 'color: #8b5cf6; font-weight: bold;'
-            };
-            if (level === 'warn' || frameCount % 600 === 0) {
-                console[level](`%c[${tag}]`, styles[tag] || '', message);
-            }
-        }
-
-        /** UTILS **/
         const randomColor = () => {
             const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
             return colors[Math.floor(Math.random() * colors.length)];
@@ -179,7 +151,6 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         };
 
-        /** SHAPE FACTORY **/
         function createShape() {
             const types = ['rect', 'circle', 'triangle'];
             const type = types[Math.floor(Math.random() * types.length)];
@@ -232,10 +203,8 @@
             el.addEventListener('touchstart', (e) => startDrag(e, shape), {passive: false});
 
             shapes.push(shape);
-            updateObjCount();
         }
 
-        /** INTERACTION **/
         function startDrag(e, shape) {
             e.preventDefault();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -243,8 +212,6 @@
 
             draggingShape = shape;
             shape.isDragging = true;
-            
-            // Calculate offset based on current x, y which are absolute from top-left
             dragOffset.x = clientX - shape.x;
             dragOffset.y = clientY - shape.y;
             lastMousePos = { x: clientX, y: clientY };
@@ -266,11 +233,9 @@
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-            // Update velocity based on mouse delta
             draggingShape.vx = (clientX - lastMousePos.x);
             draggingShape.vy = (clientY - lastMousePos.y);
 
-            // Directly update position
             draggingShape.x = clientX - dragOffset.x;
             draggingShape.y = clientY - dragOffset.y;
 
@@ -300,7 +265,6 @@
             if (action === 'delete') {
                 container.removeChild(activeShape.el);
                 shapes = shapes.filter(s => s !== activeShape);
-                updateObjCount();
             } else if (action === 'scale') {
                 activeShape.width *= value;
                 activeShape.height *= value;
@@ -311,7 +275,6 @@
             closeModal();
         }
 
-        /** PHYSICS ENGINE **/
         function resolveCollisions() {
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
@@ -319,8 +282,6 @@
             for (let i = 0; i < ITERATIONS; i++) {
                 for (let j = 0; j < shapes.length; j++) {
                     const s1 = shapes[j];
-
-                    // Floor & Walls clamping
                     if (s1.x < 0) { s1.x = 0; s1.vx *= -BOUNCE; }
                     if (s1.x + s1.width > screenW) { s1.x = screenW - s1.width; s1.vx *= -BOUNCE; }
                     if (s1.y + s1.height > screenH) { 
@@ -377,37 +338,26 @@
         }
 
         function update() {
-            frameCount++;
-
             shapes.forEach(s => {
                 if (s.isDragging) return;
-
                 s.vy += GRAVITY;
                 s.vx *= FRICTION;
                 s.vy *= FRICTION;
                 s.va *= ANGULAR_FRICTION;
-
                 if (Math.abs(s.vx) < SLEEP_THRESHOLD) s.vx = 0;
                 if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < GRAVITY * 2) s.vy = 0;
                 if (Math.abs(s.va) < 0.01) s.va = 0;
-
                 s.x += s.vx;
                 s.y += s.vy;
                 s.angle += s.va;
             });
-
             resolveCollisions();
-
-            // Apply calculated x, y to CSS transform
             shapes.forEach(s => {
                 s.el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) rotate(${s.angle}deg)`;
             });
-
             requestAnimationFrame(update);
         }
 
-        /** UI LOGIC **/
-        function updateObjCount() { objCountEl.textContent = shapes.length; }
         gravitySlider.addEventListener('input', (e) => {
             GRAVITY = parseFloat(e.target.value);
             gravityVal.textContent = GRAVITY.toFixed(2);
@@ -416,13 +366,9 @@
         resetBtn.addEventListener('click', () => {
             shapes.forEach(s => container.removeChild(s.el));
             shapes = [];
-            updateObjCount();
         });
 
-        updateObjCount();
         requestAnimationFrame(update);
-        for(let i=0; i<3; i++) setTimeout(createShape, i * 200);
-
     </script>
 </body>
 </html>
