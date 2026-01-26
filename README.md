@@ -12,6 +12,7 @@ https://zbirer.github.io/apps/libby_audiobook_tool.html
 
 https://zbirer.github.io/apps/time-difference-calculator.html
 
+https://zbirer.github.io/apps/rect-game.html
 
 
 # prompt for json viewer
