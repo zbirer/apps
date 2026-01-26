@@ -82,8 +82,8 @@
 
         <div class="flex items-center gap-4 pointer-events-auto bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white">
             <div class="flex flex-col min-w-[120px]">
-                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">כבידה: <span id="gravity-val">0.45</span></label>
-                <input type="range" id="gravity-slider" min="0" max="1.5" step="0.05" value="0.45" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">כבידה: <span id="gravity-val">0.15</span></label>
+                <input type="range" id="gravity-slider" min="0" max="0.30" step="0.01" value="0.15" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
             <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl font-bold transition-colors border border-red-100">
                 איפוס
@@ -117,7 +117,7 @@
 
     <script>
         /** PHYSICS CONSTANTS **/
-        let GRAVITY = 0.45;
+        let GRAVITY = 0.15; // Updated starting gravity within the 0-0.30 range
         const FRICTION = 0.97;          
         const ANGULAR_FRICTION = 0.92;  
         const ITERATIONS = 3;           
@@ -345,7 +345,7 @@
                 s.vy *= FRICTION;
                 s.va *= ANGULAR_FRICTION;
                 if (Math.abs(s.vx) < SLEEP_THRESHOLD) s.vx = 0;
-                if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < GRAVITY * 2) s.vy = 0;
+                if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < 0.1) s.vy = 0;
                 if (Math.abs(s.va) < 0.01) s.va = 0;
                 s.x += s.vx;
                 s.y += s.vy;
