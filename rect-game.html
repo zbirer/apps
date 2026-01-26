@@ -66,6 +66,26 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
             min-width: 220px;
         }
+        /* Modal Styles */
+        #delete-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 90vw;
+            width: 320px;
+            text-align: center;
+        }
         @media (max-width: 640px) {
             header { padding: 0 1.25rem; height: 70px; }
             #canvas-container { height: calc(100vh - 70px); }
@@ -96,7 +116,20 @@
         <!-- המלבנים ייווצרו כאן -->
     </main>
 
+    <!-- הודעות טוסט -->
     <div id="message-toast"></div>
+
+    <!-- מודל מחיקה -->
+    <div id="delete-modal">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">למחוק את המלבן?</h3>
+            <p class="text-slate-500 text-sm mb-6">לא ניתן לבטל פעולה זו.</p>
+            <div class="flex gap-3 justify-center">
+                <button id="cancel-delete" class="px-5 py-2 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors">ביטול</button>
+                <button id="confirm-delete" class="px-5 py-2 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 shadow-md transition-colors">מחק</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const canvas = document.getElementById('canvas-container');
@@ -104,20 +137,27 @@
         const clearBtn = document.getElementById('clear-btn');
         const counterEl = document.getElementById('counter');
         const toast = document.getElementById('message-toast');
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
 
         let rectangles = [];
         const MIN_SIZE = 70;
         const MAX_SIZE = 140;
-        const PLACEMENT_ATTEMPTS = 200; // הגדלת כמות הניסיונות למציאת מקום פנוי
+        const PLACEMENT_ATTEMPTS = 200;
         const FRICTION = 0.90; 
         const MIN_VELOCITY = 0.3;
+        const LONG_PRESS_DURATION = 600; // 0.6 seconds
         
         let activeRect = null;
+        let rectToDelete = null;
         let offset = { x: 0, y: 0 };
+        let longPressTimer = null;
         
         let lastMoveTime = 0;
         let lastX = 0;
         let lastY = 0;
+        let dragDistance = 0; // לביטול לחיצה ארוכה אם הייתה גרירה משמעותית
 
         function updateCounter() {
             counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'אובייקט' : 'אובייקטים'}`;
@@ -129,7 +169,6 @@
             setTimeout(() => { toast.style.opacity = '0'; }, 3000);
         }
 
-        // בדיקת חפיפה - הוספתי מרווח ביטחון קטן של 0.5 פיקסל
         function hasOverlap(r1, r2) {
             return (
                 r1.x < r2.x + r2.w - 0.5 &&
@@ -139,27 +178,20 @@
             );
         }
 
-        // בדיקה מחמירה של גבולות וחפיפות בכל המסך
         function isStateInvalid(all) {
             const canvasW = canvas.clientWidth;
             const canvasH = canvas.clientHeight;
 
             for (let i = 0; i < all.length; i++) {
                 const r = all[i];
-                
-                // בדיקת גבולות מחמירה - שימוש ב-Math.ceil כדי למנוע זליגה של שברי פיקסלים
                 if (r.x < 0 || 
                     r.y < 0 || 
                     Math.ceil(r.x + r.w) > canvasW || 
                     Math.ceil(r.y + r.h) > canvasH) {
                     return true;
                 }
-
-                // בדיקת חפיפה מול כל שאר המלבנים
                 for (let j = i + 1; j < all.length; j++) {
-                    if (hasOverlap(r, all[j])) {
-                        return true;
-                    }
+                    if (hasOverlap(r, all[j])) return true;
                 }
             }
             return false;
@@ -173,10 +205,8 @@
 
         function resolvePush(mover, all, movedSet = new Set()) {
             movedSet.add(mover);
-
             all.forEach(target => {
                 if (target === mover || movedSet.has(target)) return;
-
                 const inter = getIntersection(mover, target);
                 if (inter) {
                     if (inter.x < inter.y) {
@@ -200,35 +230,27 @@
 
         function applyInertia() {
             let stillMoving = false;
-
             rectangles.forEach(r => {
                 if (r === activeRect) return;
                 if (Math.abs(r.vx) < MIN_VELOCITY && Math.abs(r.vy) < MIN_VELOCITY) {
-                    r.vx = 0; r.vy = 0;
-                    return;
+                    r.vx = 0; r.vy = 0; return;
                 }
-
                 stillMoving = true;
                 const snapshot = rectangles.map(orig => ({ x: orig.x, y: orig.y }));
-
                 r.x += r.vx;
                 r.y += r.vy;
-
                 resolvePush(r, rectangles);
-
                 if (isStateInvalid(rectangles)) {
                     rectangles.forEach((orig, idx) => {
                         orig.x = snapshot[idx].x;
                         orig.y = snapshot[idx].y;
                     });
-                    r.vx = 0;
-                    r.vy = 0;
+                    r.vx = 0; r.vy = 0;
                 } else {
                     r.vx *= FRICTION;
                     r.vy *= FRICTION;
                 }
             });
-
             syncDOM();
             if (stillMoving) requestAnimationFrame(applyInertia);
         }
@@ -254,9 +276,21 @@
                 lastX = data.x;
                 lastY = data.y;
                 lastMoveTime = Date.now();
+                dragDistance = 0;
                 
                 data.vx = 0;
                 data.vy = 0;
+
+                // התחלת טיימר לחיצה ארוכה
+                longPressTimer = setTimeout(() => {
+                    if (dragDistance < 10) { // רק אם לא זז הרבה
+                        rectToDelete = data;
+                        deleteModal.style.display = 'flex';
+                        div.releasePointerCapture(e.pointerId); // שחרור המלבן
+                        activeRect = null;
+                        div.classList.remove('dragging');
+                    }
+                }, LONG_PRESS_DURATION);
 
                 div.setPointerCapture(e.pointerId);
                 div.classList.add('dragging');
@@ -274,6 +308,12 @@
 
                 let nextX = e.clientX - containerRect.left - offset.x;
                 let nextY = e.clientY - containerRect.top - offset.y;
+
+                // חישוב מרחק גרירה לביטול לחיצה ארוכה
+                dragDistance += Math.sqrt(Math.pow(nextX - lastX, 2) + Math.pow(nextY - lastY, 2));
+                if (dragDistance > 10) {
+                    clearTimeout(longPressTimer);
+                }
 
                 if (dt > 0) {
                     const newVx = (nextX - lastX);
@@ -304,6 +344,7 @@
             });
 
             div.addEventListener('pointerup', () => {
+                clearTimeout(longPressTimer);
                 if (activeRect) {
                     activeRect.el.classList.remove('dragging');
                     activeRect = null;
@@ -316,28 +357,39 @@
             syncDOM();
         }
 
+        // לוגיקת המודל
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (rectToDelete) {
+                // הסרה מהמערך
+                rectangles = rectangles.filter(r => r !== rectToDelete);
+                // הסרה מה-DOM
+                rectToDelete.el.remove();
+                rectToDelete = null;
+                updateCounter();
+            }
+            deleteModal.style.display = 'none';
+        });
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            rectToDelete = null;
+            deleteModal.style.display = 'none';
+        });
+
         function addRectangle() {
             const canvasW = canvas.clientWidth;
             const canvasH = canvas.clientHeight;
-            
             if (canvasW === 0 || canvasH === 0) return;
 
             for (let i = 0; i < PLACEMENT_ATTEMPTS; i++) {
                 const w = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
                 const h = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
-                
-                // הגבלת היצירה בדיוק בתוך גבולות המסך
                 const x = Math.floor(Math.random() * (canvasW - w));
                 const y = Math.floor(Math.random() * (canvasH - h));
-
                 const candidate = { x, y, w, h };
                 
                 let collision = false;
                 for (let r of rectangles) {
-                    if (hasOverlap(candidate, r)) {
-                        collision = true;
-                        break;
-                    }
+                    if (hasOverlap(candidate, r)) { collision = true; break; }
                 }
 
                 if (!collision) {
@@ -347,7 +399,6 @@
                     return; 
                 }
             }
-            
             showToast("אין מקום פנוי למלבן חדש!");
         }
 
@@ -360,7 +411,7 @@
 
         window.onload = () => {
             updateCounter();
-            setTimeout(addRectangle, 100); // השהייה קלה לוודא שהקנבס נטען במלואו
+            setTimeout(addRectangle, 100);
         };
 
         window.addEventListener('resize', () => {
