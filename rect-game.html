@@ -3,464 +3,426 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SolidStack - מלבנים מוצקים</title>
+    <title>SolidStack - עולם פיזיקלי</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
-            margin: 0;
+            font-family: 'Assistant', sans-serif;
             overflow: hidden;
-            background-color: #f1f5f9;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             touch-action: none;
-            -webkit-tap-highlight-color: transparent;
+            background-color: #f0f2f5;
+            user-select: none;
         }
-        #canvas-container {
+        #game-container {
             position: relative;
             width: 100vw;
-            height: calc(100vh - 80px);
+            height: 100vh;
             overflow: hidden;
-            background-image: 
-                linear-gradient(to right, #e2e8f0 1px, transparent 1px),
-                linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
-            background-size: 40px 40px;
         }
-        .rectangle {
+        .shape {
             position: absolute;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            /* Force origin to top-left regardless of RTL/LTR to sync with physics engine */
+            left: 0;
+            top: 0;
+            cursor: grab;
+            will-change: transform;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: 800;
-            user-select: none;
-            touch-action: none;
-            cursor: grab;
-            border: 2px solid rgba(255,255,255,0.25);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, width 0.2s ease, height 0.2s ease;
-            will-change: left, top, width, height;
+            box-sizing: border-box;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform-origin: center;
         }
-        .rectangle.dragging {
+        .shape:active {
             cursor: grabbing;
-            z-index: 50;
-            box-shadow: 0 25px 30px -5px rgb(0 0 0 / 0.2);
-            transform: scale(1.05);
-            border-color: rgba(255,255,255,0.9);
         }
-        #message-toast {
+        .shape-triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            border: none !important;
+        }
+        .toast {
             position: fixed;
-            bottom: 3rem;
+            bottom: 2rem;
             left: 50%;
             transform: translateX(-50%);
-            padding: 0.85rem 1.5rem;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(8px);
+            z-index: 100;
+            background: #ef4444;
             color: white;
-            border-radius: 16px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
-            z-index: 100;
-            font-size: 0.95rem;
-            text-align: center;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
-            min-width: 220px;
         }
-        /* Modal Styles */
-        #action-modal {
+        .toast.show {
+            opacity: 1;
+        }
+        #modal-overlay {
+            display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.4);
+            background: rgba(0,0,0,0.4);
             backdrop-filter: blur(4px);
-            display: none;
+            z-index: 200;
             align-items: center;
             justify-content: center;
-            z-index: 200;
-        }
-        .modal-content {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            max-width: 90vw;
-            width: 280px;
-            text-align: center;
-        }
-        @media (max-width: 640px) {
-            header { padding: 0 1.25rem; height: 70px; }
-            #canvas-container { height: calc(100vh - 70px); }
         }
     </style>
 </head>
-<body class="flex flex-col h-screen">
+<body class="bg-gray-100">
 
-    <!-- ממשק כותרת -->
-    <header class="bg-white border-b flex items-center justify-between shadow-sm z-50">
-        <div class="flex flex-col items-start px-4">
-            <h1 class="text-xl font-black text-slate-800 uppercase tracking-tighter">Solid<span class="text-indigo-600">Stack</span></h1>
-            <span id="counter" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">0 אובייקטים</span>
-        </div>
-        
-        <div class="flex items-center gap-3 px-4">
-            <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest p-2">
-                איפוס
+    <!-- Header UI -->
+    <header class="fixed top-0 left-0 right-0 z-50 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 pointer-events-none">
+        <div class="flex items-center gap-4 pointer-events-auto bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white">
+            <h1 class="text-xl font-extrabold text-blue-600 ml-2">SolidStack</h1>
+            <div class="flex flex-col border-r pr-4">
+                <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">אובייקטים</span>
+                <span id="obj-count" class="text-lg font-mono font-bold leading-tight">0</span>
+            </div>
+            <button id="add-btn" class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                </svg>
             </button>
-            <button id="add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform active:scale-90 transition-all text-3xl font-bold">
-                +
+        </div>
+
+        <div class="flex items-center gap-4 pointer-events-auto bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white">
+            <div class="flex flex-col min-w-[120px]">
+                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">כבידה: <span id="gravity-val">0.45</span></label>
+                <input type="range" id="gravity-slider" min="0" max="1.5" step="0.05" value="0.45" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+            <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl font-bold transition-colors border border-red-100">
+                איפוס
             </button>
         </div>
     </header>
 
-    <!-- אזור המשחק -->
-    <main id="canvas-container">
-        <!-- המלבנים ייווצרו כאן -->
-    </main>
+    <div id="game-container"></div>
 
-    <!-- הודעות טוסט -->
-    <div id="message-toast"></div>
+    <!-- Toast Message -->
+    <div id="toast" class="toast">אין מקום פנוי כרגע!</div>
 
-    <!-- מודל אפשרויות -->
-    <div id="action-modal">
-        <div class="modal-content">
-            <div class="grid grid-cols-1 gap-2">
-                <button id="enlarge-btn" class="w-full py-3 rounded-xl font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors">
-                    הגדל
+    <!-- Context Modal -->
+    <div id="modal-overlay">
+        <div class="bg-white rounded-3xl p-6 w-80 shadow-2xl scale-110 border border-gray-100">
+            <h3 class="text-xl font-bold mb-4 text-center text-gray-800">פעולות צורה</h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="modifyActiveShape('scale', 1.05)" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100">
+                    <span class="text-2xl mb-1">➕</span>
+                    <span class="text-sm font-bold">הגדל</span>
                 </button>
-                <button id="shrink-btn" class="w-full py-3 rounded-xl font-bold bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors">
-                    הקטן
+                <button onclick="modifyActiveShape('scale', 0.95)" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100">
+                    <span class="text-2xl mb-1">➖</span>
+                    <span class="text-sm font-bold">הקטן</span>
                 </button>
-                <button id="confirm-delete" class="w-full py-3 rounded-xl font-bold bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
-                    מחק
-                </button>
-                <div class="h-px bg-slate-100 my-1"></div>
-                <button id="close-modal" class="w-full py-3 rounded-xl font-bold text-slate-400 hover:text-slate-600 transition-colors">
-                    ביטול
+                <button onclick="modifyActiveShape('delete')" class="col-span-2 flex items-center justify-center gap-2 p-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl transition-all border border-red-100">
+                    <span class="text-xl">🗑️</span>
+                    <span class="font-bold">מחק צורה</span>
                 </button>
             </div>
+            <button onclick="closeModal()" class="w-full py-3 text-gray-500 font-bold hover:text-gray-700 transition-colors">ביטול</button>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('canvas-container');
+        /** PHYSICS CONSTANTS **/
+        let GRAVITY = 0.45;
+        const FRICTION = 0.97;          
+        const ANGULAR_FRICTION = 0.92;  
+        const ITERATIONS = 3;           
+        const BOUNCE = 0.15;            
+        const SLEEP_THRESHOLD = 0.05;   
+        const MAX_VA = 10;              
+        const SLOP = 0.5;               
+
+        const container = document.getElementById('game-container');
+        const objCountEl = document.getElementById('obj-count');
+        const gravitySlider = document.getElementById('gravity-slider');
+        const gravityVal = document.getElementById('gravity-val');
         const addBtn = document.getElementById('add-btn');
-        const clearBtn = document.getElementById('clear-btn');
-        const counterEl = document.getElementById('counter');
-        const toast = document.getElementById('message-toast');
-        const actionModal = document.getElementById('action-modal');
-        const confirmDeleteBtn = document.getElementById('confirm-delete');
-        const enlargeBtn = document.getElementById('enlarge-btn');
-        const shrinkBtn = document.getElementById('shrink-btn');
-        const closeModalBtn = document.getElementById('close-modal');
+        const resetBtn = document.getElementById('reset-btn');
+        const toast = document.getElementById('toast');
+        const modalOverlay = document.getElementById('modal-overlay');
 
-        let rectangles = [];
-        const MIN_SIZE = 70;
-        const MAX_SIZE = 140;
-        const PLACEMENT_ATTEMPTS = 200;
-        const FRICTION = 0.90; 
-        const MIN_VELOCITY = 0.3;
-        const LONG_PRESS_DURATION = 600; 
-        
-        let activeRect = null;
-        let selectedRect = null;
-        let offset = { x: 0, y: 0 };
+        let shapes = [];
+        let activeShape = null; 
+        let draggingShape = null;
+        let dragOffset = { x: 0, y: 0 };
+        let lastMousePos = { x: 0, y: 0 };
         let longPressTimer = null;
-        
-        let lastMoveTime = 0;
-        let lastX = 0;
-        let lastY = 0;
-        let dragDistance = 0;
+        let frameCount = 0;
 
-        function updateCounter() {
-            counterEl.textContent = `${rectangles.length} ${rectangles.length === 1 ? 'אובייקט' : 'אובייקטים'}`;
-        }
-
-        function showToast(msg) {
-            toast.textContent = msg;
-            toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
-        }
-
-        function hasOverlap(r1, r2) {
-            return (
-                r1.x < r2.x + r2.w - 0.5 &&
-                r1.x + r1.w > r2.x + 0.5 &&
-                r1.y < r2.y + r2.h - 0.5 &&
-                r1.y + r1.h > r2.y + 0.5
-            );
-        }
-
-        function isStateInvalid(all) {
-            const canvasW = canvas.clientWidth;
-            const canvasH = canvas.clientHeight;
-
-            for (let i = 0; i < all.length; i++) {
-                const r = all[i];
-                if (r.x < 0 || 
-                    r.y < 0 || 
-                    Math.ceil(r.x + r.w) > canvasW || 
-                    Math.ceil(r.y + r.h) > canvasH) {
-                    return true;
-                }
-                for (let j = i + 1; j < all.length; j++) {
-                    if (hasOverlap(r, all[j])) return true;
-                }
+        /** DEBUG LOGGER **/
+        function debugLog(tag, message, level = 'log') {
+            const styles = {
+                'PHYSICS': 'color: #3b82f6; font-weight: bold;',
+                'COLLISION': 'color: #ef4444; font-weight: bold;',
+                'INTERACTION': 'color: #10b981; font-weight: bold;',
+                'LIFECYCLE': 'color: #8b5cf6; font-weight: bold;'
+            };
+            if (level === 'warn' || frameCount % 600 === 0) {
+                console[level](`%c[${tag}]`, styles[tag] || '', message);
             }
-            return false;
         }
 
-        function getIntersection(r1, r2) {
-            const overlapX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
-            const overlapY = Math.min(r1.y + r1.h, r2.y + r2.h) - Math.max(r1.y, r2.y);
-            return (overlapX > 0.5 && overlapY > 0.5) ? { x: overlapX, y: overlapY } : null;
-        }
-
-        function resolvePush(mover, all, movedSet = new Set()) {
-            movedSet.add(mover);
-            all.forEach(target => {
-                if (target === mover || movedSet.has(target)) return;
-                const inter = getIntersection(mover, target);
-                if (inter) {
-                    if (inter.x < inter.y) {
-                        const dir = (mover.x + mover.w / 2) < (target.x + target.w / 2) ? 1 : -1;
-                        target.x += inter.x * dir;
-                    } else {
-                        const dir = (mover.y + mover.h / 2) < (target.y + target.h / 2) ? 1 : -1;
-                        target.y += inter.y * dir;
-                    }
-                    resolvePush(target, all, movedSet);
-                }
-            });
-        }
-
-        function syncDOM() {
-            rectangles.forEach(r => {
-                r.el.style.left = `${r.x}px`;
-                r.el.style.top = `${r.y}px`;
-                r.el.style.width = `${r.w}px`;
-                r.el.style.height = `${r.h}px`;
-            });
-        }
-
-        function applyInertia() {
-            let stillMoving = false;
-            rectangles.forEach(r => {
-                if (r === activeRect) return;
-                if (Math.abs(r.vx) < MIN_VELOCITY && Math.abs(r.vy) < MIN_VELOCITY) {
-                    r.vx = 0; r.vy = 0; return;
-                }
-                stillMoving = true;
-                const snapshot = rectangles.map(orig => ({ x: orig.x, y: orig.y }));
-                r.x += r.vx;
-                r.y += r.vy;
-                resolvePush(r, rectangles);
-                if (isStateInvalid(rectangles)) {
-                    rectangles.forEach((orig, idx) => {
-                        orig.x = snapshot[idx].x;
-                        orig.y = snapshot[idx].y;
-                    });
-                    r.vx = 0; r.vy = 0;
-                } else {
-                    r.vx *= FRICTION;
-                    r.vy *= FRICTION;
-                }
-            });
-            syncDOM();
-            if (stillMoving) requestAnimationFrame(applyInertia);
-        }
-
-        function createRectElement(data) {
-            const div = document.createElement('div');
-            div.className = 'rectangle';
-            div.style.width = `${data.w}px`;
-            div.style.height = `${data.h}px`;
-            div.style.backgroundColor = `hsl(${Math.floor(Math.random() * 360)}, 65%, 50%)`;
-            
-            data.vx = 0;
-            data.vy = 0;
-
-            div.addEventListener('pointerdown', (e) => {
-                activeRect = data;
-                const rect = div.getBoundingClientRect();
-                const containerRect = canvas.getBoundingClientRect();
-                
-                offset.x = e.clientX - rect.left;
-                offset.y = e.clientY - rect.top;
-                
-                lastX = data.x;
-                lastY = data.y;
-                lastMoveTime = Date.now();
-                dragDistance = 0;
-                
-                data.vx = 0;
-                data.vy = 0;
-
-                longPressTimer = setTimeout(() => {
-                    if (dragDistance < 10) { 
-                        selectedRect = data;
-                        actionModal.style.display = 'flex';
-                        div.releasePointerCapture(e.pointerId);
-                        activeRect = null;
-                        div.classList.remove('dragging');
-                    }
-                }, LONG_PRESS_DURATION);
-
-                div.setPointerCapture(e.pointerId);
-                div.classList.add('dragging');
-                e.stopPropagation();
-            });
-
-            div.addEventListener('pointermove', (e) => {
-                if (!activeRect || activeRect !== data) return;
-
-                const containerRect = canvas.getBoundingClientRect();
-                const now = Date.now();
-                const dt = now - lastMoveTime;
-                
-                const snapshot = rectangles.map(r => ({ x: r.x, y: r.y }));
-
-                let nextX = e.clientX - containerRect.left - offset.x;
-                let nextY = e.clientY - containerRect.top - offset.y;
-
-                dragDistance += Math.sqrt(Math.pow(nextX - lastX, 2) + Math.pow(nextY - lastY, 2));
-                if (dragDistance > 10) {
-                    clearTimeout(longPressTimer);
-                }
-
-                if (dt > 0) {
-                    const newVx = (nextX - lastX);
-                    const newVy = (nextY - lastY);
-                    data.vx = data.vx * 0.3 + newVx * 0.7;
-                    data.vy = data.vy * 0.3 + newVy * 0.7;
-                }
-
-                data.x = nextX;
-                data.y = nextY;
-
-                resolvePush(data, rectangles);
-
-                if (isStateInvalid(rectangles)) {
-                    rectangles.forEach((r, idx) => {
-                        r.x = snapshot[idx].x;
-                        r.y = snapshot[idx].y;
-                    });
-                    data.vx = 0;
-                    data.vy = 0;
-                }
-
-                lastX = data.x;
-                lastY = data.y;
-                lastMoveTime = now;
-
-                syncDOM();
-            });
-
-            div.addEventListener('pointerup', () => {
-                clearTimeout(longPressTimer);
-                if (activeRect) {
-                    activeRect.el.classList.remove('dragging');
-                    activeRect = null;
-                    requestAnimationFrame(applyInertia);
-                }
-            });
-
-            data.el = div;
-            canvas.appendChild(div);
-            syncDOM();
-        }
-
-        enlargeBtn.addEventListener('click', () => {
-            if (!selectedRect) return;
-            const factor = 1.05;
-            const oldW = selectedRect.w;
-            const oldH = selectedRect.h;
-            
-            selectedRect.w *= factor;
-            selectedRect.h *= factor;
-
-            if (isStateInvalid(rectangles)) {
-                selectedRect.w = oldW;
-                selectedRect.h = oldH;
-                showToast("אין מספיק מקום פנוי להגדלה!");
-            } else {
-                syncDOM();
-            }
-            actionModal.style.display = 'none';
-            selectedRect = null;
-        });
-
-        shrinkBtn.addEventListener('click', () => {
-            if (!selectedRect) return;
-            const factor = 0.95;
-            selectedRect.w *= factor;
-            selectedRect.h *= factor;
-            syncDOM();
-            actionModal.style.display = 'none';
-            selectedRect = null;
-        });
-
-        confirmDeleteBtn.addEventListener('click', () => {
-            if (selectedRect) {
-                rectangles = rectangles.filter(r => r !== selectedRect);
-                selectedRect.el.remove();
-                selectedRect = null;
-                updateCounter();
-            }
-            actionModal.style.display = 'none';
-        });
-
-        closeModalBtn.addEventListener('click', () => {
-            selectedRect = null;
-            actionModal.style.display = 'none';
-        });
-
-        function addRectangle() {
-            const canvasW = canvas.clientWidth;
-            const canvasH = canvas.clientHeight;
-            if (canvasW === 0 || canvasH === 0) return;
-
-            for (let i = 0; i < PLACEMENT_ATTEMPTS; i++) {
-                const w = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
-                const h = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE)) + MIN_SIZE;
-                const x = Math.floor(Math.random() * (canvasW - w));
-                const y = Math.floor(Math.random() * (canvasH - h));
-                const candidate = { x, y, w, h };
-                
-                let collision = false;
-                for (let r of rectangles) {
-                    if (hasOverlap(candidate, r)) { collision = true; break; }
-                }
-
-                if (!collision) {
-                    createRectElement(candidate);
-                    rectangles.push(candidate);
-                    updateCounter();
-                    return; 
-                }
-            }
-            showToast("אין מקום פנוי למלבן חדש!");
-        }
-
-        addBtn.addEventListener('click', addRectangle);
-        clearBtn.addEventListener('click', () => {
-            canvas.innerHTML = '';
-            rectangles = [];
-            updateCounter();
-        });
-
-        window.onload = () => {
-            updateCounter();
-            setTimeout(addRectangle, 100);
+        /** UTILS **/
+        const randomColor = () => {
+            const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
+            return colors[Math.floor(Math.random() * colors.length)];
         };
 
-        window.addEventListener('resize', () => {
-            rectangles.forEach(r => {
-                const canvasW = canvas.clientWidth;
-                const canvasH = canvas.clientHeight;
-                r.x = Math.max(0, Math.min(r.x, canvasW - r.w));
-                r.y = Math.max(0, Math.min(r.y, canvasH - r.h));
+        const showToast = () => {
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        };
+
+        /** SHAPE FACTORY **/
+        function createShape() {
+            const types = ['rect', 'circle', 'triangle'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const size = 60 + Math.random() * 40;
+            const width = type === 'rect' ? size * (0.8 + Math.random() * 0.4) : size;
+            const height = size;
+            const color = randomColor();
+
+            let startX, startY;
+            let attempts = 0;
+            let overlap = true;
+
+            while (overlap && attempts < 200) {
+                startX = Math.random() * (window.innerWidth - width);
+                startY = 50 + Math.random() * 150;
+                overlap = false;
+                for (let s of shapes) {
+                    const dx = (s.x + s.width/2) - (startX + width/2);
+                    const dy = (s.y + s.height/2) - (startY + height/2);
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < (size + s.size) / 1.5) {
+                        overlap = true;
+                        break;
+                    }
+                }
+                attempts++;
+            }
+
+            if (attempts >= 200) {
+                showToast();
+                return;
+            }
+
+            const el = document.createElement('div');
+            el.className = `shape ${color} ${type === 'circle' ? 'rounded-full' : (type === 'rect' ? 'rounded-2xl' : 'shape-triangle')}`;
+            el.style.width = `${width}px`;
+            el.style.height = `${height}px`;
+            container.appendChild(el);
+
+            const shape = {
+                id: Math.random().toString(36).substr(2, 5),
+                el, type, x: startX, y: startY,
+                vx: 0, vy: 0, va: 0, angle: 0,
+                width, height, size: (width + height) / 2,
+                mass: (width * height) / 100,
+                isDragging: false
+            };
+
+            el.addEventListener('mousedown', (e) => startDrag(e, shape));
+            el.addEventListener('touchstart', (e) => startDrag(e, shape), {passive: false});
+
+            shapes.push(shape);
+            updateObjCount();
+        }
+
+        /** INTERACTION **/
+        function startDrag(e, shape) {
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            draggingShape = shape;
+            shape.isDragging = true;
+            
+            // Calculate offset based on current x, y which are absolute from top-left
+            dragOffset.x = clientX - shape.x;
+            dragOffset.y = clientY - shape.y;
+            lastMousePos = { x: clientX, y: clientY };
+
+            clearTimeout(longPressTimer);
+            longPressTimer = setTimeout(() => {
+                if (draggingShape === shape) {
+                    stopDrag();
+                    openModal(shape);
+                }
+            }, 500);
+        }
+
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, {passive: false});
+
+        function handleMove(e) {
+            if (!draggingShape) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            // Update velocity based on mouse delta
+            draggingShape.vx = (clientX - lastMousePos.x);
+            draggingShape.vy = (clientY - lastMousePos.y);
+
+            // Directly update position
+            draggingShape.x = clientX - dragOffset.x;
+            draggingShape.y = clientY - dragOffset.y;
+
+            lastMousePos = { x: clientX, y: clientY };
+
+            if (Math.abs(draggingShape.vx) > 3 || Math.abs(draggingShape.vy) > 3) {
+                clearTimeout(longPressTimer);
+            }
+        }
+
+        window.addEventListener('mouseup', stopDrag);
+        window.addEventListener('touchend', stopDrag);
+
+        function stopDrag() {
+            if (draggingShape) {
+                draggingShape.isDragging = false;
+                draggingShape = null;
+            }
+            clearTimeout(longPressTimer);
+        }
+
+        function openModal(shape) { activeShape = shape; modalOverlay.style.display = 'flex'; }
+        function closeModal() { modalOverlay.style.display = 'none'; activeShape = null; }
+
+        function modifyActiveShape(action, value) {
+            if (!activeShape) return;
+            if (action === 'delete') {
+                container.removeChild(activeShape.el);
+                shapes = shapes.filter(s => s !== activeShape);
+                updateObjCount();
+            } else if (action === 'scale') {
+                activeShape.width *= value;
+                activeShape.height *= value;
+                activeShape.size = (activeShape.width + activeShape.height) / 2;
+                activeShape.el.style.width = `${activeShape.width}px`;
+                activeShape.el.style.height = `${activeShape.height}px`;
+            }
+            closeModal();
+        }
+
+        /** PHYSICS ENGINE **/
+        function resolveCollisions() {
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+
+            for (let i = 0; i < ITERATIONS; i++) {
+                for (let j = 0; j < shapes.length; j++) {
+                    const s1 = shapes[j];
+
+                    // Floor & Walls clamping
+                    if (s1.x < 0) { s1.x = 0; s1.vx *= -BOUNCE; }
+                    if (s1.x + s1.width > screenW) { s1.x = screenW - s1.width; s1.vx *= -BOUNCE; }
+                    if (s1.y + s1.height > screenH) { 
+                        s1.y = screenH - s1.height; 
+                        s1.vy *= -BOUNCE; 
+                        s1.vx *= FRICTION; 
+                        s1.va *= 0.8; 
+                    }
+
+                    for (let k = j + 1; k < shapes.length; k++) {
+                        const s2 = shapes[k];
+                        const dx = (s1.x + s1.width / 2) - (s2.x + s2.width / 2);
+                        const dy = (s1.y + s1.height / 2) - (s2.y + s2.height / 2);
+                        const minWidth = (s1.width + s2.width) / 2;
+                        const minHeight = (s1.height + s2.height) / 2;
+
+                        if (Math.abs(dx) < minWidth && Math.abs(dy) < minHeight) {
+                            const overlapX = minWidth - Math.abs(dx);
+                            const overlapY = minHeight - Math.abs(dy);
+
+                            if (overlapX > SLOP || overlapY > SLOP) {
+                                if (overlapX < overlapY) {
+                                    const dir = dx > 0 ? 1 : -1;
+                                    const sep = overlapX / (s1.isDragging || s2.isDragging ? 1 : 2);
+                                    if (!s1.isDragging) s1.x += sep * dir;
+                                    if (!s2.isDragging) s2.x -= sep * dir;
+                                    
+                                    const avgVx = (s1.vx + s2.vx) / 2;
+                                    s1.vx = avgVx + dir * BOUNCE;
+                                    s2.vx = avgVx - dir * BOUNCE;
+
+                                    const torque = (dy / minHeight) * (s1.vx - s2.vx) * 0.05;
+                                    s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
+                                    s2.va = Math.max(-MAX_VA, Math.min(MAX_VA, s2.va - torque));
+                                } else {
+                                    const dir = dy > 0 ? 1 : -1;
+                                    const sep = overlapY / (s1.isDragging || s2.isDragging ? 1 : 2);
+                                    if (!s1.isDragging) s1.y += sep * dir;
+                                    if (!s2.isDragging) s2.y -= sep * dir;
+
+                                    const avgVy = (s1.vy + s2.vy) / 2;
+                                    s1.vy = avgVy + dir * BOUNCE;
+                                    s2.vy = avgVy - dir * BOUNCE;
+
+                                    const torque = (dx / minWidth) * (s1.vy - s2.vy) * 0.05;
+                                    s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
+                                    s2.va = Math.max(-MAX_VA, Math.min(MAX_VA, s2.va - torque));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function update() {
+            frameCount++;
+
+            shapes.forEach(s => {
+                if (s.isDragging) return;
+
+                s.vy += GRAVITY;
+                s.vx *= FRICTION;
+                s.vy *= FRICTION;
+                s.va *= ANGULAR_FRICTION;
+
+                if (Math.abs(s.vx) < SLEEP_THRESHOLD) s.vx = 0;
+                if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < GRAVITY * 2) s.vy = 0;
+                if (Math.abs(s.va) < 0.01) s.va = 0;
+
+                s.x += s.vx;
+                s.y += s.vy;
+                s.angle += s.va;
             });
-            syncDOM();
+
+            resolveCollisions();
+
+            // Apply calculated x, y to CSS transform
+            shapes.forEach(s => {
+                s.el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) rotate(${s.angle}deg)`;
+            });
+
+            requestAnimationFrame(update);
+        }
+
+        /** UI LOGIC **/
+        function updateObjCount() { objCountEl.textContent = shapes.length; }
+        gravitySlider.addEventListener('input', (e) => {
+            GRAVITY = parseFloat(e.target.value);
+            gravityVal.textContent = GRAVITY.toFixed(2);
         });
+        addBtn.addEventListener('click', createShape);
+        resetBtn.addEventListener('click', () => {
+            shapes.forEach(s => container.removeChild(s.el));
+            shapes = [];
+            updateObjCount();
+        });
+
+        updateObjCount();
+        requestAnimationFrame(update);
+        for(let i=0; i<3; i++) setTimeout(createShape, i * 200);
+
     </script>
 </body>
 </html>
