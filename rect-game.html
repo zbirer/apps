@@ -19,6 +19,11 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
+            z-index: 1;
+        }
+        /* The Header area should be visually distinct */
+        header {
+            height: 64px; /* Fixed height for physics boundaries */
         }
         .shape {
             position: absolute;
@@ -38,24 +43,6 @@
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
             border: none !important;
         }
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            background: #ef4444;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-        .toast.show {
-            opacity: 1;
-        }
         #modal-overlay {
             display: none;
             position: fixed;
@@ -66,65 +53,62 @@
             align-items: center;
             justify-content: center;
         }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <!-- Header UI -->
-    <header class="fixed top-0 left-0 right-0 z-50 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 pointer-events-none">
-        <div class="flex items-center gap-4 pointer-events-auto bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white">
-            <button id="add-btn" class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
-                </svg>
-            </button>
-        </div>
-
-        <div class="flex items-center gap-4 pointer-events-auto bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white">
-            <!-- Rotation Control -->
-            <div class="flex items-center gap-2 ml-4 border-l pl-4">
-                <input type="checkbox" id="rotation-toggle" class="w-5 h-5 accent-blue-600 cursor-pointer">
-                <label for="rotation-toggle" class="text-xs text-gray-500 font-bold uppercase tracking-wider cursor-pointer">סיבוב</label>
-            </div>
-
-            <!-- Gravity Slider -->
-            <div class="flex flex-col min-w-[120px]">
-                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">כבידה: <span id="gravity-val">0.10</span></label>
-                <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
-            </div>
+    <!-- Compact One-Line Header -->
+    <header class="fixed top-0 inset-x-0 z-50 bg-white shadow-sm border-b border-gray-200 px-3 flex items-center justify-center pointer-events-auto">
+        <div class="flex items-center gap-4 sm:gap-8 w-full max-w-2xl justify-between">
             
-            <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl font-bold transition-colors border border-red-100">
-                איפוס
-            </button>
+            <!-- Group: Reset and Gravity -->
+            <div class="flex items-center gap-3">
+                <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-colors border border-red-100 whitespace-nowrap">
+                    איפוס
+                </button>
+
+                <div class="flex flex-col items-center min-w-[70px] sm:min-w-[100px]">
+                    <label class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">כבידה <span id="gravity-val">0.10</span></label>
+                    <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-1 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                </div>
+            </div>
+
+            <!-- Group: Rotation and Add -->
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5">
+                    <input type="checkbox" id="rotation-toggle" class="w-4 h-4 accent-blue-600 cursor-pointer">
+                    <label for="rotation-toggle" class="text-xs text-gray-500 font-bold cursor-pointer">סיבוב</label>
+                </div>
+
+                <button id="add-btn" class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>
+            </div>
+
         </div>
     </header>
 
     <div id="game-container"></div>
 
-    <div id="toast" class="toast">אין מקום פנוי כרגע!</div>
-
     <!-- Context Modal - Icons Only -->
     <div id="modal-overlay">
         <div class="bg-white rounded-3xl p-3 shadow-2xl border border-gray-100 flex items-center gap-2">
-            <button onclick="modifyActiveShape('scale', 1.1)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100 text-2xl">
-                ➕
-            </button>
-            <button onclick="modifyActiveShape('scale', 0.9)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-2xl transition-all border border-gray-100 text-2xl">
-                ➖
-            </button>
+            <button onclick="modifyActiveShape('scale', 1.1)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 rounded-2xl text-2xl">➕</button>
+            <button onclick="modifyActiveShape('scale', 0.9)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 rounded-2xl text-2xl">➖</button>
             <div class="w-px h-8 bg-gray-200 mx-1"></div>
-            <button onclick="modifyActiveShape('delete')" class="w-14 h-14 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl transition-all border border-red-100 text-2xl">
-                🗑️
-            </button>
+            <button onclick="modifyActiveShape('delete')" class="w-14 h-14 flex items-center justify-center bg-red-50 text-red-600 rounded-2xl text-2xl">🗑️</button>
             <div class="w-px h-8 bg-gray-200 mx-1"></div>
-            <button onclick="closeModal()" class="w-14 h-14 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors text-2xl">
-                ✕
-            </button>
+            <button onclick="closeModal()" class="w-14 h-14 flex items-center justify-center text-gray-400 text-2xl">✕</button>
         </div>
     </div>
 
     <script>
-        /** PHYSICS CONSTANTS **/
+        /** PHYSICS & BOUNDARY CONSTANTS **/
+        const HEADER_HEIGHT = 64; // Matches header height in CSS
         let GRAVITY = 0.10; 
         const FRICTION = 0.97;          
         const ANGULAR_FRICTION = 0.92;  
@@ -140,7 +124,6 @@
         const rotationToggle = document.getElementById('rotation-toggle');
         const addBtn = document.getElementById('add-btn');
         const resetBtn = document.getElementById('reset-btn');
-        const toast = document.getElementById('toast');
         const modalOverlay = document.getElementById('modal-overlay');
 
         let shapes = [];
@@ -149,16 +132,11 @@
         let dragOffset = { x: 0, y: 0 };
         let lastMousePos = { x: 0, y: 0 };
         let longPressTimer = null;
-        let canRotate = false; // Default is false
+        let canRotate = false; 
 
         const randomColor = () => {
             const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
             return colors[Math.floor(Math.random() * colors.length)];
-        };
-
-        const showToast = () => {
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
         };
 
         function createShape() {
@@ -173,25 +151,18 @@
             let attempts = 0;
             let overlap = true;
 
-            while (overlap && attempts < 200) {
+            while (overlap && attempts < 100) {
                 startX = Math.random() * (window.innerWidth - width);
-                startY = 50 + Math.random() * 150;
+                // Ensure spawn is below the header
+                startY = HEADER_HEIGHT + 20 + Math.random() * 100;
                 overlap = false;
                 for (let s of shapes) {
                     const dx = (s.x + s.width/2) - (startX + width/2);
                     const dy = (s.y + s.height/2) - (startY + height/2);
                     const dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < (size + s.size) / 1.5) {
-                        overlap = true;
-                        break;
-                    }
+                    if (dist < (size + s.size) / 1.5) { overlap = true; break; }
                 }
                 attempts++;
-            }
-
-            if (attempts >= 200) {
-                showToast();
-                return;
             }
 
             const el = document.createElement('div');
@@ -228,10 +199,7 @@
 
             clearTimeout(longPressTimer);
             longPressTimer = setTimeout(() => {
-                if (draggingShape === shape) {
-                    stopDrag();
-                    openModal(shape);
-                }
+                if (draggingShape === shape) { stopDrag(); openModal(shape); }
             }, 500);
         }
 
@@ -243,36 +211,28 @@
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-            const screenW = window.innerWidth;
-            const screenH = window.innerHeight;
-
             draggingShape.vx = (clientX - lastMousePos.x);
             draggingShape.vy = (clientY - lastMousePos.y);
 
             let newX = clientX - dragOffset.x;
             let newY = clientY - dragOffset.y;
 
-            newX = Math.max(0, Math.min(newX, screenW - draggingShape.width));
-            newY = Math.max(0, Math.min(newY, screenH - draggingShape.height));
+            // Clamping drag within boundaries including the header
+            newX = Math.max(0, Math.min(newX, window.innerWidth - draggingShape.width));
+            newY = Math.max(HEADER_HEIGHT, Math.min(newY, window.innerHeight - draggingShape.height));
 
             draggingShape.x = newX;
             draggingShape.y = newY;
 
             lastMousePos = { x: clientX, y: clientY };
-
-            if (Math.abs(draggingShape.vx) > 3 || Math.abs(draggingShape.vy) > 3) {
-                clearTimeout(longPressTimer);
-            }
+            if (Math.abs(draggingShape.vx) > 3 || Math.abs(draggingShape.vy) > 3) clearTimeout(longPressTimer);
         }
 
         window.addEventListener('mouseup', stopDrag);
         window.addEventListener('touchend', stopDrag);
 
         function stopDrag() {
-            if (draggingShape) {
-                draggingShape.isDragging = false;
-                draggingShape = null;
-            }
+            if (draggingShape) { draggingShape.isDragging = false; draggingShape = null; }
             clearTimeout(longPressTimer);
         }
 
@@ -302,14 +262,17 @@
                 for (let j = 0; j < shapes.length; j++) {
                     const s1 = shapes[j];
                     
+                    // Boundaries
                     if (s1.x < 0) { s1.x = 0; s1.vx *= -BOUNCE; }
                     if (s1.x + s1.width > screenW) { s1.x = screenW - s1.width; s1.vx *= -BOUNCE; }
                     
-                    if (s1.y < 0) { 
-                        s1.y = 0; 
+                    // Header Boundary (Top)
+                    if (s1.y < HEADER_HEIGHT) { 
+                        s1.y = HEADER_HEIGHT; 
                         s1.vy *= -BOUNCE; 
                     }
                     
+                    // Floor Boundary (Bottom)
                     if (s1.y + s1.height > screenH) { 
                         s1.y = screenH - s1.height; 
                         s1.vy *= -BOUNCE; 
@@ -334,11 +297,9 @@
                                     const sep = overlapX / (s1.isDragging || s2.isDragging ? 1 : 2);
                                     if (!s1.isDragging) s1.x += sep * dir;
                                     if (!s2.isDragging) s2.x -= sep * dir;
-                                    
                                     const avgVx = (s1.vx + s2.vx) / 2;
                                     s1.vx = avgVx + dir * BOUNCE;
                                     s2.vx = avgVx - dir * BOUNCE;
-
                                     if (canRotate) {
                                         const torque = (dy / minHeight) * (s1.vx - s2.vx) * 0.05;
                                         s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
@@ -349,11 +310,9 @@
                                     const sep = overlapY / (s1.isDragging || s2.isDragging ? 1 : 2);
                                     if (!s1.isDragging) s1.y += sep * dir;
                                     if (!s2.isDragging) s2.y -= sep * dir;
-
                                     const avgVy = (s1.vy + s2.vy) / 2;
                                     s1.vy = avgVy + dir * BOUNCE;
                                     s2.vy = avgVy - dir * BOUNCE;
-
                                     if (canRotate) {
                                         const torque = (dx / minWidth) * (s1.vy - s2.vy) * 0.05;
                                         s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
@@ -373,25 +332,16 @@
                 s.vy += GRAVITY;
                 s.vx *= FRICTION;
                 s.vy *= FRICTION;
-                
                 if (canRotate) {
                     s.va *= ANGULAR_FRICTION;
                     if (Math.abs(s.va) < 0.01) s.va = 0;
                     s.angle += s.va;
-                } else {
-                    s.va = 0;
-                    s.angle = 0;
-                }
-
+                } else { s.va = 0; s.angle = 0; }
                 if (Math.abs(s.vx) < SLEEP_THRESHOLD) s.vx = 0;
                 if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < 0.1) s.vy = 0;
-                
-                s.x += s.vx;
-                s.y += s.vy;
+                s.x += s.vx; s.y += s.vy;
             });
-
             resolveCollisions();
-
             shapes.forEach(s => {
                 s.el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) rotate(${s.angle}deg)`;
             });
@@ -402,18 +352,10 @@
             GRAVITY = parseFloat(e.target.value);
             gravityVal.textContent = GRAVITY.toFixed(2);
         });
-
         rotationToggle.addEventListener('change', (e) => {
             canRotate = e.target.checked;
-            // When turning rotation off, snap objects back to 0 degrees
-            if (!canRotate) {
-                shapes.forEach(s => {
-                    s.va = 0;
-                    s.angle = 0;
-                });
-            }
+            if (!canRotate) shapes.forEach(s => { s.va = 0; s.angle = 0; });
         });
-
         addBtn.addEventListener('click', createShape);
         resetBtn.addEventListener('click', () => {
             shapes.forEach(s => container.removeChild(s.el));
