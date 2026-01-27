@@ -22,7 +22,7 @@
             z-index: 1;
         }
         header {
-            height: 64px;
+            height: 60px;
         }
         .shape {
             position: absolute;
@@ -52,7 +52,6 @@
             align-items: center;
             justify-content: center;
         }
-        /* Scrollbar hidden for toolbar but functionality remains */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
@@ -68,50 +67,43 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Robust One-Line Header for Mobile -->
-    <header class="fixed top-0 inset-x-0 z-50 bg-white shadow-sm border-b border-gray-200 pointer-events-auto flex items-center h-16">
-        <div class="flex items-center gap-3 sm:gap-6 w-full px-3 overflow-x-auto no-scrollbar flex-nowrap justify-start">
+    <!-- Super Compact Toolbar -->
+    <header class="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 pointer-events-auto flex items-center h-[60px]">
+        <div class="flex items-center w-full px-1 sm:px-4 justify-between overflow-hidden">
             
-            <!-- GROUP: Reset & Sensors -->
-            <div class="flex items-center gap-2 flex-shrink-0">
-                <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-[11px] font-extrabold transition-colors border border-red-100 whitespace-nowrap">
-                    איפוס
+            <!-- RIGHT: Reset & Sensor -->
+            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <button id="reset-btn" title="איפוס" class="bg-red-50 hover:bg-red-100 text-red-600 w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-lg text-[10px] font-extrabold border border-red-100 flex items-center justify-center">
+                    <span class="sm:hidden text-lg">🔄</span>
+                    <span class="hidden sm:inline">איפוס</span>
                 </button>
-                <button id="sensor-btn" title="חיישני הטיה" class="bg-gray-50 hover:bg-gray-100 text-gray-600 w-9 h-9 rounded-xl flex items-center justify-center border border-gray-200 transition-all flex-shrink-0">
-                    <span class="text-xl">🧭</span>
-                </button>
+                <button id="sensor-btn" class="bg-gray-50 text-gray-600 w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-base">🧭</button>
             </div>
 
-            <!-- Vertical Divider -->
-            <div class="h-8 w-px bg-gray-100 flex-shrink-0"></div>
-
-            <!-- GROUP: Physics Sliders -->
-            <div class="flex items-center gap-4 flex-shrink-0">
-                <div class="flex flex-col items-center min-w-[75px] sm:min-w-[100px]">
-                    <label class="text-[9px] text-gray-400 font-bold uppercase mb-0.5 whitespace-nowrap">כבידה <span id="gravity-val">0.10</span></label>
-                    <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-1.5 bg-blue-50 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            <!-- MIDDLE: Sliders (Scaled down for mobile) -->
+            <div class="flex items-center gap-2 sm:gap-4 flex-grow justify-center px-1">
+                <div class="flex flex-col items-center w-full max-w-[60px] sm:max-w-[90px]">
+                    <label class="text-[8px] text-gray-400 font-bold uppercase truncate">כבידה</label>
+                    <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-1 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
                 </div>
-                <div class="flex flex-col items-center min-w-[75px] sm:min-w-[100px]">
-                    <label class="text-[9px] text-gray-400 font-bold uppercase mb-0.5 whitespace-nowrap">חיכוך <span id="friction-val">0.50</span></label>
-                    <input type="range" id="friction-slider" min="0" max="1" step="0.01" value="0.50" class="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-gray-500">
+                <div class="flex flex-col items-center w-full max-w-[60px] sm:max-w-[90px]">
+                    <label class="text-[8px] text-gray-400 font-bold uppercase truncate">חיכוך</label>
+                    <input type="range" id="friction-slider" min="0" max="1" step="0.01" value="0.50" class="w-full h-1 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-gray-500">
                 </div>
             </div>
 
-            <!-- Vertical Divider -->
-            <div class="h-8 w-px bg-gray-100 flex-shrink-0"></div>
-
-            <!-- GROUP: Rotation & Add -->
-            <div class="flex items-center gap-3 flex-shrink-0 pl-4">
-                <div class="flex items-center gap-1.5 whitespace-nowrap">
-                    <input type="checkbox" id="rotation-toggle" class="w-5 h-5 accent-blue-600 cursor-pointer">
-                    <label for="rotation-toggle" class="text-xs text-gray-500 font-bold cursor-pointer">סיבוב</label>
+            <!-- LEFT: Rotation & Add (Now strictly visible) -->
+            <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                <div class="flex items-center gap-0.5">
+                    <input type="checkbox" id="rotation-toggle" class="w-3.5 h-3.5 accent-blue-600">
+                    <label for="rotation-toggle" class="text-[9px] sm:text-xs text-gray-500 font-bold">סובב</label>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button id="add-rect-btn" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-sm active:scale-90 flex-shrink-0 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="6" width="16" height="12" rx="2" stroke-width="3" /></svg>
+                <div class="flex items-center gap-1">
+                    <button id="add-rect-btn" class="bg-blue-600 text-white w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2" stroke-width="3"/></svg>
                     </button>
-                    <button id="add-circle-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-sm active:scale-90 flex-shrink-0 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="3" /></svg>
+                    <button id="add-circle-btn" class="bg-indigo-600 text-white w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-width="3"/></svg>
                     </button>
                 </div>
             </div>
@@ -124,18 +116,18 @@
     <!-- Context Modal -->
     <div id="modal-overlay">
         <div class="bg-white rounded-3xl p-3 shadow-2xl border border-gray-100 flex items-center gap-2">
-            <button onclick="modifyActiveShape('scale', 1.1)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 active:scale-90 rounded-2xl transition-all border border-gray-100 text-2xl">➕</button>
-            <button onclick="modifyActiveShape('scale', 0.9)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 active:scale-90 rounded-2xl transition-all border border-gray-100 text-2xl">➖</button>
-            <div class="w-px h-8 bg-gray-200 mx-1"></div>
-            <button onclick="modifyActiveShape('delete')" class="w-14 h-14 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 active:scale-90 rounded-2xl transition-all border border-red-100 text-2xl">🗑️</button>
-            <div class="w-px h-8 bg-gray-200 mx-1"></div>
-            <button onclick="closeModal()" class="w-14 h-14 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors text-2xl">✕</button>
+            <button onclick="modifyActiveShape('scale', 1.1)" class="w-12 h-12 flex items-center justify-center bg-gray-50 hover:bg-blue-50 active:scale-90 rounded-xl text-xl">➕</button>
+            <button onclick="modifyActiveShape('scale', 0.9)" class="w-12 h-12 flex items-center justify-center bg-gray-50 hover:bg-blue-50 active:scale-90 rounded-xl text-xl">➖</button>
+            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+            <button onclick="modifyActiveShape('delete')" class="w-12 h-12 flex items-center justify-center bg-red-50 text-red-600 active:scale-90 rounded-xl text-xl">🗑️</button>
+            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+            <button onclick="closeModal()" class="w-12 h-12 flex items-center justify-center text-gray-400 text-xl">✕</button>
         </div>
     </div>
 
     <script>
         /** PHYSICS & BOUNDARY CONSTANTS **/
-        const HEADER_HEIGHT = 64; 
+        const HEADER_HEIGHT = 60; 
         let GRAVITY_STRENGTH = 0.10; 
         let gravityX = 0;
         let gravityY = 0.10;
@@ -152,9 +144,7 @@
 
         const container = document.getElementById('game-container');
         const gravitySlider = document.getElementById('gravity-slider');
-        const gravityVal = document.getElementById('gravity-val');
         const frictionSlider = document.getElementById('friction-slider');
-        const frictionVal = document.getElementById('friction-val');
         const rotationToggle = document.getElementById('rotation-toggle');
         const sensorBtn = document.getElementById('sensor-btn');
         const addRectBtn = document.getElementById('add-rect-btn');
@@ -171,11 +161,6 @@
         let canRotate = false; 
         let sensorsActive = false;
 
-        const randomColor = () => {
-            const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
-            return colors[Math.floor(Math.random() * colors.length)];
-        };
-
         function updatePhysicsParams() {
             currentBounce = 0.9 * (1 - frictionSliderVal);
             currentLinearFriction = 1.0 - (frictionSliderVal * 0.15);
@@ -185,30 +170,30 @@
 
         function createShape(forcedType = null) {
             const type = forcedType || 'rect';
-            const size = 60 + Math.random() * 40;
+            const size = 50 + Math.random() * 30; // Slightly smaller base size for mobile
             const width = type === 'rect' ? size * (0.8 + Math.random() * 0.4) : size;
             const height = size;
-            const color = randomColor();
+            const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
 
             let startX, startY;
             let attempts = 0;
             let overlap = true;
 
-            while (overlap && attempts < 100) {
+            while (overlap && attempts < 50) {
                 startX = Math.random() * (window.innerWidth - width);
-                startY = HEADER_HEIGHT + 20 + Math.random() * 100;
+                startY = HEADER_HEIGHT + 20 + Math.random() * 80;
                 overlap = false;
                 for (let s of shapes) {
                     const dx = (s.x + s.width/2) - (startX + width/2);
                     const dy = (s.y + s.height/2) - (startY + height/2);
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < (size + s.size) / 1.5) { overlap = true; break; }
+                    if (Math.sqrt(dx*dx + dy*dy) < (size + s.size) / 1.6) { overlap = true; break; }
                 }
                 attempts++;
             }
 
             const el = document.createElement('div');
-            el.className = `shape ${color} ${type === 'circle' ? 'rounded-full' : 'rounded-2xl'}`;
+            el.className = `shape ${color} ${type === 'circle' ? 'rounded-full' : 'rounded-xl'}`;
             el.style.width = `${width}px`;
             el.style.height = `${height}px`;
             container.appendChild(el);
@@ -228,7 +213,7 @@
         }
 
         function startDrag(e, shape) {
-            e.preventDefault();
+            if (modalOverlay.style.display === 'flex') return;
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             draggingShape = shape;
@@ -279,8 +264,7 @@
                 shapes = shapes.filter(s => s !== activeShape);
                 closeModal();
             } else if (action === 'scale') {
-                activeShape.width *= value;
-                activeShape.height *= value;
+                activeShape.width *= value; activeShape.height *= value;
                 activeShape.size = (activeShape.width + activeShape.height) / 2;
                 activeShape.el.style.width = `${activeShape.width}px`;
                 activeShape.el.style.height = `${activeShape.height}px`;
@@ -316,8 +300,7 @@
                                     if (!s1.isDragging) s1.x += sep * dir;
                                     if (!s2.isDragging) s2.x -= sep * dir;
                                     const avgVx = (s1.vx + s2.vx) / 2;
-                                    s1.vx = avgVx + dir * currentBounce;
-                                    s2.vx = avgVx - dir * currentBounce;
+                                    s1.vx = avgVx + dir * currentBounce; s2.vx = avgVx - dir * currentBounce;
                                     if (canRotate) {
                                         const torque = (dy / minHeight) * (s1.vx - s2.vx) * 0.05;
                                         s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
@@ -329,8 +312,7 @@
                                     if (!s1.isDragging) s1.y += sep * dir;
                                     if (!s2.isDragging) s2.y -= sep * dir;
                                     const avgVy = (s1.vy + s2.vy) / 2;
-                                    s1.vy = avgVy + dir * currentBounce;
-                                    s2.vy = avgVy - dir * currentBounce;
+                                    s1.vy = avgVy + dir * currentBounce; s2.vy = avgVy - dir * currentBounce;
                                     if (canRotate) {
                                         const torque = (dx / minWidth) * (s1.vy - s2.vy) * 0.05;
                                         s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
@@ -387,12 +369,10 @@
 
         gravitySlider.addEventListener('input', (e) => {
             GRAVITY_STRENGTH = parseFloat(e.target.value);
-            gravityVal.textContent = GRAVITY_STRENGTH.toFixed(2);
             if (!sensorsActive) { gravityX = 0; gravityY = GRAVITY_STRENGTH; }
         });
         frictionSlider.addEventListener('input', (e) => {
             frictionSliderVal = parseFloat(e.target.value);
-            frictionVal.textContent = frictionSliderVal.toFixed(2);
             updatePhysicsParams();
         });
         rotationToggle.addEventListener('change', (e) => {
