@@ -55,7 +55,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Sensor Active Animation */
         .sensor-active {
             animation: pulse 2s infinite;
         }
@@ -69,43 +68,45 @@
 <body class="bg-gray-100">
 
     <!-- Compact One-Line Header -->
-    <header class="fixed top-0 inset-x-0 z-50 bg-white shadow-sm border-b border-gray-200 px-3 flex items-center justify-center pointer-events-auto">
-        <div class="flex items-center gap-2 sm:gap-6 w-full max-w-4xl justify-between">
+    <header class="fixed top-0 inset-x-0 z-50 bg-white shadow-sm border-b border-gray-200 px-2 py-2 flex items-center justify-center pointer-events-auto">
+        <div class="flex items-center gap-2 sm:gap-4 w-full max-w-5xl justify-between overflow-x-auto no-scrollbar">
             
-            <!-- Group: Reset, Gravity and Sensors -->
-            <div class="flex items-center gap-2 sm:gap-4">
-                <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-extrabold transition-colors border border-red-100 whitespace-nowrap">
+            <!-- GROUP: Reset & Sensors -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1.5 rounded-lg text-[10px] font-extrabold transition-colors border border-red-100 whitespace-nowrap">
                     איפוס
                 </button>
-
-                <div class="flex flex-col items-center min-w-[60px] sm:min-w-[90px]">
-                    <label class="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase mb-0.5">כבידה <span id="gravity-val">0.10</span></label>
-                    <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-1 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                </div>
-
-                <!-- Sensor Toggle Button -->
-                <button id="sensor-btn" title="הפעל חיישני הטיה" class="bg-gray-100 hover:bg-gray-200 text-gray-600 w-9 h-9 rounded-xl flex items-center justify-center transition-all border border-gray-200">
-                    <span class="text-xl">🧭</span>
+                <button id="sensor-btn" title="חיישני הטיה" class="bg-gray-100 hover:bg-gray-200 text-gray-600 w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 transition-all">
+                    <span class="text-lg">🧭</span>
                 </button>
             </div>
 
-            <!-- Group: Rotation and Add Buttons -->
-            <div class="flex items-center gap-2 sm:gap-4">
+            <!-- GROUP: Physics Sliders -->
+            <div class="flex items-center gap-3 sm:gap-6 shrink-0 px-2 border-r border-l border-gray-100">
+                <!-- Gravity -->
+                <div class="flex flex-col items-center min-w-[65px] sm:min-w-[90px]">
+                    <label class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">כבידה <span id="gravity-val">0.10</span></label>
+                    <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-1 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                </div>
+                <!-- Friction (Slider 0 is slippery/bouncy, 1 is sticky/dead) -->
+                <div class="flex flex-col items-center min-w-[65px] sm:min-w-[90px]">
+                    <label class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">חיכוך <span id="friction-val">0.50</span></label>
+                    <input type="range" id="friction-slider" min="0" max="1" step="0.01" value="0.50" class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600">
+                </div>
+            </div>
+
+            <!-- GROUP: Rotation & Add -->
+            <div class="flex items-center gap-2 shrink-0">
                 <div class="flex items-center gap-1">
                     <input type="checkbox" id="rotation-toggle" class="w-4 h-4 accent-blue-600 cursor-pointer">
-                    <label for="rotation-toggle" class="text-[10px] sm:text-xs text-gray-500 font-bold cursor-pointer">סיבוב</label>
+                    <label for="rotation-toggle" class="text-[10px] text-gray-500 font-bold cursor-pointer">סיבוב</label>
                 </div>
-
-                <div class="flex items-center gap-2">
-                    <button id="add-rect-btn" title="הוסף מלבן" class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <rect x="4" y="6" width="16" height="12" rx="2" stroke-width="3" />
-                        </svg>
+                <div class="flex items-center gap-1.5">
+                    <button id="add-rect-btn" class="bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="6" width="16" height="12" rx="2" stroke-width="3" /></svg>
                     </button>
-                    <button id="add-circle-btn" title="הוסף עיגול" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all text-white w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <circle cx="12" cy="12" r="8" stroke-width="3" />
-                        </svg>
+                    <button id="add-circle-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="8" stroke-width="3" /></svg>
                     </button>
                 </div>
             </div>
@@ -115,7 +116,7 @@
 
     <div id="game-container"></div>
 
-    <!-- Context Modal - Icons Only -->
+    <!-- Context Modal -->
     <div id="modal-overlay">
         <div class="bg-white rounded-3xl p-3 shadow-2xl border border-gray-100 flex items-center gap-2">
             <button onclick="modifyActiveShape('scale', 1.1)" class="w-14 h-14 flex items-center justify-center bg-gray-50 hover:bg-blue-50 active:scale-90 rounded-2xl transition-all border border-gray-100 text-2xl">➕</button>
@@ -134,10 +135,13 @@
         let gravityX = 0;
         let gravityY = 0.10;
         
-        const FRICTION = 0.97;          
-        const ANGULAR_FRICTION = 0.92;  
+        // Physics logic: Higher slider value = more friction (slower movement, less bounce)
+        let frictionSliderVal = 0.50;
+        let currentBounce = 0.2; 
+        let currentLinearFriction = 0.97;
+        let currentAngularFriction = 0.92;
+
         const ITERATIONS = 3;           
-        const BOUNCE = 0.15;            
         const SLEEP_THRESHOLD = 0.05;   
         const MAX_VA = 10;              
         const SLOP = 0.5;               
@@ -145,6 +149,8 @@
         const container = document.getElementById('game-container');
         const gravitySlider = document.getElementById('gravity-slider');
         const gravityVal = document.getElementById('gravity-val');
+        const frictionSlider = document.getElementById('friction-slider');
+        const frictionVal = document.getElementById('friction-val');
         const rotationToggle = document.getElementById('rotation-toggle');
         const sensorBtn = document.getElementById('sensor-btn');
         const addRectBtn = document.getElementById('add-rect-btn');
@@ -165,6 +171,16 @@
             const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
             return colors[Math.floor(Math.random() * colors.length)];
         };
+
+        // Initialize dynamic physics parameters
+        function updatePhysicsParams() {
+            // Slider 0 (no friction) -> Bounce 0.9, Friction 1.0 (no loss)
+            // Slider 1 (max friction) -> Bounce 0.0, Friction 0.8 (high loss)
+            currentBounce = 0.9 * (1 - frictionSliderVal);
+            currentLinearFriction = 1.0 - (frictionSliderVal * 0.15); // ranges from 1.0 to 0.85
+            currentAngularFriction = 1.0 - (frictionSliderVal * 0.2);  // ranges from 1.0 to 0.8
+        }
+        updatePhysicsParams();
 
         function createShape(forcedType = null) {
             const type = forcedType || 'rect';
@@ -207,53 +223,7 @@
 
             el.addEventListener('mousedown', (e) => startDrag(e, shape));
             el.addEventListener('touchstart', (e) => startDrag(e, shape), {passive: false});
-
             shapes.push(shape);
-        }
-
-        /** SENSOR LOGIC **/
-        async function toggleSensors() {
-            if (sensorsActive) {
-                sensorsActive = false;
-                sensorBtn.classList.remove('bg-blue-600', 'text-white', 'sensor-active');
-                gravityX = 0;
-                gravityY = GRAVITY_STRENGTH;
-                return;
-            }
-
-            // Request permission for iOS 13+
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission !== 'granted') return;
-                } catch (err) {
-                    console.error("Sensor permission denied", err);
-                    return;
-                }
-            }
-
-            sensorsActive = true;
-            sensorBtn.classList.add('bg-blue-600', 'text-white', 'sensor-active');
-            window.addEventListener('deviceorientation', handleOrientation);
-        }
-
-        function handleOrientation(event) {
-            if (!sensorsActive) return;
-
-            // beta: -180 to 180 (front/back tilt)
-            // gamma: -90 to 90 (left/right tilt)
-            const beta = event.beta; 
-            const gamma = event.gamma;
-
-            // Normalize and map to gravity
-            // Portrait orientation: beta around 45-90 is "down", gamma is lateral
-            // We'll treat the tilt relative to the screen plane
-            gravityX = (gamma / 45) * GRAVITY_STRENGTH;
-            gravityY = (beta / 45) * GRAVITY_STRENGTH;
-            
-            // Clamp values
-            gravityX = Math.max(-GRAVITY_STRENGTH*2, Math.min(GRAVITY_STRENGTH*2, gravityX));
-            gravityY = Math.max(-GRAVITY_STRENGTH*2, Math.min(GRAVITY_STRENGTH*2, gravityY));
         }
 
         /** INTERACTION **/
@@ -323,31 +293,39 @@
             for (let i = 0; i < ITERATIONS; i++) {
                 for (let j = 0; j < shapes.length; j++) {
                     const s1 = shapes[j];
-                    if (s1.x < 0) { s1.x = 0; s1.vx *= -BOUNCE; }
-                    if (s1.x + s1.width > screenW) { s1.x = screenW - s1.width; s1.vx *= -BOUNCE; }
-                    if (s1.y < HEADER_HEIGHT) { s1.y = HEADER_HEIGHT; s1.vy *= -BOUNCE; }
+                    
+                    if (s1.x < 0) { s1.x = 0; s1.vx *= -currentBounce; }
+                    if (s1.x + s1.width > screenW) { s1.x = screenW - s1.width; s1.vx *= -currentBounce; }
+                    if (s1.y < HEADER_HEIGHT) { s1.y = HEADER_HEIGHT; s1.vy *= -currentBounce; }
                     if (s1.y + s1.height > screenH) { 
-                        s1.y = screenH - s1.height; s1.vy *= -BOUNCE; s1.vx *= FRICTION; 
-                        if (canRotate) s1.va *= 0.8; 
+                        s1.y = screenH - s1.height; 
+                        s1.vy *= -currentBounce; 
+                        s1.vx *= currentLinearFriction; 
+                        if (canRotate) s1.va *= (currentAngularFriction * 0.9); 
                     }
+
                     for (let k = j + 1; k < shapes.length; k++) {
                         const s2 = shapes[k];
                         const dx = (s1.x + s1.width / 2) - (s2.x + s2.width / 2);
                         const dy = (s1.y + s1.height / 2) - (s2.y + s2.height / 2);
                         const minWidth = (s1.width + s2.width) / 2;
                         const minHeight = (s1.height + s2.height) / 2;
+
                         if (Math.abs(dx) < minWidth && Math.abs(dy) < minHeight) {
                             const overlapX = minWidth - Math.abs(dx);
                             const overlapY = minHeight - Math.abs(dy);
+
                             if (overlapX > SLOP || overlapY > SLOP) {
                                 if (overlapX < overlapY) {
                                     const dir = dx > 0 ? 1 : -1;
                                     const sep = overlapX / (s1.isDragging || s2.isDragging ? 1 : 2);
                                     if (!s1.isDragging) s1.x += sep * dir;
                                     if (!s2.isDragging) s2.x -= sep * dir;
+                                    
                                     const avgVx = (s1.vx + s2.vx) / 2;
-                                    s1.vx = avgVx + dir * BOUNCE;
-                                    s2.vx = avgVx - dir * BOUNCE;
+                                    s1.vx = avgVx + dir * currentBounce;
+                                    s2.vx = avgVx - dir * currentBounce;
+
                                     if (canRotate) {
                                         const torque = (dy / minHeight) * (s1.vx - s2.vx) * 0.05;
                                         s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
@@ -358,9 +336,11 @@
                                     const sep = overlapY / (s1.isDragging || s2.isDragging ? 1 : 2);
                                     if (!s1.isDragging) s1.y += sep * dir;
                                     if (!s2.isDragging) s2.y -= sep * dir;
+
                                     const avgVy = (s1.vy + s2.vy) / 2;
-                                    s1.vy = avgVy + dir * BOUNCE;
-                                    s2.vy = avgVy - dir * BOUNCE;
+                                    s1.vy = avgVy + dir * currentBounce;
+                                    s2.vy = avgVy - dir * currentBounce;
+
                                     if (canRotate) {
                                         const torque = (dx / minWidth) * (s1.vy - s2.vy) * 0.05;
                                         s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
@@ -378,15 +358,14 @@
             shapes.forEach(s => {
                 if (s.isDragging) return;
                 
-                // Apply Gravity components (Sensor or Static)
                 s.vx += gravityX;
                 s.vy += gravityY;
                 
-                s.vx *= FRICTION;
-                s.vy *= FRICTION;
+                s.vx *= currentLinearFriction;
+                s.vy *= currentLinearFriction;
                 
                 if (canRotate) {
-                    s.va *= ANGULAR_FRICTION;
+                    s.va *= currentAngularFriction;
                     if (Math.abs(s.va) < 0.01) s.va = 0;
                     s.angle += s.va;
                 } else { s.va = 0; s.angle = 0; }
@@ -394,7 +373,8 @@
                 if (Math.abs(s.vx) < SLEEP_THRESHOLD) s.vx = 0;
                 if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < Math.abs(gravityY) * 2) s.vy = 0;
                 
-                s.x += s.vx; s.y += s.vy;
+                s.x += s.vx;
+                s.y += s.vy;
             });
             
             resolveCollisions();
@@ -405,13 +385,41 @@
             requestAnimationFrame(update);
         }
 
+        /** SENSOR LOGIC **/
+        async function toggleSensors() {
+            if (sensorsActive) {
+                sensorsActive = false;
+                sensorBtn.classList.remove('bg-blue-600', 'text-white', 'sensor-active');
+                gravityX = 0;
+                gravityY = GRAVITY_STRENGTH;
+                return;
+            }
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission !== 'granted') return;
+                } catch (err) { return; }
+            }
+            sensorsActive = true;
+            sensorBtn.classList.add('bg-blue-600', 'text-white', 'sensor-active');
+            window.addEventListener('deviceorientation', (e) => {
+                if (!sensorsActive) return;
+                gravityX = (e.gamma / 45) * GRAVITY_STRENGTH;
+                gravityY = (e.beta / 45) * GRAVITY_STRENGTH;
+            });
+        }
+
+        /** UI LISTENERS **/
         gravitySlider.addEventListener('input', (e) => {
             GRAVITY_STRENGTH = parseFloat(e.target.value);
             gravityVal.textContent = GRAVITY_STRENGTH.toFixed(2);
-            if (!sensorsActive) {
-                gravityX = 0;
-                gravityY = GRAVITY_STRENGTH;
-            }
+            if (!sensorsActive) { gravityX = 0; gravityY = GRAVITY_STRENGTH; }
+        });
+
+        frictionSlider.addEventListener('input', (e) => {
+            frictionSliderVal = parseFloat(e.target.value);
+            frictionVal.textContent = frictionSliderVal.toFixed(2);
+            updatePhysicsParams();
         });
 
         rotationToggle.addEventListener('change', (e) => {
@@ -422,7 +430,6 @@
         sensorBtn.addEventListener('click', toggleSensors);
         addRectBtn.addEventListener('click', () => createShape('rect'));
         addCircleBtn.addEventListener('click', () => createShape('circle'));
-        
         resetBtn.addEventListener('click', () => {
             shapes.forEach(s => container.removeChild(s.el));
             shapes = [];
