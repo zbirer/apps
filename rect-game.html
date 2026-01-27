@@ -67,42 +67,42 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Super Compact Toolbar -->
-    <header class="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 pointer-events-auto flex items-center h-[60px]">
-        <div class="flex items-center w-full px-1 sm:px-4 justify-between overflow-hidden">
+    <!-- Compact Toolbar Fixed for Mobile Visibility -->
+    <header class="fixed top-0 inset-x-0 z-50 bg-white shadow-sm border-b border-gray-200 pointer-events-auto flex items-center h-[60px]">
+        <div class="flex items-center w-full px-2 justify-between overflow-x-auto no-scrollbar">
             
-            <!-- RIGHT: Reset & Sensor -->
-            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                <button id="reset-btn" title="איפוס" class="bg-red-50 hover:bg-red-100 text-red-600 w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-lg text-[10px] font-extrabold border border-red-100 flex items-center justify-center">
-                    <span class="sm:hidden text-lg">🔄</span>
+            <!-- Reset & Sensors -->
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 w-9 h-9 sm:w-auto sm:px-3 sm:py-1.5 rounded-lg text-[11px] font-extrabold border border-red-100 flex items-center justify-center">
+                    <span class="sm:hidden">🔄</span>
                     <span class="hidden sm:inline">איפוס</span>
                 </button>
-                <button id="sensor-btn" class="bg-gray-50 text-gray-600 w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-base">🧭</button>
+                <button id="sensor-btn" class="bg-gray-50 text-gray-600 w-9 h-9 rounded-lg flex items-center justify-center border border-gray-200 text-lg">🧭</button>
             </div>
 
-            <!-- MIDDLE: Sliders (Scaled down for mobile) -->
-            <div class="flex items-center gap-2 sm:gap-4 flex-grow justify-center px-1">
-                <div class="flex flex-col items-center w-full max-w-[60px] sm:max-w-[90px]">
+            <!-- Physics Sliders -->
+            <div class="flex items-center gap-2 sm:gap-4 flex-grow justify-center px-2">
+                <div class="flex flex-col items-center w-full max-w-[65px] sm:max-w-[100px]">
                     <label class="text-[8px] text-gray-400 font-bold uppercase truncate">כבידה</label>
                     <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-1 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
                 </div>
-                <div class="flex flex-col items-center w-full max-w-[60px] sm:max-w-[90px]">
+                <div class="flex flex-col items-center w-full max-w-[65px] sm:max-w-[100px]">
                     <label class="text-[8px] text-gray-400 font-bold uppercase truncate">חיכוך</label>
                     <input type="range" id="friction-slider" min="0" max="1" step="0.01" value="0.50" class="w-full h-1 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-gray-500">
                 </div>
             </div>
 
-            <!-- LEFT: Rotation & Add (Now strictly visible) -->
-            <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-                <div class="flex items-center gap-0.5">
-                    <input type="checkbox" id="rotation-toggle" class="w-3.5 h-3.5 accent-blue-600">
-                    <label for="rotation-toggle" class="text-[9px] sm:text-xs text-gray-500 font-bold">סובב</label>
+            <!-- Rotation & Add -->
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <div class="flex items-center gap-0.5 ml-1">
+                    <input type="checkbox" id="rotation-toggle" class="w-4 h-4 accent-blue-600">
+                    <label for="rotation-toggle" class="text-[10px] text-gray-500 font-bold">סובב</label>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button id="add-rect-btn" class="bg-blue-600 text-white w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
+                    <button id="add-rect-btn" class="bg-blue-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2" stroke-width="3"/></svg>
                     </button>
-                    <button id="add-circle-btn" class="bg-indigo-600 text-white w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
+                    <button id="add-circle-btn" class="bg-indigo-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-sm active:scale-90">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-width="3"/></svg>
                     </button>
                 </div>
@@ -170,8 +170,8 @@
 
         function createShape(forcedType = null) {
             const type = forcedType || 'rect';
-            const size = 50 + Math.random() * 30; // Slightly smaller base size for mobile
-            const width = type === 'rect' ? size * (0.8 + Math.random() * 0.4) : size;
+            const size = 50 + Math.random() * 60; 
+            const width = type === 'rect' ? size * (0.8 + Math.random() * 0.6) : size;
             const height = size;
             const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
             const color = colors[Math.floor(Math.random() * colors.length)];
@@ -203,7 +203,7 @@
                 el, type, x: startX, y: startY,
                 vx: 0, vy: 0, va: 0, angle: 0,
                 width, height, size: (width + height) / 2,
-                mass: (width * height) / 100,
+                mass: (width * height) / 100, 
                 isDragging: false
             };
 
@@ -266,57 +266,87 @@
             } else if (action === 'scale') {
                 activeShape.width *= value; activeShape.height *= value;
                 activeShape.size = (activeShape.width + activeShape.height) / 2;
+                activeShape.mass = (activeShape.width * activeShape.height) / 100;
                 activeShape.el.style.width = `${activeShape.width}px`;
                 activeShape.el.style.height = `${activeShape.height}px`;
             }
         }
 
+        /** RESOLVE COLLISIONS WITH MASS PROPERTIES **/
         function resolveCollisions() {
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
+            
             for (let i = 0; i < ITERATIONS; i++) {
                 for (let j = 0; j < shapes.length; j++) {
                     const s1 = shapes[j];
+                    
+                    // Boundaries - Basic Bouncing
                     if (s1.x < 0) { s1.x = 0; s1.vx *= -currentBounce; }
                     if (s1.x + s1.width > screenW) { s1.x = screenW - s1.width; s1.vx *= -currentBounce; }
                     if (s1.y < HEADER_HEIGHT) { s1.y = HEADER_HEIGHT; s1.vy *= -currentBounce; }
                     if (s1.y + s1.height > screenH) { 
-                        s1.y = screenH - s1.height; s1.vy *= -currentBounce; s1.vx *= currentLinearFriction; 
+                        s1.y = screenH - s1.height; 
+                        s1.vy *= -currentBounce; 
+                        s1.vx *= currentLinearFriction; 
                         if (canRotate) s1.va *= (currentAngularFriction * 0.9); 
                     }
+
                     for (let k = j + 1; k < shapes.length; k++) {
                         const s2 = shapes[k];
                         const dx = (s1.x + s1.width / 2) - (s2.x + s2.width / 2);
                         const dy = (s1.y + s1.height / 2) - (s2.y + s2.height / 2);
                         const minWidth = (s1.width + s2.width) / 2;
                         const minHeight = (s1.height + s2.height) / 2;
+
                         if (Math.abs(dx) < minWidth && Math.abs(dy) < minHeight) {
                             const overlapX = minWidth - Math.abs(dx);
                             const overlapY = minHeight - Math.abs(dy);
+
                             if (overlapX > SLOP || overlapY > SLOP) {
+                                // Mass calculations for reaction
+                                // If being dragged, mass is effectively infinite
+                                const m1 = s1.isDragging ? 1000000 : s1.mass;
+                                const m2 = s2.isDragging ? 1000000 : s2.mass;
+                                const totalM = m1 + m2;
+                                
+                                // Ratios: heavier object moves less (Inertia)
+                                const r1 = m2 / totalM; // Influence of s2 on s1
+                                const r2 = m1 / totalM; // Influence of s1 on s2
+
                                 if (overlapX < overlapY) {
                                     const dir = dx > 0 ? 1 : -1;
-                                    const sep = overlapX / (s1.isDragging || s2.isDragging ? 1 : 2);
-                                    if (!s1.isDragging) s1.x += sep * dir;
-                                    if (!s2.isDragging) s2.x -= sep * dir;
-                                    const avgVx = (s1.vx + s2.vx) / 2;
-                                    s1.vx = avgVx + dir * currentBounce; s2.vx = avgVx - dir * currentBounce;
+                                    
+                                    // 1. Position Resolution (Separation)
+                                    if (!s1.isDragging) s1.x += overlapX * r1 * dir;
+                                    if (!s2.isDragging) s2.x -= overlapX * r2 * dir;
+                                    
+                                    // 2. Velocity Resolution (Impulse)
+                                    const commonVx = (s1.vx * m1 + s2.vx * m2) / totalM;
+                                    if (!s1.isDragging) s1.vx = commonVx + dir * currentBounce * r1;
+                                    if (!s2.isDragging) s2.vx = commonVx - dir * currentBounce * r2;
+
                                     if (canRotate) {
                                         const torque = (dy / minHeight) * (s1.vx - s2.vx) * 0.05;
-                                        s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
-                                        s2.va = Math.max(-MAX_VA, Math.min(MAX_VA, s2.va - torque));
+                                        s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque * r1));
+                                        s2.va = Math.max(-MAX_VA, Math.min(MAX_VA, s2.va - torque * r2));
                                     }
                                 } else {
                                     const dir = dy > 0 ? 1 : -1;
-                                    const sep = overlapY / (s1.isDragging || s2.isDragging ? 1 : 2);
-                                    if (!s1.isDragging) s1.y += sep * dir;
-                                    if (!s2.isDragging) s2.y -= sep * dir;
-                                    const avgVy = (s1.vy + s2.vy) / 2;
-                                    s1.vy = avgVy + dir * currentBounce; s2.vy = avgVy - dir * currentBounce;
+                                    
+                                    // 1. Position Resolution (Separation)
+                                    if (!s1.isDragging) s1.y += overlapY * r1 * dir;
+                                    if (!s2.isDragging) s2.y -= overlapY * r2 * dir;
+
+                                    // 2. Velocity Resolution (Impulse)
+                                    const commonVy = (s1.vy * m1 + s2.vy * m2) / totalM;
+                                    if (!s1.isDragging) s1.vy = commonVy + dir * currentBounce * r1;
+                                    if (!s2.isDragging) s2.vy = commonVy - dir * currentBounce * r2;
+
                                     if (canRotate) {
                                         const torque = (dx / minWidth) * (s1.vy - s2.vy) * 0.05;
-                                        s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque));
-                                        s2.va = Math.max(-MAX_VA, Math.min(MAX_VA, s2.va - torque));
+                                        s1.va = Math.max(-MAX_VA, Math.min(MAX_VA, s1.va + torque * r1));
+                                        s2.va = Math.max(-MAX_VA, Math.min(MAX_VA, s2.va - torque * r2));
                                     }
                                 }
                             }
