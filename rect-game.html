@@ -82,8 +82,8 @@
 
         <div class="flex items-center gap-4 pointer-events-auto bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white">
             <div class="flex flex-col min-w-[120px]">
-                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">כבידה: <span id="gravity-val">0.15</span></label>
-                <input type="range" id="gravity-slider" min="0" max="0.30" step="0.01" value="0.15" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">כבידה: <span id="gravity-val">0.10</span></label>
+                <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
             </div>
             <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl font-bold transition-colors border border-red-100">
                 איפוס
@@ -117,7 +117,7 @@
 
     <script>
         /** PHYSICS CONSTANTS **/
-        let GRAVITY = 0.15; // Updated starting gravity within the 0-0.30 range
+        let GRAVITY = 0.10; // Updated initial value to match new slider range
         const FRICTION = 0.97;          
         const ANGULAR_FRICTION = 0.92;  
         const ITERATIONS = 3;           
@@ -233,11 +233,21 @@
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+
             draggingShape.vx = (clientX - lastMousePos.x);
             draggingShape.vy = (clientY - lastMousePos.y);
 
-            draggingShape.x = clientX - dragOffset.x;
-            draggingShape.y = clientY - dragOffset.y;
+            // Directly update position with boundary clamping during drag
+            let newX = clientX - dragOffset.x;
+            let newY = clientY - dragOffset.y;
+
+            newX = Math.max(0, Math.min(newX, screenW - draggingShape.width));
+            newY = Math.max(0, Math.min(newY, screenH - draggingShape.height));
+
+            draggingShape.x = newX;
+            draggingShape.y = newY;
 
             lastMousePos = { x: clientX, y: clientY };
 
@@ -282,8 +292,18 @@
             for (let i = 0; i < ITERATIONS; i++) {
                 for (let j = 0; j < shapes.length; j++) {
                     const s1 = shapes[j];
+                    
+                    // X-axis boundaries
                     if (s1.x < 0) { s1.x = 0; s1.vx *= -BOUNCE; }
                     if (s1.x + s1.width > screenW) { s1.x = screenW - s1.width; s1.vx *= -BOUNCE; }
+                    
+                    // Top boundary check
+                    if (s1.y < 0) { 
+                        s1.y = 0; 
+                        s1.vy *= -BOUNCE; 
+                    }
+                    
+                    // Bottom boundary check
                     if (s1.y + s1.height > screenH) { 
                         s1.y = screenH - s1.height; 
                         s1.vy *= -BOUNCE; 
