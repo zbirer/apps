@@ -54,15 +54,25 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Sensor Active Animation */
+        .sensor-active {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
 
     <!-- Compact One-Line Header -->
     <header class="fixed top-0 inset-x-0 z-50 bg-white shadow-sm border-b border-gray-200 px-3 flex items-center justify-center pointer-events-auto">
-        <div class="flex items-center gap-2 sm:gap-6 w-full max-w-3xl justify-between">
+        <div class="flex items-center gap-2 sm:gap-6 w-full max-w-4xl justify-between">
             
-            <!-- Group: Reset and Gravity -->
+            <!-- Group: Reset, Gravity and Sensors -->
             <div class="flex items-center gap-2 sm:gap-4">
                 <button id="reset-btn" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-extrabold transition-colors border border-red-100 whitespace-nowrap">
                     איפוס
@@ -72,6 +82,11 @@
                     <label class="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase mb-0.5">כבידה <span id="gravity-val">0.10</span></label>
                     <input type="range" id="gravity-slider" min="0" max="0.20" step="0.01" value="0.10" class="w-full h-1 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600">
                 </div>
+
+                <!-- Sensor Toggle Button -->
+                <button id="sensor-btn" title="הפעל חיישני הטיה" class="bg-gray-100 hover:bg-gray-200 text-gray-600 w-9 h-9 rounded-xl flex items-center justify-center transition-all border border-gray-200">
+                    <span class="text-xl">🧭</span>
+                </button>
             </div>
 
             <!-- Group: Rotation and Add Buttons -->
@@ -82,13 +97,11 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <!-- Add Rectangle -->
                     <button id="add-rect-btn" title="הוסף מלבן" class="bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <rect x="4" y="6" width="16" height="12" rx="2" stroke-width="3" />
                         </svg>
                     </button>
-                    <!-- Add Circle -->
                     <button id="add-circle-btn" title="הוסף עיגול" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all text-white w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <circle cx="12" cy="12" r="8" stroke-width="3" />
@@ -117,7 +130,10 @@
     <script>
         /** PHYSICS & BOUNDARY CONSTANTS **/
         const HEADER_HEIGHT = 64; 
-        let GRAVITY = 0.10; 
+        let GRAVITY_STRENGTH = 0.10; 
+        let gravityX = 0;
+        let gravityY = 0.10;
+        
         const FRICTION = 0.97;          
         const ANGULAR_FRICTION = 0.92;  
         const ITERATIONS = 3;           
@@ -130,6 +146,7 @@
         const gravitySlider = document.getElementById('gravity-slider');
         const gravityVal = document.getElementById('gravity-val');
         const rotationToggle = document.getElementById('rotation-toggle');
+        const sensorBtn = document.getElementById('sensor-btn');
         const addRectBtn = document.getElementById('add-rect-btn');
         const addCircleBtn = document.getElementById('add-circle-btn');
         const resetBtn = document.getElementById('reset-btn');
@@ -142,6 +159,7 @@
         let lastMousePos = { x: 0, y: 0 };
         let longPressTimer = null;
         let canRotate = false; 
+        let sensorsActive = false;
 
         const randomColor = () => {
             const colors = ['bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'];
@@ -193,6 +211,52 @@
             shapes.push(shape);
         }
 
+        /** SENSOR LOGIC **/
+        async function toggleSensors() {
+            if (sensorsActive) {
+                sensorsActive = false;
+                sensorBtn.classList.remove('bg-blue-600', 'text-white', 'sensor-active');
+                gravityX = 0;
+                gravityY = GRAVITY_STRENGTH;
+                return;
+            }
+
+            // Request permission for iOS 13+
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission !== 'granted') return;
+                } catch (err) {
+                    console.error("Sensor permission denied", err);
+                    return;
+                }
+            }
+
+            sensorsActive = true;
+            sensorBtn.classList.add('bg-blue-600', 'text-white', 'sensor-active');
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        function handleOrientation(event) {
+            if (!sensorsActive) return;
+
+            // beta: -180 to 180 (front/back tilt)
+            // gamma: -90 to 90 (left/right tilt)
+            const beta = event.beta; 
+            const gamma = event.gamma;
+
+            // Normalize and map to gravity
+            // Portrait orientation: beta around 45-90 is "down", gamma is lateral
+            // We'll treat the tilt relative to the screen plane
+            gravityX = (gamma / 45) * GRAVITY_STRENGTH;
+            gravityY = (beta / 45) * GRAVITY_STRENGTH;
+            
+            // Clamp values
+            gravityX = Math.max(-GRAVITY_STRENGTH*2, Math.min(GRAVITY_STRENGTH*2, gravityX));
+            gravityY = Math.max(-GRAVITY_STRENGTH*2, Math.min(GRAVITY_STRENGTH*2, gravityY));
+        }
+
+        /** INTERACTION **/
         function startDrag(e, shape) {
             e.preventDefault();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -243,14 +307,13 @@
             if (action === 'delete') {
                 container.removeChild(activeShape.el);
                 shapes = shapes.filter(s => s !== activeShape);
-                closeModal(); // Close only on delete
+                closeModal();
             } else if (action === 'scale') {
                 activeShape.width *= value;
                 activeShape.height *= value;
                 activeShape.size = (activeShape.width + activeShape.height) / 2;
                 activeShape.el.style.width = `${activeShape.width}px`;
                 activeShape.el.style.height = `${activeShape.height}px`;
-                // Modal remains open
             }
         }
 
@@ -314,19 +377,28 @@
         function update() {
             shapes.forEach(s => {
                 if (s.isDragging) return;
-                s.vy += GRAVITY;
+                
+                // Apply Gravity components (Sensor or Static)
+                s.vx += gravityX;
+                s.vy += gravityY;
+                
                 s.vx *= FRICTION;
                 s.vy *= FRICTION;
+                
                 if (canRotate) {
                     s.va *= ANGULAR_FRICTION;
                     if (Math.abs(s.va) < 0.01) s.va = 0;
                     s.angle += s.va;
                 } else { s.va = 0; s.angle = 0; }
+                
                 if (Math.abs(s.vx) < SLEEP_THRESHOLD) s.vx = 0;
-                if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < 0.1) s.vy = 0;
+                if (Math.abs(s.vy) < SLEEP_THRESHOLD && Math.abs(s.vy) < Math.abs(gravityY) * 2) s.vy = 0;
+                
                 s.x += s.vx; s.y += s.vy;
             });
+            
             resolveCollisions();
+            
             shapes.forEach(s => {
                 s.el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) rotate(${s.angle}deg)`;
             });
@@ -334,14 +406,20 @@
         }
 
         gravitySlider.addEventListener('input', (e) => {
-            GRAVITY = parseFloat(e.target.value);
-            gravityVal.textContent = GRAVITY.toFixed(2);
+            GRAVITY_STRENGTH = parseFloat(e.target.value);
+            gravityVal.textContent = GRAVITY_STRENGTH.toFixed(2);
+            if (!sensorsActive) {
+                gravityX = 0;
+                gravityY = GRAVITY_STRENGTH;
+            }
         });
+
         rotationToggle.addEventListener('change', (e) => {
             canRotate = e.target.checked;
             if (!canRotate) shapes.forEach(s => { s.va = 0; s.angle = 0; });
         });
         
+        sensorBtn.addEventListener('click', toggleSensors);
         addRectBtn.addEventListener('click', () => createShape('rect'));
         addCircleBtn.addEventListener('click', () => createShape('circle'));
         
