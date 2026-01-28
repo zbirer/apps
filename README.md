@@ -14,6 +14,8 @@ https://zbirer.github.io/apps/time-difference-calculator.html
 
 https://zbirer.github.io/apps/rect-game.html
 
+https://zbirer.github.io/apps/flight-simulator.html
+
 
 # prompt for json viewer
 
