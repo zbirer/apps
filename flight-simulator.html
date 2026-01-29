@@ -1,15 +1,54 @@
+<!--
+    =============================================================================
+    תיאור המשחק: סימולטור טיסה מדברי (3D Flight Simulator - Desert Edition)
+    =============================================================================
+    משחק זה הוא סימולטור טיסה בתלת-ממד המבוסס על ספריית Three.js.
+    השחקן שולט במטוס קטן מנקודת מבט של טייס (POV) במרחב מדברי פתוח.
+    
+    תכונות עיקריות:
+    1. סביבה: מדבר עצום עם דיונות חול, הרי סלע ואגמים כחולים.
+    2. פיזיקה: מודל טיסה הכולל מצערת (Throttle), עילוי (Lift), כוח כבידה וגרר.
+    3. ממשק משתמש (HUD):
+       - פאנל נתונים: מהירות, גובה ואחוז מצערת (הוקטן בחצי, רוחב מותאם לטקסט).
+       - אופק מלאכותי: עיגול מכשירים המציג את נטיית המטוס (Pitch/Roll) בזמן אמת.
+       - מפה דינמית: מפה מסתובבת שבה כיוון הטיסה תמיד פונה כלפי מעלה.
+       - כפתור מסך מלא: מאפשר חוויית טיסה אימרסיבית.
+    4. שליטה:
+       - ג'ויסטיק וירטואלי (נייד) או מקשי W/A/S/D (מקלדת).
+       - סליידר מצערת לשליטה במהירות המנוע.
+    5. אופטימיזציה: תמיכה מלאה במסכי מגע ובמצב Landscape (רוחבי) בטלפונים.
+
+    הוראות הפעלה:
+    - הגבר מצערת כדי לצבור מהירות על הקרקע.
+    - משוך את הג'ויסטיק למטה (או מקש S) כדי להמריא.
+    - הימנע מהתנגשות בהרים או נחיתה חזקה מדי על הקרקע/מים.
+
+    =============================================================================
+    CHANGE LOG (יש לעדכן פרק זה בכל שינוי של הקובץ)
+    =============================================================================
+    - גרסה 1.0: יצירת הבסיס בתוך חדר עם רהיטים.
+    - גרסה 1.1: הוספת ממשק ג'ויסטיק וסליידר מצערת.
+    - גרסה 1.2: תיקון נקודת המבט (POV) קדימה ושיפור מנגנון האיפוס.
+    - גרסה 1.3: העברת הסביבה למדבר פתוח עם הרים.
+    - גרסה 1.4: הוספת אגמים, מפה מסתובבת ואופק מלאכותי.
+    - גרסה 1.5: אופטימיזציה למובייל (Landscape/Portrait) והקטנת ה-HUD ב-50%.
+    - גרסה 1.6: הוספת הערת תיאור גדולה ו-Change Log בתחילת הקובץ.
+    - גרסה 1.7: הוספת כפתור מסך מלא ושיפור ויזואלי של עיגול האופק המלאכותי. (נוכחי)
+    =============================================================================
+-->
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>סימולטור טיסה - מותאם ל-Landscape</title>
+    <title>סימולטור טיסה - מדבר</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #000; user-select: none; touch-action: none; }
         canvas { display: block; }
         
-        /* HUD - רוחב מותאם לתוכן - הוקטן בחצי */
+        /* HUD - פאנל נתונים קטן מאוד (הוקטן בחצי) */
         #hud {
             position: absolute;
             top: 10px;
@@ -19,13 +58,14 @@
             pointer-events: none;
             font-family: monospace;
             background: rgba(0, 0, 0, 0.6);
-            padding: 4px 8px; /* צומצם */
-            border-radius: 6px;
+            padding: 4px 6px;
+            border-radius: 4px;
             border: 1px solid #0f0;
             width: fit-content;
             white-space: nowrap;
-            z-index: 10;
-            font-size: 9px; /* הוקטן משמעותית */
+            z-index: 100;
+            font-size: 8px; /* קטן מאוד */
+            line-height: 1.2;
         }
 
         /* מפה קטנה בצד ימין */
@@ -33,48 +73,46 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            width: 80px; /* הוקטן לנייד */
+            width: 80px;
             height: 80px;
             background: rgba(40, 40, 40, 0.8);
             border: 2px solid #fff;
             border-radius: 50%;
             overflow: hidden;
-            z-index: 10;
+            z-index: 50;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            pointer-events: none;
         }
 
         #minimap-canvas { width: 100%; height: 100%; }
 
-        /* אופק מלאכותי */
+        /* אופק מלאכותי (Attitude Indicator) */
         #horizon-instrument {
             position: absolute;
-            bottom: 10px;
+            bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 60px;
-            height: 60px;
-            background: #333;
-            border: 2px solid #555;
+            width: 66px;
+            height: 66px;
+            background: #222;
+            border: 2px solid #666;
             border-radius: 50%;
             overflow: hidden;
-            z-index: 10;
-        }
-
-        /* הסתרת כלי האופק ב-Landscape קיצוני בטלפונים קטנים כדי לפנות מקום */
-        @media (max-height: 350px) {
-            #horizon-instrument { display: none; }
+            z-index: 50;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            pointer-events: none; /* לא חוסם לחיצות */
         }
 
         #horizon-disc {
             position: absolute;
-            top: -30px;
-            left: -30px;
-            width: 120px;
-            height: 120px;
+            top: -33px;
+            left: -33px;
+            width: 132px;
+            height: 132px;
             background: linear-gradient(to bottom, 
                 #3498db 0%, #3498db 50%, 
-                #fff 50%, #fff 51%, 
-                #a0522d 51%, #a0522d 100%);
+                #ffffff 50%, #ffffff 51%, 
+                #8b4513 51%, #8b4513 100%);
             transition: transform 0.05s linear;
         }
 
@@ -83,63 +121,58 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 15px;
+            width: 16px;
             height: 2px;
             background: #f1c40f;
-            z-index: 11;
+            z-index: 60;
         }
 
-        #debug-log {
-            position: absolute;
-            top: 100px;
-            right: 10px;
-            color: #ffeb3b;
-            font-size: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 4px;
-            border-radius: 5px;
-            pointer-events: none;
-            z-index: 10;
-            max-width: 100px;
-            direction: ltr;
-        }
-
-        #reset-btn {
+        /* כפתורי מערכת עליונים */
+        #top-controls {
             position: absolute;
             top: 10px;
-            left: 100px;
-            background: #d32f2f;
-            color: white;
-            border: 1px solid white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 10px;
-            z-index: 2000;
+            left: 80px; /* מוזז ליד ה-HUD */
+            display: flex;
+            gap: 5px;
+            z-index: 1000;
         }
 
-        /* בקרי טיסה */
+        .sys-btn {
+            background: rgba(60, 60, 60, 0.8);
+            color: white;
+            border: 1px solid white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 9px;
+            white-space: nowrap;
+        }
+
+        #reset-btn { background: #d32f2f; }
+        #fullscreen-btn { background: #2e7d32; }
+
+        /* בקרי טיסה (ג'ויסטיק ומצערת) */
         #throttle-container {
             position: absolute;
-            bottom: 15px;
-            right: 15px;
+            bottom: 20px;
+            right: 20px;
             width: 40px;
-            height: 130px;
+            height: 140px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 15px;
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 0;
-            z-index: 50;
+            padding: 8px 0;
+            z-index: 200;
         }
 
         #throttle-slider {
             width: 30px;
-            height: 90px;
+            height: 100px;
             -webkit-appearance: slider-vertical;
             appearance: slider-vertical;
             background: transparent;
@@ -148,8 +181,8 @@
 
         #joystick-container {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
+            bottom: 20px;
+            left: 20px;
             width: 100px;
             height: 100px;
             background: rgba(255, 255, 255, 0.1);
@@ -158,7 +191,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 50;
+            z-index: 200;
         }
 
         #joystick-knob {
@@ -166,26 +199,14 @@
             height: 40px;
             background: #fff;
             border-radius: 50%;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
-        /* התאמות למסכים גדולים (Desktop / Tablet) */
-        @media (min-width: 600px) and (min-height: 500px) {
-            #hud { font-size: 12px; top: 20px; left: 20px; padding: 6px 12px; }
-            #minimap-container { width: 140px; height: 140px; top: 20px; right: 20px; }
-            #horizon-instrument { width: 90px; height: 90px; bottom: 30px; }
-            #horizon-disc { top: -45px; left: -45px; width: 180px; height: 180px; }
-            #reset-btn { top: 20px; left: 160px; font-size: 12px; padding: 8px 15px; }
-            #throttle-container { width: 60px; height: 200px; right: 40px; bottom: 40px; }
-            #joystick-container { width: 160px; height: 160px; left: 40px; bottom: 40px; }
-            #debug-log { top: 180px; right: 20px; font-size: 10px; }
-        }
-
-        /* התאמה למצב Landscape בטלפון */
+        /* התאמות Landscape למובייל */
         @media (orientation: landscape) and (max-height: 500px) {
-            #reset-btn { top: auto; bottom: 15px; left: 50%; transform: translateX(-50%); }
-            #hud { top: 10px; left: 10px; }
-            #minimap-container { top: 10px; right: 10px; width: 80px; height: 80px; }
+            #top-controls { top: auto; bottom: 10px; left: 50%; transform: translateX(-50%); }
+            #hud { top: 5px; left: 5px; }
+            #minimap-container { top: 5px; right: 5px; width: 70px; height: 70px; }
         }
 
         #crash-overlay {
@@ -196,12 +217,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 3000;
+            z-index: 5000;
         }
 
         #crash-box {
             background: #1a1a1a;
-            padding: 20px;
+            padding: 25px;
             border-radius: 15px;
             border: 2px solid #ff4444;
             text-align: center;
@@ -209,10 +230,10 @@
         }
 
         .crash-title { color: #ff4444; font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-        .crash-reason { color: #fff; font-size: 12px; margin-bottom: 15px; }
+        .crash-reason { color: #fff; font-size: 13px; margin-bottom: 20px; }
         .crash-btn { 
             background: #ff4444; color: white; border: none; padding: 10px 20px; 
-            font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold;
+            font-size: 15px; border-radius: 8px; cursor: pointer; font-weight: bold;
         }
         .label { font-weight: bold; margin-left: 3px; color: #0f0; }
     </style>
@@ -220,9 +241,14 @@
 <body>
 
     <div id="hud">
-        <div><span class="label">מהירות:</span> <span id="speed">0</span></div>
-        <div><span class="label">גובה:</span> <span id="altitude">0</span></div>
-        <div><span class="label">מצערת:</span> <span id="throttle-text">0</span>%</div>
+        <div><span class="label">SPEED:</span> <span id="speed">0</span></div>
+        <div><span class="label">ALT:</span> <span id="altitude">0</span></div>
+        <div><span class="label">THR:</span> <span id="throttle-text">0</span>%</div>
+    </div>
+
+    <div id="top-controls">
+        <button id="reset-btn" class="sys-btn">איפוס (R)</button>
+        <button id="fullscreen-btn" class="sys-btn">מסך מלא</button>
     </div>
 
     <div id="minimap-container">
@@ -234,14 +260,10 @@
         <div id="horizon-center-mark"></div>
     </div>
 
-    <div id="debug-log">Status: Initializing...</div>
-
-    <button id="reset-btn">איפוס (R)</button>
-
     <div id="throttle-container">
-        <span style="color:white; font-size:8px">מצערת</span>
+        <span style="color:white; font-size:7px">THR</span>
         <input type="range" id="throttle-slider" min="0" max="100" value="0" step="1">
-        <span style="color:white; font-size:8px">עצור</span>
+        <span style="color:white; font-size:7px">IDLE</span>
     </div>
 
     <div id="joystick-container">
@@ -252,34 +274,26 @@
         <div id="crash-box">
             <div class="crash-title">התרסקות!</div>
             <div id="crash-reason-display" class="crash-reason"></div>
-            <button class="crash-btn" id="crash-reset-btn">טיסה חדשה</button>
+            <button class="crash-btn" id="crash-reset-btn">טיסה מחדש</button>
         </div>
     </div>
 
     <script>
         let scene, camera, renderer;
         let plane, propeller;
-        let speed = 0;
-        let throttle = 0;
-        let isCrashed = false;
-        let resetGracePeriod = 0;
+        let speed = 0, throttle = 0;
+        let isCrashed = false, resetGracePeriod = 0;
         
-        const MAX_THROTTLE = 1;
-        const LIFT_COEFFICIENT = 0.08;
-        const DRAG = 0.98;
-        const GRAVITY = 0.01;
+        const WORLD_SIZE = 1200;
         const GROUND_Y = 0.25;
-        const WORLD_SIZE = 1200; 
+        const DRAG = 0.98, GRAVITY = 0.01;
+        const LIFT_COEFFICIENT = 0.08;
         
-        const PITCH_SENSITIVITY = 0.02;
-        const ROLL_SENSITIVITY = 0.035;
-        const YAW_SENSITIVITY = 0.02;
+        const PITCH_SENS = 0.02, ROLL_SENS = 0.035, YAW_SENS = 0.02;
 
         const input = { pitch: 0, roll: 0, throttle: 0 };
         const keys = {};
-        const obstacles = [];
-        const lakes = [];
-
+        const obstacles = [], lakes = [];
         let minimapCtx;
 
         window.onload = function() {
@@ -288,18 +302,6 @@
             setupMinimap();
             animate();
         };
-
-        function logDebug(msg) {
-            console.log("[FlightSim Log]: " + msg);
-            document.getElementById('debug-log').innerText = msg;
-        }
-
-        function setupMinimap() {
-            const canvas = document.getElementById('minimap-canvas');
-            canvas.width = 160;
-            canvas.height = 160;
-            minimapCtx = canvas.getContext('2d');
-        }
 
         function init() {
             scene = new THREE.Scene();
@@ -319,84 +321,32 @@
             sunLight.castShadow = true;
             scene.add(sunLight);
 
-            createDesert();
+            createWorld();
             createPlane();
             
             document.getElementById('reset-btn').addEventListener('click', resetPlane);
             document.getElementById('crash-reset-btn').addEventListener('click', resetPlane);
-
-            window.addEventListener('keydown', e => { 
-                keys[e.code] = true; 
-                if(e.code === 'KeyR') resetPlane();
+            
+            document.getElementById('fullscreen-btn').addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen();
+                }
             });
+
+            window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyR') resetPlane(); });
             window.addEventListener('keyup', e => keys[e.code] = false);
             window.addEventListener('resize', onWindowResize);
-            
-            logDebug("Ready for flight. Optimized UI.");
         }
 
-        function setupControls() {
-            const throttleSlider = document.getElementById('throttle-slider');
-            throttleSlider.addEventListener('input', (e) => {
-                input.throttle = e.target.value / 100;
-            });
-
-            const joystickContainer = document.getElementById('joystick-container');
-            const joystickKnob = document.getElementById('joystick-knob');
-            let isDragging = false;
-
-            const handleJoystickMove = (clientX, clientY) => {
-                const rect = joystickContainer.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                let dx = clientX - centerX;
-                let dy = clientY - centerY;
-                const maxRadius = rect.width / 2;
-                const distance = Math.sqrt(dx*dx + dy*dy);
-                
-                if (distance > maxRadius) {
-                    dx *= maxRadius / distance;
-                    dy *= maxRadius / distance;
-                }
-                
-                joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-                
-                const deadzone = 5;
-                const normalizedX = Math.abs(dx) < deadzone ? 0 : dx / maxRadius;
-                const normalizedY = Math.abs(dy) < deadzone ? 0 : dy / maxRadius;
-
-                input.roll = normalizedX;
-                input.pitch = normalizedY;
-            };
-
-            const resetJoystick = () => {
-                isDragging = false;
-                joystickKnob.style.transform = `translate(0px, 0px)`;
-                input.roll = 0; input.pitch = 0;
-            };
-
-            const onStart = (e) => {
-                isDragging = true;
-                const touch = e.touches ? e.touches[0] : e;
-                handleJoystickMove(touch.clientX, touch.clientY);
-            };
-
-            const onMove = (e) => {
-                if (!isDragging) return;
-                const touch = e.touches ? e.touches[0] : e;
-                handleJoystickMove(touch.clientX, touch.clientY);
-                if(e.touches) e.preventDefault();
-            };
-
-            joystickContainer.addEventListener('mousedown', onStart);
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', resetJoystick);
-            joystickContainer.addEventListener('touchstart', onStart, {passive: false});
-            window.addEventListener('touchmove', onMove, {passive: false});
-            window.addEventListener('touchend', resetJoystick);
+        function setupMinimap() {
+            const canvas = document.getElementById('minimap-canvas');
+            canvas.width = 160; canvas.height = 160;
+            minimapCtx = canvas.getContext('2d');
         }
 
-        function createDesert() {
+        function createWorld() {
             const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE * 3, WORLD_SIZE * 3);
             const groundMat = new THREE.MeshStandardMaterial({ color: 0xd2b48c }); 
             const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -405,38 +355,23 @@
             scene.add(ground);
 
             for (let i = 0; i < 60; i++) {
-                const h = 40 + Math.random() * 120;
-                const r = 30 + Math.random() * 60;
-                const geo = new THREE.ConeGeometry(r, h, 12);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x8b7355 });
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(
-                    (Math.random() - 0.5) * WORLD_SIZE * 2.5,
-                    h / 2,
-                    (Math.random() - 0.5) * WORLD_SIZE * 2.5
-                );
-                if (Math.abs(mesh.position.x) < 80 && Math.abs(mesh.position.z + 200) < 150) mesh.position.z += 300;
+                const h = 40 + Math.random() * 120, r = 30 + Math.random() * 60;
+                const mesh = new THREE.Mesh(new THREE.ConeGeometry(r, h, 12), new THREE.MeshStandardMaterial({ color: 0x8b7355 }));
+                mesh.position.set((Math.random()-0.5)*WORLD_SIZE*2.5, h/2, (Math.random()-0.5)*WORLD_SIZE*2.5);
+                if (Math.abs(mesh.position.x)<80 && Math.abs(mesh.position.z+200)<150) mesh.position.z += 300;
                 mesh.castShadow = true;
                 mesh.userData = { type: 'mountain', radius: r, height: h };
-                scene.add(mesh);
-                obstacles.push(mesh);
+                scene.add(mesh); obstacles.push(mesh);
             }
 
             for (let i = 0; i < 25; i++) {
                 const r = 30 + Math.random() * 50;
-                const geo = new THREE.CircleGeometry(r, 32);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x039be5, side: THREE.DoubleSide });
-                const lake = new THREE.Mesh(geo, mat);
+                const lake = new THREE.Mesh(new THREE.CircleGeometry(r, 32), new THREE.MeshStandardMaterial({ color: 0x039be5, side: THREE.DoubleSide }));
                 lake.rotation.x = -Math.PI / 2;
-                lake.position.set(
-                    (Math.random() - 0.5) * WORLD_SIZE * 2.5,
-                    0.03,
-                    (Math.random() - 0.5) * WORLD_SIZE * 2.5
-                );
-                if (Math.abs(lake.position.x) < 80 && Math.abs(lake.position.z + 200) < 150) lake.position.x += 150;
+                lake.position.set((Math.random()-0.5)*WORLD_SIZE*2.5, 0.03, (Math.random()-0.5)*WORLD_SIZE*2.5);
+                if (Math.abs(lake.position.x)<80 && Math.abs(lake.position.z+200)<150) lake.position.x += 150;
                 lake.userData = { type: 'lake', radius: r };
-                scene.add(lake);
-                lakes.push(lake);
+                scene.add(lake); lakes.push(lake);
             }
         }
 
@@ -460,38 +395,62 @@
         function resetPlane() {
             plane.position.set(0, GROUND_Y + 0.05, -200); 
             plane.rotation.set(0, 0, 0); 
-            speed = 0;
-            throttle = 0;
-            input.throttle = 0;
-            input.pitch = 0;
-            input.roll = 0;
+            speed = 0; throttle = 0;
+            input.throttle = 0; input.pitch = 0; input.roll = 0;
             const slider = document.getElementById('throttle-slider');
             if(slider) slider.value = 0;
-            isCrashed = false;
-            resetGracePeriod = 120;
+            isCrashed = false; resetGracePeriod = 120;
             document.getElementById('crash-overlay').style.display = 'none';
+        }
+
+        function setupControls() {
+            const throttleSlider = document.getElementById('throttle-slider');
+            throttleSlider.addEventListener('input', (e) => { input.throttle = e.target.value / 100; });
+
+            const joystickContainer = document.getElementById('joystick-container');
+            const joystickKnob = document.getElementById('joystick-knob');
+            let isDragging = false;
+
+            const move = (clientX, clientY) => {
+                const rect = joystickContainer.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2, centerY = rect.top + rect.height / 2;
+                let dx = clientX - centerX, dy = clientY - centerY;
+                const maxRadius = rect.width / 2;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance > maxRadius) { dx *= maxRadius/distance; dy *= maxRadius/distance; }
+                joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+                const deadzone = 5;
+                input.roll = Math.abs(dx) < deadzone ? 0 : dx / maxRadius;
+                input.pitch = Math.abs(dy) < deadzone ? 0 : dy / maxRadius;
+            };
+
+            const resetJoy = () => { isDragging = false; joystickKnob.style.transform = `translate(0,0)`; input.roll = 0; input.pitch = 0; };
+            const onStart = (e) => { isDragging = true; const t = e.touches ? e.touches[0] : e; move(t.clientX, t.clientY); };
+            const onMove = (e) => { if (!isDragging) return; const t = e.touches ? e.touches[0] : e; move(t.clientX, t.clientY); if(e.touches) e.preventDefault(); };
+
+            joystickContainer.addEventListener('mousedown', onStart);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', resetJoy);
+            joystickContainer.addEventListener('touchstart', onStart, {passive: false});
+            window.addEventListener('touchmove', onMove, {passive: false});
+            window.addEventListener('touchend', resetJoy);
         }
 
         function updatePhysics() {
             if (isCrashed) return;
             if (resetGracePeriod > 0) resetGracePeriod--;
 
-            let currentPitch = input.pitch;
-            let currentRoll = input.roll;
-            let currentThrottle = input.throttle;
-
-            if (keys['KeyW']) currentPitch = 0.5;
-            if (keys['KeyS']) currentPitch = -0.5;
-            if (keys['KeyA']) currentRoll = 0.5;
-            if (keys['KeyD']) currentRoll = -0.5;
+            let curPitch = input.pitch, curRoll = input.roll, curThr = input.throttle;
+            if (keys['KeyW']) curPitch = 0.5; if (keys['KeyS']) curPitch = -0.5;
+            if (keys['KeyA']) curRoll = 0.5; if (keys['KeyD']) curRoll = -0.5;
             
-            const targetSpeed = currentThrottle * 1.2;
+            const targetSpeed = curThr * 1.25;
             speed += (targetSpeed - speed) * 0.04;
             speed *= DRAG;
 
-            plane.rotateX(currentPitch * PITCH_SENSITIVITY * (speed + 0.1));
-            plane.rotateZ(-currentRoll * ROLL_SENSITIVITY * (speed + 0.1));
-            plane.rotateY(-currentRoll * YAW_SENSITIVITY * speed);
+            plane.rotateX(curPitch * PITCH_SENS * (speed + 0.1));
+            plane.rotateZ(-curRoll * ROLL_SENS * (speed + 0.1));
+            plane.rotateY(-curRoll * YAW_SENS * speed);
             plane.translateZ(speed);
 
             const lift = speed * speed * LIFT_COEFFICIENT * 18;
@@ -499,123 +458,71 @@
                 plane.position.y += (lift - GRAVITY);
             } else {
                 plane.position.y = GROUND_Y;
-                plane.rotation.x *= 0.95;
-                plane.rotation.z *= 0.95;
+                plane.rotation.x *= 0.95; plane.rotation.z *= 0.95;
             }
 
-            propeller.rotation.z += 0.2 + currentThrottle * 0.8;
+            propeller.rotation.z += 0.2 + curThr * 0.8;
+            if (resetGracePeriod === 0) checkCollisions();
             
-            if (resetGracePeriod === 0) {
-                checkCollisions();
-            }
-            
-            updateHUD(currentThrottle);
-            updateHorizonGauge();
-            drawRotatingMinimap();
+            updateUI(curThr);
         }
 
-        function drawRotatingMinimap() {
-            if (!minimapCtx) return;
-            const size = minimapCtx.canvas.width;
-            const center = size / 2;
-            minimapCtx.clearRect(0, 0, size, size);
-
-            const mapScale = size / (WORLD_SIZE * 2);
+        function updateUI(tVal) {
+            document.getElementById('speed').innerText = Math.round(speed * 850);
+            document.getElementById('altitude').innerText = Math.max(0, Math.round((plane.position.y - GROUND_Y) * 10));
+            document.getElementById('throttle-text').innerText = Math.round(tVal * 100);
             
-            minimapCtx.save();
-            minimapCtx.translate(center, center);
-            minimapCtx.rotate(-plane.rotation.y);
-
-            minimapCtx.fillStyle = '#03a9f4';
-            lakes.forEach(lake => {
-                const dx = (lake.position.x - plane.position.x) * mapScale;
-                const dz = (lake.position.z - plane.position.z) * mapScale;
-                if (Math.abs(dx) < center * 1.5 && Math.abs(dz) < center * 1.5) {
-                    minimapCtx.beginPath();
-                    minimapCtx.arc(dx, dz, 4, 0, Math.PI * 2);
-                    minimapCtx.fill();
-                }
-            });
-
-            minimapCtx.fillStyle = '#795548';
-            obstacles.forEach(obs => {
-                const dx = (obs.position.x - plane.position.x) * mapScale;
-                const dz = (obs.position.z - plane.position.z) * mapScale;
-                if (Math.abs(dx) < center * 1.5 && Math.abs(dz) < center * 1.5) {
-                    minimapCtx.beginPath();
-                    minimapCtx.arc(dx, dz, 3, 0, Math.PI * 2);
-                    minimapCtx.fill();
-                }
-            });
-
-            minimapCtx.restore();
-
-            minimapCtx.fillStyle = '#ff1744';
-            minimapCtx.beginPath();
-            minimapCtx.moveTo(center, center - 4);
-            minimapCtx.lineTo(center + 3, center + 3);
-            minimapCtx.lineTo(center - 3, center + 3);
-            minimapCtx.closePath();
-            minimapCtx.fill();
-            
-            minimapCtx.strokeStyle = 'rgba(255,255,255,0.4)';
-            minimapCtx.beginPath();
-            minimapCtx.arc(center, center, center - 2, 0, Math.PI * 2);
-            minimapCtx.stroke();
-        }
-
-        function updateHorizonGauge() {
+            // Horizon Instrument
             const disc = document.getElementById('horizon-disc');
-            if (!disc) return;
-            const roll = plane.rotation.z;
-            const pitch = plane.rotation.x;
-            const pitchOffset = pitch * 40; 
-            disc.style.transform = `rotate(${roll}rad) translateY(${pitchOffset}px)`;
+            if (disc) {
+                const pitchOff = plane.rotation.x * 40;
+                disc.style.transform = `rotate(${plane.rotation.z}rad) translateY(${pitchOff}px)`;
+            }
+
+            // Minimap
+            if (minimapCtx) {
+                const sz = 160, c = 80;
+                minimapCtx.clearRect(0,0,sz,sz);
+                const scale = sz / (WORLD_SIZE * 2);
+                minimapCtx.save();
+                minimapCtx.translate(c,c);
+                minimapCtx.rotate(-plane.rotation.y);
+                minimapCtx.fillStyle = '#03a9f4';
+                lakes.forEach(l => {
+                    const dx = (l.position.x - plane.position.x) * scale, dz = (l.position.z - plane.position.z) * scale;
+                    if(Math.abs(dx)<sz && Math.abs(dz)<sz) { minimapCtx.beginPath(); minimapCtx.arc(dx,dz,4,0,Math.PI*2); minimapCtx.fill(); }
+                });
+                minimapCtx.fillStyle = '#795548';
+                obstacles.forEach(o => {
+                    const dx = (o.position.x - plane.position.x) * scale, dz = (o.position.z - plane.position.z) * scale;
+                    if(Math.abs(dx)<sz && Math.abs(dz)<sz) { minimapCtx.beginPath(); minimapCtx.arc(dx,dz,3,0,Math.PI*2); minimapCtx.fill(); }
+                });
+                minimapCtx.restore();
+                minimapCtx.fillStyle = '#ff1744';
+                minimapCtx.beginPath(); minimapCtx.moveTo(c, c-5); minimapCtx.lineTo(c+4, c+4); minimapCtx.lineTo(c-4, c+4); minimapCtx.closePath(); minimapCtx.fill();
+            }
         }
 
         function checkCollisions() {
-            if (plane.position.y <= GROUND_Y + 0.05) {
-                if (Math.abs(plane.rotation.x) > 0.8 || Math.abs(plane.rotation.z) > 0.8) {
-                    crash("זווית חדה מדי בקרקע.");
-                    return;
-                }
+            if (plane.position.y <= GROUND_Y + 0.05 && (Math.abs(plane.rotation.x) > 0.8 || Math.abs(plane.rotation.z) > 0.8)) {
+                return crash("זווית חדה מדי בנחיתה.");
             }
-
             if (Math.abs(plane.position.x) > WORLD_SIZE * 1.4 || Math.abs(plane.position.z) > WORLD_SIZE * 1.4) {
-                crash("יצאת מגבולות המדבר.");
-                return;
+                return crash("יציאה מגבולות המרחב.");
             }
-
             for (let obs of obstacles) {
-                const dist = plane.position.distanceTo(obs.position);
-                const safeRadius = obs.userData.radius;
-                if (dist < safeRadius && plane.position.y < obs.userData.height) {
-                    crash("התנגשות בהר.");
-                    break;
-                }
+                if (plane.position.distanceTo(obs.position) < obs.userData.radius && plane.position.y < obs.userData.height) return crash("התנגשות בהר.");
             }
-
             for (let lake of lakes) {
-                const dist = plane.position.distanceTo(lake.position);
-                if (dist < lake.userData.radius && plane.position.y < GROUND_Y + 0.3) {
-                    crash("נחיתת מים במדבר.");
-                    break;
-                }
+                if (plane.position.distanceTo(lake.position) < lake.userData.radius && plane.position.y < GROUND_Y + 0.3) return crash("התרסקות במים.");
             }
         }
 
         function crash(reason) {
             if (isCrashed) return;
             isCrashed = true;
-            logDebug("CRASH: " + reason);
             document.getElementById('crash-reason-display').innerText = reason;
             document.getElementById('crash-overlay').style.display = 'flex';
-        }
-
-        function updateHUD(tVal) {
-            document.getElementById('speed').innerText = Math.round(speed * 850);
-            document.getElementById('altitude').innerText = Math.max(0, Math.round((plane.position.y - GROUND_Y) * 10));
-            document.getElementById('throttle-text').innerText = Math.round(tVal * 100);
         }
 
         function onWindowResize() {
