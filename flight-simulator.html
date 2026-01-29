@@ -1,39 +1,41 @@
 <!--
     =============================================================================
-    תיאור המשחק: סימולטור טיסה מדברי (3D Flight Simulator - Desert Edition)
+    Game Description: 3D Flight Simulator - Desert Edition
     =============================================================================
-    משחק זה הוא סימולטור טיסה בתלת-ממד המבוסס על ספריית Three.js.
-    השחקן שולט במטוס קטן מנקודת מבט של טייס (POV) במרחב מדברי פתוח.
+    This game is a 3D flight simulator based on the Three.js library.
+    The player controls a small aircraft from a Pilot's Point of View (POV) 
+    within a vast open desert environment.
     
-    תכונות עיקריות:
-    1. סביבה: מדבר עצום עם דיונות חול, הרי סלע ואגמים כחולים.
-    2. פיזיקה: מודל טיסה הכולל מצערת (Throttle), עילוי (Lift), כוח כבידה וגרר.
-    3. ממשק משתמש (HUD):
-       - פאנל נתונים: מהירות, גובה ואחוז מצערת (הוקטן בחצי, רוחב מותאם לטקסט).
-       - אופק מלאכותי: עיגול מכשירים המציג את נטיית המטוס (Pitch/Roll) בזמן אמת.
-       - מפה דינמית: מפה מסתובבת שבה כיוון הטיסה תמיד פונה כלפי מעלה.
-       - כפתור מסך מלא: מאפשר חוויית טיסה אימרסיבית.
-    4. שליטה:
-       - ג'ויסטיק וירטואלי (נייד) או מקשי W/A/S/D (מקלדת).
-       - סליידר מצערת לשליטה במהירות המנוע.
-    5. אופטימיזציה: תמיכה מלאה במסכי מגע ובמצב Landscape (רוחבי) בטלפונים.
+    Key Features:
+    1. Environment: Vast desert with sand dunes, rocky mountains, and blue lakes.
+    2. Physics: Flight model including Throttle, Lift, Gravity, and Drag.
+    3. User Interface (HUD):
+       - Data Panel: Speed, Altitude, and Throttle percentage (compact design).
+       - Artificial Horizon: Instrument showing Pitch/Roll in real-time.
+       - Dynamic Minimap: Rotating map where flight direction always faces UP.
+       - Fullscreen Button: Toggle for an immersive flight experience.
+    4. Controls:
+       - Virtual Joystick (Mobile/Touch) or W/A/S/D keys (Keyboard).
+       - Throttle Slider for engine power control.
+    5. Optimization: Full support for touchscreens and Landscape/Portrait modes.
 
-    הוראות הפעלה:
-    - הגבר מצערת כדי לצבור מהירות על הקרקע.
-    - משוך את הג'ויסטיק למטה (או מקש S) כדי להמריא.
-    - הימנע מהתנגשות בהרים או נחיתה חזקה מדי על הקרקע/מים.
+    Flight Instructions:
+    - Increase Throttle to gain ground speed.
+    - Pull the Joystick DOWN (or press S) to rotate the nose up and take off.
+    - Avoid crashing into mountains or hitting the ground/water at steep angles.
 
     =============================================================================
-    CHANGE LOG (יש לעדכן פרק זה בכל שינוי של הקובץ)
+    CHANGE LOG (Update this section with every file modification)
     =============================================================================
-    - גרסה 1.0: יצירת הבסיס בתוך חדר עם רהיטים.
-    - גרסה 1.1: הוספת ממשק ג'ויסטיק וסליידר מצערת.
-    - גרסה 1.2: תיקון נקודת המבט (POV) קדימה ושיפור מנגנון האיפוס.
-    - גרסה 1.3: העברת הסביבה למדבר פתוח עם הרים.
-    - גרסה 1.4: הוספת אגמים, מפה מסתובבת ואופק מלאכותי.
-    - גרסה 1.5: אופטימיזציה למובייל (Landscape/Portrait) והקטנת ה-HUD ב-50%.
-    - גרסה 1.6: הוספת הערת תיאור גדולה ו-Change Log בתחילת הקובץ.
-    - גרסה 1.7: הוספת כפתור מסך מלא ושיפור ויזואלי של עיגול האופק המלאכותי. (נוכחי)
+    - Version 1.0: Initial base created inside a room with furniture.
+    - Version 1.1: Added virtual joystick and throttle slider interface.
+    - Version 1.2: Fixed forward POV and improved reset mechanism.
+    - Version 1.3: Moved environment to an open desert with mountains.
+    - Version 1.4: Added lakes, rotating minimap, and artificial horizon.
+    - Version 1.5: Mobile optimization (Landscape/Portrait) and HUD size reduction.
+    - Version 1.6: Added descriptive header and Change Log (Hebrew).
+    - Version 1.7: Added Fullscreen button and improved Artificial Horizon visual.
+    - Version 1.8: Translated all code comments and documentation to English. (Current)
     =============================================================================
 -->
 
@@ -42,13 +44,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>סימולטור טיסה - מדבר</title>
+    <title>Flight Simulator - Desert</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #000; user-select: none; touch-action: none; }
         canvas { display: block; }
         
-        /* HUD - פאנל נתונים קטן מאוד (הוקטן בחצי) */
+        /* HUD - Data panel (50% size reduction) */
         #hud {
             position: absolute;
             top: 10px;
@@ -64,11 +66,11 @@
             width: fit-content;
             white-space: nowrap;
             z-index: 100;
-            font-size: 8px; /* קטן מאוד */
+            font-size: 8px; 
             line-height: 1.2;
         }
 
-        /* מפה קטנה בצד ימין */
+        /* Small minimap on the right */
         #minimap-container {
             position: absolute;
             top: 10px;
@@ -86,7 +88,7 @@
 
         #minimap-canvas { width: 100%; height: 100%; }
 
-        /* אופק מלאכותי (Attitude Indicator) */
+        /* Artificial Horizon (Attitude Indicator) */
         #horizon-instrument {
             position: absolute;
             bottom: 15px;
@@ -100,7 +102,7 @@
             overflow: hidden;
             z-index: 50;
             box-shadow: 0 0 10px rgba(0,0,0,0.8);
-            pointer-events: none; /* לא חוסם לחיצות */
+            pointer-events: none; 
         }
 
         #horizon-disc {
@@ -127,11 +129,11 @@
             z-index: 60;
         }
 
-        /* כפתורי מערכת עליונים */
+        /* Top System Buttons */
         #top-controls {
             position: absolute;
             top: 10px;
-            left: 80px; /* מוזז ליד ה-HUD */
+            left: 80px; 
             display: flex;
             gap: 5px;
             z-index: 1000;
@@ -152,7 +154,7 @@
         #reset-btn { background: #d32f2f; }
         #fullscreen-btn { background: #2e7d32; }
 
-        /* בקרי טיסה (ג'ויסטיק ומצערת) */
+        /* Flight Controls (Joystick and Throttle) */
         #throttle-container {
             position: absolute;
             bottom: 20px;
@@ -202,7 +204,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
-        /* התאמות Landscape למובייל */
+        /* Mobile Landscape Adjustments */
         @media (orientation: landscape) and (max-height: 500px) {
             #top-controls { top: auto; bottom: 10px; left: 50%; transform: translateX(-50%); }
             #hud { top: 5px; left: 5px; }
@@ -327,6 +329,7 @@
             document.getElementById('reset-btn').addEventListener('click', resetPlane);
             document.getElementById('crash-reset-btn').addEventListener('click', resetPlane);
             
+            // Fullscreen Toggle
             document.getElementById('fullscreen-btn').addEventListener('click', () => {
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(() => {});
@@ -354,16 +357,19 @@
             ground.receiveShadow = true;
             scene.add(ground);
 
+            // Generate Mountains
             for (let i = 0; i < 60; i++) {
                 const h = 40 + Math.random() * 120, r = 30 + Math.random() * 60;
                 const mesh = new THREE.Mesh(new THREE.ConeGeometry(r, h, 12), new THREE.MeshStandardMaterial({ color: 0x8b7355 }));
                 mesh.position.set((Math.random()-0.5)*WORLD_SIZE*2.5, h/2, (Math.random()-0.5)*WORLD_SIZE*2.5);
+                // Safe zone for starting area
                 if (Math.abs(mesh.position.x)<80 && Math.abs(mesh.position.z+200)<150) mesh.position.z += 300;
                 mesh.castShadow = true;
                 mesh.userData = { type: 'mountain', radius: r, height: h };
                 scene.add(mesh); obstacles.push(mesh);
             }
 
+            // Generate Lakes
             for (let i = 0; i < 25; i++) {
                 const r = 30 + Math.random() * 50;
                 const lake = new THREE.Mesh(new THREE.CircleGeometry(r, 32), new THREE.MeshStandardMaterial({ color: 0x039be5, side: THREE.DoubleSide }));
@@ -453,6 +459,7 @@
             plane.rotateY(-curRoll * YAW_SENS * speed);
             plane.translateZ(speed);
 
+            // Aerodynamic lift calculation
             const lift = speed * speed * LIFT_COEFFICIENT * 18;
             if (plane.position.y > GROUND_Y || lift > GRAVITY) {
                 plane.position.y += (lift - GRAVITY);
@@ -472,14 +479,14 @@
             document.getElementById('altitude').innerText = Math.max(0, Math.round((plane.position.y - GROUND_Y) * 10));
             document.getElementById('throttle-text').innerText = Math.round(tVal * 100);
             
-            // Horizon Instrument
+            // Artificial Horizon logic
             const disc = document.getElementById('horizon-disc');
             if (disc) {
                 const pitchOff = plane.rotation.x * 40;
                 disc.style.transform = `rotate(${plane.rotation.z}rad) translateY(${pitchOff}px)`;
             }
 
-            // Minimap
+            // Minimap drawing logic (rotating world around stationary plane icon)
             if (minimapCtx) {
                 const sz = 160, c = 80;
                 minimapCtx.clearRect(0,0,sz,sz);
@@ -498,21 +505,26 @@
                     if(Math.abs(dx)<sz && Math.abs(dz)<sz) { minimapCtx.beginPath(); minimapCtx.arc(dx,dz,3,0,Math.PI*2); minimapCtx.fill(); }
                 });
                 minimapCtx.restore();
+                // Static plane icon pointing forward
                 minimapCtx.fillStyle = '#ff1744';
                 minimapCtx.beginPath(); minimapCtx.moveTo(c, c-5); minimapCtx.lineTo(c+4, c+4); minimapCtx.lineTo(c-4, c+4); minimapCtx.closePath(); minimapCtx.fill();
             }
         }
 
         function checkCollisions() {
+            // Ground crash check (angle threshold)
             if (plane.position.y <= GROUND_Y + 0.05 && (Math.abs(plane.rotation.x) > 0.8 || Math.abs(plane.rotation.z) > 0.8)) {
                 return crash("זווית חדה מדי בנחיתה.");
             }
+            // World boundary check
             if (Math.abs(plane.position.x) > WORLD_SIZE * 1.4 || Math.abs(plane.position.z) > WORLD_SIZE * 1.4) {
                 return crash("יציאה מגבולות המרחב.");
             }
+            // Obstacle (Mountain) collision
             for (let obs of obstacles) {
                 if (plane.position.distanceTo(obs.position) < obs.userData.radius && plane.position.y < obs.userData.height) return crash("התנגשות בהר.");
             }
+            // Water collision
             for (let lake of lakes) {
                 if (plane.position.distanceTo(lake.position) < lake.userData.radius && plane.position.y < GROUND_Y + 0.3) return crash("התרסקות במים.");
             }
