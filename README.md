@@ -16,6 +16,8 @@ https://zbirer.github.io/apps/rect-game.html
 
 https://zbirer.github.io/apps/flight-simulator.html
 
+https://zbirer.github.io/apps/scheduler.html
+
 
 # prompt for json viewer
 
