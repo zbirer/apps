@@ -14,6 +14,7 @@
   - 2026-02-03: Implemented a 5-month progress bar for Agam's course.
   - 2026-02-03: Added "Weeks" unit to the countdown row and optimized mobile layout for 6 units.
   - 2026-02-03: Added this Change Log section at the top of the file.
+  - 2026-02-03: Optimized number transition animation to target only the text, preventing the container square from flashing/blinking during updates.
 -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -69,6 +70,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border: 1px solid rgba(255,255,255,0.5);
             overflow: hidden;
+            /* Static background, no animation here */
         }
 
         .agam-box {
@@ -97,6 +99,8 @@
             line-height: 1;
             z-index: 1;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            display: inline-block;
+            will-change: transform, opacity;
         }
 
         .label {
@@ -107,13 +111,20 @@
             white-space: nowrap;
         }
 
-        /* --- אנימציית Simple Fade --- */
-        .animate-change {
-            animation: fadeIn 0.4s ease-in-out;
+        /* --- אנימציית טקסט בלבד למניעת הבהוב הריבוע --- */
+        .animate-digit {
+            animation: digitFadeSlide 0.4s ease-out;
         }
-        @keyframes fadeIn {
-            from { opacity: 0.3; }
-            to { opacity: 1; }
+        
+        @keyframes digitFadeSlide {
+            0% { 
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            100% { 
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 640px) {
@@ -361,10 +372,10 @@
                 const el = document.getElementById(`${prefix}-${key}`);
                 if (el && el.innerText !== values[key]) {
                     el.innerText = values[key];
-                    const parent = el.parentElement;
-                    parent.classList.remove('animate-change');
-                    void parent.offsetWidth; 
-                    parent.classList.add('animate-change');
+                    // Trigger animation only on the text element
+                    el.classList.remove('animate-digit');
+                    void el.offsetWidth; 
+                    el.classList.add('animate-digit');
                 }
             }
         }
