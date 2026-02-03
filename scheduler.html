@@ -1,3 +1,20 @@
+<!-- 
+  CHANGE LOG:
+  - Every change made to this file should be documented here with a new line in English.
+  - Reason for change must be clearly explained.
+
+  HISTORY:
+  - 2026-02-03: Initial version with simple countdown.
+  - 2026-02-03: Added mobile responsive design and fixed Hebrew grammar for plural/singular units.
+  - 2026-02-03: Added total days display (later removed) and detailed time units (hours, minutes, seconds).
+  - 2026-02-03: Implemented accurate calendar-based month calculation and English debug logs.
+  - 2026-02-03: Redesigned UI to a "Flip Clock" style with individual cards for each time unit.
+  - 2026-02-03: Differentiated color schemes for Agam (Blue/Course) and Shahaf (Orange/Release).
+  - 2026-02-03: Added randomized motivation quotes (20 per person) and simple fade animation.
+  - 2026-02-03: Implemented a 5-month progress bar for Agam's course.
+  - 2026-02-03: Added "Weeks" unit to the countdown row and optimized mobile layout for 6 units.
+  - 2026-02-03: Added this Change Log section at the top of the file.
+-->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -44,7 +61,7 @@
             border-radius: 8px;
             width: 100%;
             aspect-ratio: 4 / 5; 
-            max-width: 55px; /* Slightly smaller to fit 6 units */
+            max-width: 55px; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -103,7 +120,7 @@
             .countdown-row { 
                 gap: 4px !important; 
                 width: 100%;
-                max-width: 360px; /* Adjusted to fit 6 boxes */
+                max-width: 360px; 
             }
             .happy-panel {
                 padding: 1rem !important;
@@ -173,7 +190,6 @@
                             <p class="text-blue-400 font-bold text-xs">סיום קורס: 19.03.2026</p>
                         </div>
                         
-                        <!-- Row ordered Right to Left: Months to Seconds -->
                         <div class="flex flex-row-reverse items-center justify-between w-full gap-2 countdown-row" id="agam-timer">
                             <div class="flip-card"><div class="digit-box agam-box"><span class="digit-value" id="agam-m">00</span></div><span class="label">חודשים</span></div>
                             <div class="flip-card"><div class="digit-box agam-box"><span class="digit-value" id="agam-w">00</span></div><span class="label">שבועות</span></div>
@@ -325,7 +341,6 @@
             let diffRemaining = targetDate - tempDate;
             const totalDaysRemaining = Math.floor(diffRemaining / (1000 * 60 * 60 * 24));
             
-            // Calculate weeks and remainder days
             const weeks = Math.floor(totalDaysRemaining / 7);
             const days = totalDaysRemaining % 7;
 
