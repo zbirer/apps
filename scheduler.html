@@ -44,7 +44,7 @@
             border-radius: 8px;
             width: 100%;
             aspect-ratio: 4 / 5; 
-            max-width: 60px;
+            max-width: 55px; /* Slightly smaller to fit 6 units */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -74,7 +74,7 @@
         }
 
         .digit-value {
-            font-size: clamp(1.1rem, 4.5vw, 2.1rem); 
+            font-size: clamp(1rem, 4vw, 2rem); 
             font-weight: 900;
             color: #ffffff;
             line-height: 1;
@@ -83,7 +83,7 @@
         }
 
         .label {
-            font-size: clamp(0.45rem, 2.2vw, 0.65rem);
+            font-size: clamp(0.4rem, 2vw, 0.65rem);
             font-weight: 800;
             color: #64748b;
             text-transform: uppercase;
@@ -103,7 +103,7 @@
             .countdown-row { 
                 gap: 4px !important; 
                 width: 100%;
-                max-width: 340px;
+                max-width: 360px; /* Adjusted to fit 6 boxes */
             }
             .happy-panel {
                 padding: 1rem !important;
@@ -117,7 +117,7 @@
             border: 2px solid white;
             padding: 1.5rem;
             width: 100%;
-            max-width: 500px;
+            max-width: 550px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         }
 
@@ -156,11 +156,11 @@
 <body>
 
     <div class="main-container">
-        <div class="w-full max-w-lg space-y-4 sm:space-y-6 pt-4">
+        <div class="w-full max-w-xl space-y-4 sm:space-y-6 pt-4">
             
             <div class="text-center space-y-1">
                 <h1 class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight">סופרים בכיף! 🥳</h1>
-                <p class="text-slate-600 font-bold text-sm sm:text-base">כי כל יום שעובר לא חוזר!</p>
+                <p class="text-slate-600 font-bold text-sm sm:text-base">כל יום הוא מתנה, והיעד מתקרב!</p>
             </div>
 
             <div class="space-y-4 sm:space-y-6">
@@ -173,8 +173,10 @@
                             <p class="text-blue-400 font-bold text-xs">סיום קורס: 19.03.2026</p>
                         </div>
                         
+                        <!-- Row ordered Right to Left: Months to Seconds -->
                         <div class="flex flex-row-reverse items-center justify-between w-full gap-2 countdown-row" id="agam-timer">
                             <div class="flip-card"><div class="digit-box agam-box"><span class="digit-value" id="agam-m">00</span></div><span class="label">חודשים</span></div>
+                            <div class="flip-card"><div class="digit-box agam-box"><span class="digit-value" id="agam-w">00</span></div><span class="label">שבועות</span></div>
                             <div class="flip-card"><div class="digit-box agam-box"><span class="digit-value" id="agam-d">00</span></div><span class="label">ימים</span></div>
                             <div class="flip-card"><div class="digit-box agam-box"><span class="digit-value" id="agam-h">00</span></div><span class="label">שעות</span></div>
                             <div class="flip-card"><div class="digit-box agam-box"><span class="digit-value" id="agam-min">00</span></div><span class="label">דקות</span></div>
@@ -206,6 +208,7 @@
                         
                         <div class="flex flex-row-reverse items-center justify-between w-full gap-2 countdown-row" id="shahaf-timer">
                             <div class="flip-card"><div class="digit-box shahaf-box"><span class="digit-value" id="shahaf-m">00</span></div><span class="label">חודשים</span></div>
+                            <div class="flip-card"><div class="digit-box shahaf-box"><span class="digit-value" id="shahaf-w">00</span></div><span class="label">שבועות</span></div>
                             <div class="flip-card"><div class="digit-box shahaf-box"><span class="digit-value" id="shahaf-d">00</span></div><span class="label">ימים</span></div>
                             <div class="flip-card"><div class="digit-box shahaf-box"><span class="digit-value" id="shahaf-h">00</span></div><span class="label">שעות</span></div>
                             <div class="flip-card"><div class="digit-box shahaf-box"><span class="digit-value" id="shahaf-min">00</span></div><span class="label">דקות</span></div>
@@ -226,9 +229,7 @@
 
     <script>
         const agamDate = new Date('2026-03-19T00:00:00');
-        // Total course duration: 5 months. Start date = March 19 minus 5 months = Oct 19, 2025
         const agamStartDate = new Date('2025-10-19T00:00:00'); 
-        
         const shahafDate = new Date('2026-10-11T00:00:00');
 
         const agamQuotes = [
@@ -322,13 +323,19 @@
             }
 
             let diffRemaining = targetDate - tempDate;
-            const days = Math.floor(diffRemaining / (1000 * 60 * 60 * 24));
+            const totalDaysRemaining = Math.floor(diffRemaining / (1000 * 60 * 60 * 24));
+            
+            // Calculate weeks and remainder days
+            const weeks = Math.floor(totalDaysRemaining / 7);
+            const days = totalDaysRemaining % 7;
+
             const hours = Math.floor((diffRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diffRemaining % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diffRemaining % (1000 * 60)) / 1000);
 
             const values = {
                 'm': formatNum(months),
+                'w': formatNum(weeks),
                 'd': formatNum(days),
                 'h': formatNum(hours),
                 'min': formatNum(minutes),
