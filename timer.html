@@ -11,11 +11,12 @@
   - 2026-02-04: Redesigned UI for medical use (Pulse & Respiration) with improved mobile ergonomics.
   - 2026-02-04: Updated UI with cheerful and vibrant colors.
   - 2026-02-04: Fixed mobile responsiveness issues to ensure full content fits within viewport without scrolling.
-  - 2026-02-04: Redesigned "Reset" button to be a solid, bright coral button for maximum visibility.
+  - 2026-02-04: Redesigned "Reset" button for maximum visibility.
   - 2026-02-04: Fixed layout overflow where the Reset button was being pushed off-screen.
-  - 2026-02-04: New graphic design: Modern "Midnight Professional" theme with deep blues, mint accents, and glass effects.
-  - 2026-02-04: Strict vertical layout optimization to ensure bottom controls are always visible on short screens.
-                Reduced headers and paddings, used flex-shrink on non-essential parts.
+  - 2026-02-04: New graphic design: Modern "Midnight Professional" theme.
+  - 2026-02-04: Strict vertical layout optimization for short screens.
+  - 2026-02-04: Reordered keypad digits to match the standard phone layout (1-2-3).
+  - 2026-02-04: Removed "ספירה" label and icon from the results card for a cleaner look.
 -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -50,11 +51,11 @@
             height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* מניעת גלילה לחלוטין */
+            overflow: hidden; 
             touch-action: manipulation;
         }
 
-        /* Header Area - מצומצם למינימום ההכרחי */
+        /* Header Area */
         .header {
             flex: 0 0 12vh;
             display: flex;
@@ -83,7 +84,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Main Dashboard Area - גמיש אך ניתן לכיווץ */
+        /* Main Dashboard Area */
         .main-content {
             flex: 1 1 18vh;
             padding: 5px 15px;
@@ -111,16 +112,13 @@
             text-align: center;
             border-right: 1px solid var(--glass-border);
             padding-right: 8px;
-        }
-
-        .count-label {
-            font-size: 0.65rem;
-            color: rgba(255, 255, 255, 0.4);
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .number-box {
-            font-size: clamp(1.8rem, 5vh, 2.5rem);
+            font-size: clamp(2.2rem, 6vh, 3.2rem);
             font-weight: 900;
             color: var(--accent-mint);
         }
@@ -152,7 +150,7 @@
             color: var(--accent-glow);
         }
 
-        /* Numpad Container - גובה קבוע אך נמוך יותר */
+        /* Numpad Container */
         .numpad-container {
             flex: 0 0 45vh;
             background: rgba(0, 0, 0, 0.2);
@@ -190,7 +188,7 @@
         .numpad .btn-clear { color: var(--accent-danger); background: rgba(255, 77, 77, 0.1); }
         .numpad .btn-back { color: rgba(255, 255, 255, 0.3); }
 
-        /* Controls Area - תמיד גלוי למטה */
+        /* Controls Area */
         .controls {
             flex: 0 0 25vh;
             display: flex;
@@ -222,7 +220,6 @@
         .btn-start { background: var(--accent-mint); color: #0b2010; }
         .btn-pause { background: var(--accent-gold); color: #202000; }
         
-        /* כפתור איפוס - בולט, גדול ותופס את כל הרוחב */
         .btn-reset {
             background-color: var(--accent-danger);
             color: white;
@@ -299,7 +296,6 @@
     <div class="main-content">
         <div class="results-card">
             <div class="count-area">
-                <span class="count-label">ספירה 🔢</span>
                 <div class="number-box" id="numberBox">00</div>
             </div>
             <div class="calculations-stack">
@@ -317,15 +313,18 @@
 
     <div class="numpad-container">
         <div class="numpad">
-            <button onclick="appendNumber(1)">1</button>
-            <button onclick="appendNumber(2)">2</button>
             <button onclick="appendNumber(3)">3</button>
-            <button onclick="appendNumber(4)">4</button>
-            <button onclick="appendNumber(5)">5</button>
+            <button onclick="appendNumber(2)">2</button>
+            <button onclick="appendNumber(1)">1</button>
+            
             <button onclick="appendNumber(6)">6</button>
-            <button onclick="appendNumber(7)">7</button>
-            <button onclick="appendNumber(8)">8</button>
+            <button onclick="appendNumber(5)">5</button>
+            <button onclick="appendNumber(4)">4</button>
+            
             <button onclick="appendNumber(9)">9</button>
+            <button onclick="appendNumber(8)">8</button>
+            <button onclick="appendNumber(7)">7</button>
+            
             <button class="btn-clear" onclick="clearInput()">C</button>
             <button onclick="appendNumber(0)">0</button>
             <button class="btn-back" onclick="backspace()">⌫</button>
