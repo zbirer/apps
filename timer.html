@@ -13,22 +13,26 @@
   - 2026-02-04: Fixed mobile responsiveness issues to ensure full content fits within viewport without scrolling.
   - 2026-02-04: Redesigned "Reset" button to be a solid, bright coral button for maximum visibility.
   - 2026-02-04: Fixed layout overflow where the Reset button was being pushed off-screen.
-                Applied flex-shrink: 0 to controls and adjusted section heights.
+  - 2026-02-04: New graphic design: Modern "Midnight Professional" theme with deep blues, mint accents, and glass effects.
+  - 2026-02-04: Strict vertical layout optimization to ensure bottom controls are always visible on short screens.
+                Reduced headers and paddings, used flex-shrink on non-essential parts.
 -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>מחשבון דופק ונשימה עליז</title>
+    <title>מחשבון דופק ונשימה מקצועי</title>
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
-            --primary-text: #4a4a4a;
-            --accent-sunny: #ffd93d;
-            --accent-teal: #4ecdc4;
-            --accent-coral: #ff5252; /* צבע אדום בולט יותר */
-            --card-bg: rgba(255, 255, 255, 0.9);
+            --bg-gradient: linear-gradient(180deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --primary-text: #ffffff;
+            --accent-glow: #00d2ff;
+            --accent-mint: #3ae374;
+            --accent-danger: #ff4d4d;
+            --accent-gold: #fffa65;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
         }
 
         * {
@@ -39,49 +43,50 @@
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--bg-gradient);
             color: var(--primary-text);
             height: 100vh;
             height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
-            overflow: hidden; 
+            overflow: hidden; /* מניעת גלילה לחלוטין */
             touch-action: manipulation;
         }
 
-        /* Header Area - מצומצם יותר כדי להשאיר מקום */
+        /* Header Area - מצומצם למינימום ההכרחי */
         .header {
-            flex: 0 0 auto;
-            padding: 10px 5px;
+            flex: 0 0 12vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom: 3px solid var(--accent-sunny);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .timer-display {
             font-size: clamp(2.5rem, 6vh, 4rem);
             font-weight: 900;
-            color: var(--accent-coral);
+            color: var(--accent-glow);
             font-variant-numeric: tabular-nums;
             line-height: 1;
         }
 
         .subtitle {
-            font-size: clamp(0.7rem, 1.5vh, 0.8rem);
-            font-weight: 600;
-            color: #888;
+            font-size: clamp(0.6rem, 1.5vh, 0.8rem);
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
             margin-top: 2px;
+            letter-spacing: 0.5px;
         }
 
-        /* Main Dashboard Area - גמיש */
+        /* Main Dashboard Area - גמיש אך ניתן לכיווץ */
         .main-content {
-            flex: 1 1 auto;
-            padding: 8px 15px;
+            flex: 1 1 18vh;
+            padding: 5px 15px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -90,13 +95,13 @@
 
         .results-card {
             background: var(--card-bg);
-            border-radius: 18px;
+            border-radius: 20px;
             padding: 10px;
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
-            border: 1px solid white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
             width: 100%;
             max-width: 380px;
         }
@@ -104,22 +109,20 @@
         .count-area {
             flex: 1;
             text-align: center;
-            border-right: 2px dashed #eee;
+            border-right: 1px solid var(--glass-border);
             padding-right: 8px;
         }
 
         .count-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #999;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
             display: block;
-            margin-bottom: 2px;
         }
 
         .number-box {
-            font-size: clamp(1.8rem, 4.5vh, 2.5rem);
+            font-size: clamp(1.8rem, 5vh, 2.5rem);
             font-weight: 900;
-            color: var(--accent-teal);
+            color: var(--accent-mint);
         }
 
         .calculations-stack {
@@ -133,151 +136,156 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
             padding: 5px 10px;
-            border-radius: 10px;
-            border: 1px solid #f0f0f0;
+            border-radius: 8px;
         }
 
         .calc-label {
             font-size: 0.75rem;
-            font-weight: 700;
-            color: #666;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .calc-value {
-            font-size: clamp(1rem, 2vh, 1.2rem);
+            font-size: clamp(1rem, 2.2vh, 1.3rem);
             font-weight: 900;
-            color: var(--accent-coral);
+            color: var(--accent-glow);
         }
 
-        /* Numpad Container - מוגדר כ-גמיש אך לא נעלם */
+        /* Numpad Container - גובה קבוע אך נמוך יותר */
         .numpad-container {
-            flex: 0 0 auto;
-            background: white;
+            flex: 0 0 45vh;
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 20px 20px 0 0;
-            padding: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
         }
 
         .numpad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
+            gap: 8px;
             width: 100%;
-            max-width: 380px;
+            max-width: 360px;
             margin: 0 auto;
         }
 
         .numpad button {
-            background: #fff8f8;
+            background: rgba(255, 255, 255, 0.08);
             border: none;
-            color: var(--primary-text);
-            padding: clamp(8px, 1.8vh, 14px) 0;
-            font-size: clamp(1.1rem, 2.8vh, 1.4rem);
+            color: white;
+            padding: clamp(8px, 2.5vh, 18px) 0;
+            font-size: clamp(1.2rem, 3.5vh, 1.8rem);
             border-radius: 12px;
-            font-weight: 800;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            font-weight: 600;
         }
 
         .numpad button:active {
-            background: var(--accent-sunny);
+            background: var(--accent-glow);
+            color: #000;
             transform: scale(0.95);
         }
 
-        .numpad .btn-clear { color: var(--accent-coral); background: #fff0f0; }
-        .numpad .btn-back { color: #aaa; }
+        .numpad .btn-clear { color: var(--accent-danger); background: rgba(255, 77, 77, 0.1); }
+        .numpad .btn-back { color: rgba(255, 255, 255, 0.3); }
 
-        /* Controls Area - מוגדר כחשוב ביותר להישאר גלוי */
+        /* Controls Area - תמיד גלוי למטה */
         .controls {
-            flex: 0 0 auto; /* לא מתכווץ */
+            flex: 0 0 25vh;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+
+        .control-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto;
             gap: 8px;
-            padding: 10px;
-            background: white;
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
         }
 
         .btn {
             border: none;
-            border-radius: 12px;
-            padding: clamp(12px, 2.2vh, 15px);
+            border-radius: 14px;
+            padding: clamp(10px, 2.2vh, 16px);
             font-size: clamp(0.9rem, 2vh, 1.1rem);
             font-weight: 800;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
         }
 
-        .btn-start { background-color: var(--accent-teal); color: white; }
-        .btn-pause { background-color: var(--accent-sunny); color: var(--primary-text); }
+        .btn-start { background: var(--accent-mint); color: #0b2010; }
+        .btn-pause { background: var(--accent-gold); color: #202000; }
         
-        /* כפתור איפוס בולט במיוחד */
+        /* כפתור איפוס - בולט, גדול ותופס את כל הרוחב */
         .btn-reset {
-            grid-column: span 2;
-            background-color: var(--accent-coral);
+            background-color: var(--accent-danger);
             color: white;
-            padding: clamp(10px, 2vh, 14px);
-            box-shadow: 0 4px 12px rgba(255, 82, 82, 0.4);
-            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+            width: 100%;
+            margin-top: 2px;
         }
 
         .btn-reset:active:not(:disabled) {
             transform: scale(0.98);
-            filter: brightness(0.9);
+            filter: brightness(0.8);
         }
 
-        .btn:disabled { opacity: 0.4; filter: grayscale(1); }
+        .btn:disabled { 
+            opacity: 0.2; 
+            filter: grayscale(1);
+        }
 
         /* Modal */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(255, 82, 82, 0.4);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
 
         .modal-content {
-            background: white;
+            background: #111;
             padding: 25px;
-            border-radius: 20px;
+            border-radius: 24px;
             width: 80%;
             max-width: 300px;
             text-align: center;
+            border: 1px solid var(--glass-border);
         }
 
         .modal-btns {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             margin-top: 20px;
         }
 
         .modal-btns button {
             flex: 1;
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 12px;
             border: none;
             font-weight: 800;
-            cursor: pointer;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        @keyframes pulse-glow {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
 
         .timer-running {
-            animation: pulse 1s infinite ease-in-out;
-            color: var(--accent-coral) !important;
+            animation: pulse-glow 1.5s infinite ease-in-out;
+            color: var(--accent-mint) !important;
         }
     </style>
 </head>
@@ -325,17 +333,19 @@
     </div>
 
     <div class="controls">
-        <button class="btn btn-start" id="startBtn">התחל ▶️</button>
-        <button class="btn btn-pause" id="pauseBtn" disabled>השהה ⏸️</button>
+        <div class="control-row">
+            <button class="btn btn-start" id="startBtn">התחל ▶️</button>
+            <button class="btn btn-pause" id="pauseBtn" disabled>השהה ⏸️</button>
+        </div>
         <button class="btn btn-reset" id="resetBtn">איפוס נתונים 🧼</button>
     </div>
 
     <div class="modal" id="resetModal">
         <div class="modal-content">
-            <h2 style="color: var(--accent-coral); margin-bottom: 10px;">לאפס הכל? 🧼</h2>
+            <h2 style="color: var(--accent-danger); margin-bottom: 10px;">לאפס הכל? 🧼</h2>
             <div class="modal-btns">
-                <button style="background: #f1f3f5; color: #888;" id="cancelReset">ביטול</button>
-                <button style="background: var(--accent-coral); color: white;" id="confirmReset">אישור</button>
+                <button style="background: rgba(255,255,255,0.1); color: white;" id="cancelReset">ביטול</button>
+                <button style="background: var(--accent-danger); color: white;" id="confirmReset">אישור</button>
             </div>
         </div>
     </div>
