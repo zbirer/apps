@@ -1,134 +1,299 @@
+<!-- 
+  CHANGE LOG
+  Any changes to this file should be recorded in this log.
+  The log and all entries must be written in English.
+
+  - 2026-02-04: Initial version with changelog header added.
+  - 2026-02-04: Added numeric keypad and input field for setting timer duration.
+  - 2026-02-04: Implemented full responsiveness for all device sizes.
+  - 2026-02-04: Changed timer logic to count forward (stopwatch) up to 1 hour.
+                Separated numeric pad input into a dedicated "Number Box".
+                Updated UI labels to Hebrew.
+  - 2026-02-04: Added auto-calculated fields: Multiplied by 2 and Multiplied by 4.
+-->
 <!DOCTYPE html>
-<html>
+<html lang="he" dir="rtl">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>טיימר ומקלדת נומרית</title>
     <style>
+        :root {
+            --primary: #6e8efb;
+            --secondary: #a777e3;
+            --glass: rgba(255, 255, 255, 0.15);
+            --text-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            padding: 20px;
         }
+
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: clamp(1rem, 5vw, 2.5rem);
+            border-radius: 32px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
             text-align: center;
-            width: 80%;
-            max-width: 400px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
         }
-        .timer {
-            font-size: 5rem;
-            font-weight: 700;
-            margin: 1.5rem 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+
+        .timer-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .timer-display {
+            font-size: clamp(4rem, 15vw, 6.5rem);
+            font-weight: 800;
+            margin: 0.5rem 0;
+            text-shadow: var(--text-shadow);
             font-variant-numeric: tabular-nums;
+            letter-spacing: -3px;
+            line-height: 1;
         }
-        .buttons {
+
+        .input-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .number-box {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 5vw, 1.6rem);
+            color: #fff;
+            min-height: 3.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+        }
+
+        .calculations-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .calc-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        .calc-value {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .numpad button {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: clamp(15px, 4vw, 22px) 0;
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+        }
+
+        .numpad button:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.9);
+        }
+
+        .action-buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-top: 2rem;
+            gap: 14px;
         }
-        .reset {
+
+        .reset-btn {
             grid-column: span 2;
         }
-        button {
-            font-size: 1.2rem;
-            padding: 1rem;
+
+        .control-btn {
+            font-size: clamp(1rem, 3.5vw, 1.2rem);
+            padding: 16px;
             border: none;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #6e8efb;
+            border-radius: 16px;
+            background: white;
+            color: var(--primary);
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            transition: all 0.2s ease;
         }
-        button:active {
-            transform: scale(0.95);
-        }
-        button:disabled {
-            background: rgba(255, 255, 255, 0.5);
-            color: #999;
+
+        .control-btn:disabled {
+            background: rgba(255, 255, 255, 0.4);
+            color: rgba(0,0,0,0.25);
             cursor: not-allowed;
         }
+
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            padding: 20px;
         }
+
         .modal-content {
             background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            width: 80%;
-            max-width: 300px;
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 340px;
             text-align: center;
+            color: #2d3436;
         }
+
         .modal-buttons {
             display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
+            gap: 14px;
+            margin-top: 1.8rem;
         }
-        .modal button {
+
+        .modal-buttons button {
             flex: 1;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 700;
             color: white;
-            padding: 0.8rem;
+            cursor: pointer;
         }
-        .confirm {
-            background: #6e8efb;
+
+        .confirm-btn { background: var(--primary); }
+        .cancel-btn { background: #ff5e5e; }
+
+        .limit-reached {
+            color: #ff5e5e;
+            animation: shake 0.3s ease;
         }
-        .cancel {
-            background: #fb6e6e;
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="timer" id="timer">0:00</div>
-        <div class="buttons">
-            <button id="startBtn">Start</button>
-            <button id="pauseBtn" disabled>Pause</button>
-            <button id="resetBtn" class="reset">Reset</button>
+        <!-- מקטע הטיימר -->
+        <div class="timer-section">
+            <div class="timer-display" id="timer">00:00</div>
+            <div class="action-buttons">
+                <button class="control-btn" id="startBtn">התחל</button>
+                <button class="control-btn" id="pauseBtn" disabled>השהה</button>
+            </div>
+        </div>
+
+        <!-- מקטע הקלט הנומרי -->
+        <div class="input-section">
+            <div class="number-box" id="numberBox">---</div>
+            
+            <!-- חישובים אוטומטיים -->
+            <div class="calculations-grid">
+                <div class="calc-item">
+                    <span>כפול 2</span>
+                    <span class="calc-value" id="calcX2">0</span>
+                </div>
+                <div class="calc-item">
+                    <span>כפול 4</span>
+                    <span class="calc-value" id="calcX4">0</span>
+                </div>
+            </div>
+
+            <div class="numpad">
+                <button onclick="appendNumber(1)">1</button>
+                <button onclick="appendNumber(2)">2</button>
+                <button onclick="appendNumber(3)">3</button>
+                <button onclick="appendNumber(4)">4</button>
+                <button onclick="appendNumber(5)">5</button>
+                <button onclick="appendNumber(6)">6</button>
+                <button onclick="appendNumber(7)">7</button>
+                <button onclick="appendNumber(8)">8</button>
+                <button onclick="appendNumber(9)">9</button>
+                <button onclick="clearInput()">C</button>
+                <button onclick="appendNumber(0)">0</button>
+                <button onclick="backspace()">&larr;</button>
+            </div>
+
+            <button class="control-btn reset-btn" id="resetBtn">איפוס הכל</button>
         </div>
     </div>
 
+    <!-- מודאל איפוס -->
     <div class="modal" id="resetModal">
         <div class="modal-content">
-            <h2 style="color: #333; margin-top: 0;">Reset Timer?</h2>
-            <p style="color: #666;">Are you sure you want to reset the timer?</p>
+            <h2 style="margin-top: 0;">לאפס הכל?</h2>
+            <p>פעולה זו תאפס את הזמן ואת הקלט הנומרי.</p>
             <div class="modal-buttons">
-                <button class="cancel" id="cancelReset">Cancel</button>
-                <button class="confirm" id="confirmReset">Reset</button>
+                <button class="cancel-btn" id="cancelReset">לא</button>
+                <button class="confirm-btn" id="confirmReset">כן, אפס</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Variables to track the timer state
-        let startTime = null; // The timestamp when the timer was started
-        let elapsedTime = 0; // The total elapsed time in milliseconds
-        let timerId = null; // ID of the active timer interval
+        // משתני טיימר
+        let timerId = null;
+        let elapsedTime = 0; // במילישניות
+        let startTime = 0;
+        const MAX_TIME = 3600000; // שעה אחת במילישניות
 
-        // DOM elements for timer display and buttons
+        // משתני קלט נומרי
+        let numericInput = "";
+
         const timerDisplay = document.getElementById('timer');
+        const numberBox = document.getElementById('numberBox');
+        const calcX2Display = document.getElementById('calcX2');
+        const calcX4Display = document.getElementById('calcX4');
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const resetBtn = document.getElementById('resetBtn');
@@ -136,73 +301,100 @@
         const confirmResetBtn = document.getElementById('confirmReset');
         const cancelResetBtn = document.getElementById('cancelReset');
 
-        // Function to update the timer display
-        function updateDisplay() {
-            // Calculate total seconds and split into minutes and seconds
+        // פונקציות טיימר (ספירה קדימה)
+        function updateTimerDisplay() {
             const totalSeconds = Math.floor(elapsedTime / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            // Update the timer text content with formatted time
-            timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            const mins = Math.floor(totalSeconds / 60);
+            const secs = totalSeconds % 60;
+            timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            
+            if (elapsedTime >= MAX_TIME) {
+                stopTimer();
+                timerDisplay.classList.add('limit-reached');
+            }
         }
 
-        // Function to start the timer
         function startTimer() {
-            if (timerId) return; // Prevent multiple intervals
-
-            // Adjust startTime to account for paused elapsed time
+            if (timerId) return;
+            
             startTime = Date.now() - elapsedTime;
-            // Start an interval to update elapsed time and display
             timerId = setInterval(() => {
                 elapsedTime = Date.now() - startTime;
-                updateDisplay(); // Update the display on each tick
+                updateTimerDisplay();
             }, 100);
 
-            // Update button states
             startBtn.disabled = true;
             pauseBtn.disabled = false;
         }
 
-        // Function to pause the timer
-        function pauseTimer() {
-            clearInterval(timerId); // Stop the interval
-            timerId = null; // Clear the timer ID
+        function stopTimer() {
+            clearInterval(timerId);
+            timerId = null;
             startBtn.disabled = false;
             pauseBtn.disabled = true;
         }
 
-        // Function to show the reset confirmation modal
+        // פונקציות קלט נומרי וחישוב
+        function updateNumberBox() {
+            numberBox.textContent = numericInput || "---";
+            
+            // המרה למספר לביצוע חישוב
+            const val = parseInt(numericInput) || 0;
+            
+            // עדכון חישובים אוטומטיים
+            calcX2Display.textContent = (val * 2).toLocaleString();
+            calcX4Display.textContent = (val * 4).toLocaleString();
+        }
+
+        function appendNumber(num) {
+            if (numericInput.length >= 8) return; // הגבלת אורך
+            numericInput += num;
+            updateNumberBox();
+        }
+
+        function clearInput() {
+            numericInput = "";
+            updateNumberBox();
+        }
+
+        function backspace() {
+            numericInput = numericInput.slice(0, -1);
+            updateNumberBox();
+        }
+
+        // ניהול מודאל ואיפוס
         function showResetModal() {
-            resetModal.style.display = 'flex'; // Make the modal visible
+            resetModal.style.display = 'flex';
         }
 
-        // Function to hide the reset confirmation modal
         function hideResetModal() {
-            resetModal.style.display = 'none'; // Hide the modal
+            resetModal.style.display = 'none';
         }
 
-        // Function to reset the timer
-        function resetTimer() {
-            clearInterval(timerId); // Stop any active timer interval
-            timerId = null; // Clear the timer ID
-            elapsedTime = 0; // Reset elapsed time to zero
-            updateDisplay(); // Reset the display
-
-            // Reset button states
-            startBtn.disabled = false;
-            pauseBtn.disabled = true;
-            hideResetModal(); // Close the reset confirmation modal
+        function resetAll() {
+            stopTimer();
+            elapsedTime = 0;
+            numericInput = "";
+            timerDisplay.classList.remove('limit-reached');
+            updateTimerDisplay();
+            updateNumberBox();
+            hideResetModal();
         }
 
-        // Event listeners for button clicks
-        startBtn.addEventListener('click', startTimer); // Start button
-        pauseBtn.addEventListener('click', pauseTimer); // Pause button
-        resetBtn.addEventListener('click', showResetModal); // Show reset modal
-        confirmResetBtn.addEventListener('click', resetTimer); // Confirm reset
-        cancelResetBtn.addEventListener('click', hideResetModal); // Cancel reset
+        // מאזיני אירועים
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', stopTimer);
+        resetBtn.addEventListener('click', showResetModal);
+        confirmResetBtn.addEventListener('click', resetAll);
+        cancelResetBtn.addEventListener('click', hideResetModal);
 
-        // Initialize the display when the page loads
-        updateDisplay();
+        resetModal.addEventListener('click', (e) => {
+            if (e.target === resetModal) hideResetModal();
+        });
+
+        // אתחול תצוגה
+        updateTimerDisplay();
+        updateNumberBox();
     </script>
 </body>
 </html>
