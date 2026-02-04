@@ -9,13 +9,17 @@
   - 2026-02-04: Changed timer logic to count forward (stopwatch) up to 1 hour.
   - 2026-02-04: Reorganized layout: Number Box and calculations for pulse/respiration.
   - 2026-02-04: Redesigned UI for medical use (Pulse & Respiration) with improved mobile ergonomics.
-  - 2026-02-04: Updated UI with cheerful and vibrant colors (Coral, Turquoise, Sunny Yellow) and soft gradients.
+  - 2026-02-04: Updated UI with cheerful and vibrant colors.
+  - 2026-02-04: Fixed mobile responsiveness issues to ensure full content fits within viewport without scrolling.
+  - 2026-02-04: Redesigned "Reset" button to be a solid, bright coral button for maximum visibility.
+  - 2026-02-04: Fixed layout overflow where the Reset button was being pushed off-screen.
+                Applied flex-shrink: 0 to controls and adjusted section heights.
 -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>מחשבון דופק ונשימה עליז</title>
     <style>
         :root {
@@ -23,9 +27,8 @@
             --primary-text: #4a4a4a;
             --accent-sunny: #ffd93d;
             --accent-teal: #4ecdc4;
-            --accent-coral: #ff6b6b;
+            --accent-coral: #ff5252; /* צבע אדום בולט יותר */
             --card-bg: rgba(255, 255, 255, 0.9);
-            --btn-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         * {
@@ -43,85 +46,87 @@
             height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; 
             touch-action: manipulation;
         }
 
-        /* Header / Timer Area */
+        /* Header Area - מצומצם יותר כדי להשאיר מקום */
         .header {
-            padding: 25px 20px;
-            text-align: center;
+            flex: 0 0 auto;
+            padding: 10px 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             background: rgba(255, 255, 255, 0.95);
             border-bottom: 3px solid var(--accent-sunny);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
         .timer-display {
-            font-size: clamp(3.5rem, 12vh, 5rem);
+            font-size: clamp(2.5rem, 6vh, 4rem);
             font-weight: 900;
             color: var(--accent-coral);
             font-variant-numeric: tabular-nums;
             line-height: 1;
-            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
         }
 
         .subtitle {
-            font-size: 1rem;
+            font-size: clamp(0.7rem, 1.5vh, 0.8rem);
             font-weight: 600;
             color: #888;
-            margin-top: 8px;
-            letter-spacing: 1px;
+            margin-top: 2px;
         }
 
-        /* Main Dashboard Area */
+        /* Main Dashboard Area - גמיש */
         .main-content {
-            flex: 1;
-            padding: 20px;
+            flex: 1 1 auto;
+            padding: 8px 15px;
             display: flex;
-            flex-direction: column;
-            gap: 15px;
-            overflow-y: auto;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
         }
 
         .results-card {
             background: var(--card-bg);
-            border-radius: 30px;
-            padding: 20px;
+            border-radius: 18px;
+            padding: 10px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.2);
-            border: 2px solid white;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
+            border: 1px solid white;
+            width: 100%;
+            max-width: 380px;
         }
 
         .count-area {
             flex: 1;
             text-align: center;
             border-right: 2px dashed #eee;
-            padding-right: 15px;
+            padding-right: 8px;
         }
 
         .count-label {
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: #999;
-            text-transform: uppercase;
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .number-box {
-            font-size: 3rem;
+            font-size: clamp(1.8rem, 4.5vh, 2.5rem);
             font-weight: 900;
             color: var(--accent-teal);
-            text-shadow: 1px 1px 0px white;
         }
 
         .calculations-stack {
             flex: 1.5;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 4px;
         }
 
         .calc-item {
@@ -129,149 +134,141 @@
             justify-content: space-between;
             align-items: center;
             background: white;
-            padding: 10px 15px;
-            border-radius: 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            padding: 5px 10px;
+            border-radius: 10px;
             border: 1px solid #f0f0f0;
         }
 
         .calc-label {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             font-weight: 700;
             color: #666;
         }
 
         .calc-value {
-            font-size: 1.4rem;
+            font-size: clamp(1rem, 2vh, 1.2rem);
             font-weight: 900;
             color: var(--accent-coral);
         }
 
-        /* Numpad Area */
+        /* Numpad Container - מוגדר כ-גמיש אך לא נעלם */
         .numpad-container {
+            flex: 0 0 auto;
             background: white;
-            border-radius: 35px 35px 0 0;
-            padding: 15px 15px 5px 15px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
+            border-radius: 20px 20px 0 0;
+            padding: 8px;
         }
 
         .numpad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            gap: 5px;
+            width: 100%;
+            max-width: 380px;
+            margin: 0 auto;
         }
 
         .numpad button {
-            background: #fff5f5;
-            border: 2px solid transparent;
+            background: #fff8f8;
+            border: none;
             color: var(--primary-text);
-            padding: 18px 0;
-            font-size: 1.6rem;
-            border-radius: 20px;
+            padding: clamp(8px, 1.8vh, 14px) 0;
+            font-size: clamp(1.1rem, 2.8vh, 1.4rem);
+            border-radius: 12px;
             font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
 
         .numpad button:active {
             background: var(--accent-sunny);
-            transform: scale(0.92);
-            border-color: white;
+            transform: scale(0.95);
         }
 
         .numpad .btn-clear { color: var(--accent-coral); background: #fff0f0; }
         .numpad .btn-back { color: #aaa; }
 
-        /* Control Area */
+        /* Controls Area - מוגדר כחשוב ביותר להישאר גלוי */
         .controls {
+            flex: 0 0 auto; /* לא מתכווץ */
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            padding: 15px;
+            grid-template-rows: auto auto;
+            gap: 8px;
+            padding: 10px;
             background: white;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
         }
 
         .btn {
             border: none;
-            border-radius: 20px;
-            padding: 20px;
-            font-size: 1.2rem;
+            border-radius: 12px;
+            padding: clamp(12px, 2.2vh, 15px);
+            font-size: clamp(0.9rem, 2vh, 1.1rem);
             font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: var(--btn-shadow);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
-        .btn-start {
-            background-color: var(--accent-teal);
-            color: white;
-        }
-
-        .btn-pause {
-            background-color: var(--accent-sunny);
-            color: var(--primary-text);
-        }
-
+        .btn-start { background-color: var(--accent-teal); color: white; }
+        .btn-pause { background-color: var(--accent-sunny); color: var(--primary-text); }
+        
+        /* כפתור איפוס בולט במיוחד */
         .btn-reset {
-            background-color: transparent;
-            color: #ccc;
             grid-column: span 2;
-            padding: 10px;
-            font-size: 0.85rem;
-            box-shadow: none;
-            text-decoration: underline;
+            background-color: var(--accent-coral);
+            color: white;
+            padding: clamp(10px, 2vh, 14px);
+            box-shadow: 0 4px 12px rgba(255, 82, 82, 0.4);
+            text-transform: uppercase;
         }
 
-        .btn:active:not(:disabled) {
-            transform: translateY(2px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        .btn-reset:active:not(:disabled) {
+            transform: scale(0.98);
+            filter: brightness(0.9);
         }
 
-        .btn:disabled {
-            opacity: 0.4;
-            filter: grayscale(1);
-        }
+        .btn:disabled { opacity: 0.4; filter: grayscale(1); }
 
         /* Modal */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(255, 107, 107, 0.4);
+            background: rgba(255, 82, 82, 0.4);
             backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            padding: 20px;
         }
 
         .modal-content {
             background: white;
-            padding: 35px;
-            border-radius: 35px;
-            width: 100%;
-            max-width: 320px;
+            padding: 25px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 300px;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
         }
 
         .modal-btns {
             display: flex;
-            gap: 15px;
-            margin-top: 25px;
+            gap: 12px;
+            margin-top: 20px;
         }
 
         .modal-btns button {
             flex: 1;
-            padding: 15px;
-            border-radius: 18px;
+            padding: 12px;
+            border-radius: 10px;
             border: none;
             font-weight: 800;
             cursor: pointer;
         }
 
-        /* Pulse Animation when running */
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -330,13 +327,12 @@
     <div class="controls">
         <button class="btn btn-start" id="startBtn">התחל ▶️</button>
         <button class="btn btn-pause" id="pauseBtn" disabled>השהה ⏸️</button>
-        <button class="btn btn-reset" id="resetBtn">איפוס נתונים</button>
+        <button class="btn btn-reset" id="resetBtn">איפוס נתונים 🧼</button>
     </div>
 
     <div class="modal" id="resetModal">
         <div class="modal-content">
             <h2 style="color: var(--accent-coral); margin-bottom: 10px;">לאפס הכל? 🧼</h2>
-            <p style="color: #888;">האם אתה בטוח שברצונך למחוק את כל הנתונים?</p>
             <div class="modal-btns">
                 <button style="background: #f1f3f5; color: #888;" id="cancelReset">ביטול</button>
                 <button style="background: var(--accent-coral); color: white;" id="confirmReset">אישור</button>
