@@ -224,6 +224,10 @@
             const urls = feedUrls[category] || [];
             const rssContent = document.getElementById('rss-content');
             const throbber = document.querySelector('.throbber');
+            
+            // Words to exclude
+            const excludedWords = ['כדורגל', 'כדורסל', 'ספורט'];
+
             rssContent.innerHTML = '';
             throbber.style.display = 'block';
 
@@ -239,6 +243,12 @@
                 throbber.style.display = 'none';
 
                 allItems.forEach(item => {
+                    // Filter Logic: check if title or description contains excluded words
+                    const combinedText = (item.title + " " + item.description).toLowerCase();
+                    const shouldSkip = excludedWords.some(word => combinedText.includes(word));
+
+                    if (shouldSkip) return; // Skip this iteration
+
                     const rssItem = document.createElement('div');
                     rssItem.className = 'rss-item';
 
@@ -344,4 +354,3 @@
     </script>
 </body>
 </html>
-
