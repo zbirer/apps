@@ -1,0 +1,442 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Brain, Zap, Activity, ChevronRight, Award, 
+  RefreshCw, Info, CheckCircle2, XCircle, 
+  Stethoscope, Keyboard, Send, Eye, Baby,
+  Moon, Thermometer, Target, Users, Radio, 
+  Shuffle, Trophy, Star, Medal, Lock, Unlock,
+  ChevronLeft, BarChart3
+} from 'lucide-react';
+
+// --- FUZZY MATCHING LOGIC ---
+const getLevenshteinDistance = (a, b) => {
+  const matrix = Array.from({ length: a.length + 1 }, () => 
+    Array.from({ length: b.length + 1 }, (_, i) => i)
+  );
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+};
+
+const isCloseEnough = (input, target) => {
+  const cleanInput = input.toLowerCase().trim();
+  const cleanTarget = target.toLowerCase().trim();
+  if (cleanInput.includes(cleanTarget) || cleanTarget.includes(cleanInput)) return true;
+  const distance = getLevenshteinDistance(cleanInput, cleanTarget);
+  const threshold = Math.floor(cleanTarget.length * 0.35); 
+  return distance <= threshold;
+};
+
+// --- DATA: ALL CHAPTERS EXPANDED ---
+const QUESTION_POOL = {
+  anatomy: [
+    { type: 'choice', text: "Which lobe is responsible for processing auditory information?", options: ["Frontal", "Parietal", "Occipital", "Temporal"], correct: 3, fact: "The temporal lobes sit on the sides of the brain, near your ears." },
+    { type: 'open', text: "What is the name of the thin, folded outer layer of the cerebrum?", answer: "Cerebral Cortex", fact: "Its folds increase the surface area to pack in more neurons." },
+    { type: 'choice', text: "What connects the two cerebral hemispheres?", options: ["Amygdala", "Corpus Callosum", "Pons", "Thalamus"], correct: 1, fact: "The corpus callosum is the largest bundle of nerve fibers in the brain." },
+    { type: 'open', text: "Which almond-shaped structure integrates memory and emotion?", answer: "Amygdala", fact: "It is critical for processing fear and social rewards." },
+    { type: 'choice', text: "What comprises the brainstem?", options: ["Midbrain, Pons, Medulla", "Thalamus, Cortex, Amygdala", "Cerebellum, Pons, Medulla", "Frontal, Parietal, Temporal"], correct: 0, fact: "The brainstem controls basic survival functions like breathing." }
+  ],
+  signaling: [
+    { type: 'open', text: "What is the brain's most common excitatory neurotransmitter?", answer: "Glutamate", fact: "It is used by roughly half of all excitatory synapses." },
+    { type: 'choice', text: "Which cells provide nutrients and regulate ion concentrations around neurons?", options: ["Microglia", "Astrocytes", "Oligodendrocytes", "Neurons"], correct: 1, fact: "Astrocytes are star-shaped glial cells that support neural health." },
+    { type: 'open', text: "The junction where neurons communicate via chemicals is called a...", answer: "Synapse", fact: "Signals travel across the synaptic cleft via neurotransmission." },
+    { type: 'choice', text: "What charge describes a resting neuron?", options: ["+70 mV", "-70 mV", "0 mV", "-10 mV"], correct: 1, fact: "Resting membrane potential is more negative inside the cell." },
+    { type: 'open', text: "Which chemical acts as a brake, inhibiting neural firing?", answer: "GABA", fact: "GABA is the primary inhibitory neurotransmitter." }
+  ],
+  senses: [
+    { type: 'choice', text: "Which cells pick up fine detail and color in the eye?", options: ["Rods", "Cones", "Ganglion", "Lens"], correct: 1, fact: "Cones are concentrated in the fovea for maximum acuity." },
+    { type: 'open', text: "The sense of taste is also known as...", answer: "Gustation", fact: "We have 5,000 to 10,000 taste buds." },
+    { type: 'choice', text: "Which sense bypasses the Thalamus to go directly to the Cortex?", options: ["Sight", "Hearing", "Smell", "Touch"], correct: 2, fact: "Olfaction (smell) is the only sense with this direct pathway." },
+    { type: 'open', text: "What are the specialized sensory fibers that respond to tissue damage (pain)?", answer: "Nociceptors", fact: "Nociceptors respond to thermal, mechanical, or chemical danger." }
+  ],
+  development: [
+    { type: 'choice', text: "The elimination of unused neurons and synapses is called...", options: ["Neurogenesis", "Proliferation", "Synaptic Pruning", "Apoptosis"], correct: 2, fact: "Pruning allows the brain to become more specialized based on experience." },
+    { type: 'open', text: "The ability of the brain to adapt and rewire itself is called...", answer: "Neuroplasticity", fact: "Learning a new skill creates and strengthens neural connections." },
+    { type: 'choice', text: "Until what age does the brain continue to mature?", options: ["18", "21", "25", "30"], correct: 3, fact: "The prefrontal cortex is one of the last areas to fully mature." }
+  ],
+  clinical: [
+    { type: 'choice', text: "Which disease is marked by amyloid plaques and tau tangles?", options: ["Parkinson's", "ALS", "Alzheimer's", "Huntington's"], correct: 2, fact: "These protein clumps disrupt and eventually kill brain cells." },
+    { type: 'open', text: "What neurotransmitter is lost in Parkinson's disease?", answer: "Dopamine", fact: "Loss occurs specifically in the substantia nigra." },
+    { type: 'choice', text: "Which condition involves possessing an extra copy of chromosome 21?", options: ["Autism", "Down Syndrome", "Dyslexia", "Epilepsy"], correct: 1, fact: "This is also known as Trisomy 21." },
+    { type: 'open', text: "What is the medical term for a 'brain attack' or blockage of blood?", answer: "Stroke", fact: "Rapid treatment with tPA can prevent permanent damage." }
+  ],
+  society: [
+    { type: 'choice', text: "Which tech uses radio waves to see brain structure?", options: ["MRI", "EEG", "PET", "TMS"], correct: 0, fact: "MRI maps water distribution in tissues." },
+    { type: 'open', text: "The field combining neuroscience and economic decision-making is...", answer: "Neuroeconomics", fact: "It studies how the brain calculates risk and reward." },
+    { type: 'choice', text: "Which tool can temporarily silence a specific brain region using magnets?", options: ["PET", "EEG", "TMS", "MRI"], correct: 2, fact: "Transcranial Magnetic Stimulation is used for both research and therapy." }
+  ]
+};
+
+const MISSIONS = [
+  { id: 'anatomy', title: 'Anatomy Hub', icon: <Brain className="w-5 h-5" />, color: 'blue' },
+  { id: 'signaling', title: 'Synaptic Fire', icon: <Zap className="w-5 h-5" />, color: 'yellow' },
+  { id: 'senses', title: 'Senses & perception', icon: <Eye className="w-5 h-5" />, color: 'purple' },
+  { id: 'development', title: 'Brain Growth', icon: <Baby className="w-5 h-5" />, color: 'green' },
+  { id: 'clinical', title: 'Diagnostic Lab', icon: <Stethoscope className="w-5 h-5" />, color: 'red' },
+  { id: 'society', title: 'Future Tech', icon: <Users className="w-5 h-5" />, color: 'cyan' }
+];
+
+const App = () => {
+  // State
+  const [view, setView] = useState('menu'); // menu, play, achievements
+  const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [unlockedAchievements, setUnlockedAchievements] = useState([]);
+  const [currentMission, setCurrentMission] = useState(null);
+  const [sessionQuestions, setSessionQuestions] = useState([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [userInput, setUserInput] = useState('');
+  const [showFeedback, setShowFeedback] = useState(null);
+  const [correctCount, setCorrectCount] = useState(0);
+
+  // Constants
+  const xpPerLevel = 1000;
+  const currentXP = score % xpPerLevel;
+  const progress = (currentXP / xpPerLevel) * 100;
+
+  const ranks = [
+    "Neural Cadet", "Synapse Scout", "Cortex Investigator", 
+    "Neural Architect", "Neuro-Legend"
+  ];
+  const currentRank = ranks[Math.min(level - 1, ranks.length - 1)];
+
+  const achievements = [
+    { id: 'first_step', name: 'First Spark', desc: 'Answered your first question correctly.', icon: <Zap /> },
+    { id: 'fuzzy', name: 'Flexible Mind', desc: 'Used fuzzy matching to get a correct answer.', icon: <RefreshCw /> },
+    { id: 'perfect', name: 'Neural Precision', desc: 'Completed a mission with 100% accuracy.', icon: <Target /> },
+    { id: 'master', name: 'Grand Master', desc: 'Reached Level 5.', icon: <Trophy /> },
+    { id: 'clinical', name: 'Medical Expert', desc: 'Completed the Diagnostic Lab.', icon: <Medal /> }
+  ];
+
+  // Effects
+  useEffect(() => {
+    const newLevel = Math.floor(score / xpPerLevel) + 1;
+    if (newLevel > level) {
+      setLevel(newLevel);
+      if (newLevel >= 5) unlockAchievement('master');
+    }
+  }, [score]);
+
+  // Logic
+  const unlockAchievement = (id) => {
+    if (!unlockedAchievements.includes(id)) {
+      setUnlockedAchievements(prev => [...prev, id]);
+    }
+  };
+
+  const startMission = (id) => {
+    let qs = [];
+    if (id === 'mixed') {
+      const all = Object.values(QUESTION_POOL).flat();
+      qs = all.sort(() => Math.random() - 0.5).slice(0, 10);
+      setCurrentMission({ id: 'mixed', title: 'MASTER MIXED' });
+    } else {
+      qs = QUESTION_POOL[id].sort(() => Math.random() - 0.5).slice(0, 5);
+      setCurrentMission(MISSIONS.find(m => m.id === id));
+    }
+    setSessionQuestions(qs);
+    setCurrentIdx(0);
+    setCorrectCount(0);
+    setView('play');
+    window.scrollTo(0, 0);
+  };
+
+  const handleAnswer = (choiceIdx) => {
+    if (showFeedback) return;
+    const q = sessionQuestions[currentIdx];
+    let isCorrect = false;
+    let usedFuzzy = false;
+
+    if (q.type === 'choice') {
+      isCorrect = choiceIdx === q.correct;
+    } else {
+      isCorrect = isCloseEnough(userInput, q.answer);
+      if (isCorrect && userInput.toLowerCase().trim() !== q.answer.toLowerCase().trim()) {
+        usedFuzzy = true;
+      }
+    }
+
+    if (isCorrect) {
+      const reward = q.type === 'open' ? 250 : 150;
+      setScore(prev => prev + reward);
+      setCorrectCount(prev => prev + 1);
+      unlockAchievement('first_step');
+      if (usedFuzzy) unlockAchievement('fuzzy');
+    }
+
+    setShowFeedback({ correct: isCorrect, fact: q.fact, answer: q.type === 'open' ? q.answer : null });
+  };
+
+  const nextStep = () => {
+    setShowFeedback(null);
+    setUserInput('');
+    if (currentIdx < sessionQuestions.length - 1) {
+      setCurrentIdx(prev => prev + 1);
+    } else {
+      if (correctCount + 1 >= sessionQuestions.length) unlockAchievement('perfect');
+      if (currentMission.id === 'clinical') unlockAchievement('clinical');
+      setView('menu');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#05070a] text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden p-4 sm:p-6">
+      
+      {/* HEADER / HUD */}
+      <header className="max-w-4xl mx-auto flex flex-col gap-4 mb-8">
+        <div className="flex justify-between items-center bg-slate-900/50 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+             <div className="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/20">
+                <Brain className="w-5 h-5 text-white" />
+             </div>
+             <div>
+                <h1 className="text-lg font-black tracking-tighter">NEURO-PRO</h1>
+                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Interface v5.0</p>
+             </div>
+          </div>
+          <div className="text-right">
+             <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">Points</p>
+             <p className="text-xl font-black text-blue-400 tabular-nums">{score.toLocaleString()}</p>
+          </div>
+        </div>
+
+        {/* Level Bar */}
+        <div className="bg-slate-900/30 p-3 rounded-xl border border-white/5">
+           <div className="flex justify-between items-end mb-1.5">
+              <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
+                 <Star className="w-3 h-3 fill-current" /> LVL {level} : {currentRank}
+              </span>
+              <span className="text-[10px] font-bold text-slate-500">{currentXP} / {xpPerLevel} XP</span>
+           </div>
+           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 transition-all duration-1000"
+                style={{ width: `${progress}%` }}
+              />
+           </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto">
+        
+        {/* VIEW: MENU */}
+        {view === 'menu' && (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-3">
+               <button 
+                onClick={() => setView('achievements')}
+                className="flex items-center justify-center gap-2 bg-slate-900 border border-white/5 p-4 rounded-2xl hover:bg-slate-800 transition-all active:scale-95"
+               >
+                 <Trophy className="w-4 h-4 text-yellow-500" />
+                 <span className="text-xs font-bold uppercase tracking-widest">Rewards</span>
+               </button>
+               <button 
+                onClick={() => startMission('mixed')}
+                className="flex items-center justify-center gap-2 bg-blue-600 p-4 rounded-2xl hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+               >
+                 <Shuffle className="w-4 h-4 text-white" />
+                 <span className="text-xs font-bold uppercase tracking-widest">Master Challenge</span>
+               </button>
+            </div>
+
+            {/* Mission Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+               {MISSIONS.map(m => (
+                 <button
+                   key={m.id}
+                   onClick={() => startMission(m.id)}
+                   className="flex items-center gap-4 bg-slate-900/40 border border-white/5 p-5 rounded-2xl hover:border-blue-500/30 transition-all text-left group active:scale-[0.98]"
+                 >
+                   <div className={`p-3 rounded-xl bg-slate-950 shadow-inner text-${m.color}-500 group-hover:scale-110 transition-transform`}>
+                     {m.icon}
+                   </div>
+                   <div>
+                     <h3 className="text-sm font-black uppercase tracking-tight">{m.title}</h3>
+                     <p className="text-[10px] text-slate-500 font-medium">Research Sequence Available</p>
+                   </div>
+                   <ChevronRight className="w-4 h-4 ml-auto text-slate-700" />
+                 </button>
+               ))}
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: ACHIEVEMENTS */}
+        {view === 'achievements' && (
+          <div className="animate-in slide-in-from-right-10 duration-500">
+            <button onClick={() => setView('menu')} className="flex items-center gap-2 text-slate-500 mb-6 text-xs font-bold uppercase tracking-widest">
+              <ChevronLeft className="w-4 h-4" /> Back to Terminal
+            </button>
+            
+            <div className="bg-slate-900/50 border border-white/5 p-6 rounded-3xl">
+              <h2 className="text-xl font-black mb-6 flex items-center gap-2 uppercase tracking-tighter italic">
+                <Medal className="text-yellow-500" /> Research Milestones
+              </h2>
+              
+              <div className="space-y-3">
+                {achievements.map(a => {
+                  const isUnlocked = unlockedAchievements.includes(a.id);
+                  return (
+                    <div 
+                      key={a.id}
+                      className={`flex items-center gap-4 p-4 rounded-2xl border ${isUnlocked ? 'bg-blue-600/5 border-blue-500/20' : 'bg-slate-950/50 border-white/5 opacity-50'}`}
+                    >
+                      <div className={`p-3 rounded-xl ${isUnlocked ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-600'}`}>
+                        {isUnlocked ? a.icon : <Lock className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-black uppercase">{a.name}</h4>
+                        <p className="text-[10px] text-slate-500 font-medium">{a.desc}</p>
+                      </div>
+                      {isUnlocked && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: PLAY */}
+        {view === 'play' && (
+          <div className="animate-in zoom-in-95 duration-500">
+            <div className="flex justify-between items-center mb-6">
+               <button onClick={() => setView('menu')} className="text-slate-600 hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                 <XCircle className="w-3 h-3" /> Abort
+               </button>
+               <div className="px-3 py-1 bg-blue-600/10 rounded-full border border-blue-500/20 text-[9px] font-black text-blue-400 uppercase tracking-widest">
+                 {currentMission.title} // unit_{currentIdx + 1}
+               </div>
+            </div>
+
+            <div className="bg-[#0b0f1a] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+              <div className="p-8 sm:p-12">
+                <div className="flex items-center gap-2 mb-8">
+                  <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-pulse" />
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Data Inquiry active</span>
+                </div>
+
+                <h2 className="text-xl sm:text-3xl font-black leading-tight mb-10 text-white italic">
+                  {sessionQuestions[currentIdx].text}
+                </h2>
+
+                {/* Choices */}
+                {sessionQuestions[currentIdx].type === 'choice' && (
+                  <div className="grid grid-cols-1 gap-3">
+                    {sessionQuestions[currentIdx].options.map((opt, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleAnswer(i)}
+                        disabled={showFeedback}
+                        className={`
+                          p-5 rounded-2xl text-left font-bold transition-all border-2 text-sm
+                          ${showFeedback 
+                            ? i === sessionQuestions[currentIdx].correct
+                              ? 'bg-green-500/10 border-green-500 text-green-400'
+                              : 'bg-slate-900/50 border-slate-800 opacity-30'
+                            : 'bg-slate-900/40 border-slate-800 hover:border-blue-500/50 active:scale-[0.98]'
+                          }
+                        `}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Input */}
+                {sessionQuestions[currentIdx].type === 'open' && (
+                  <div className="relative group">
+                    <input 
+                      type="text"
+                      autoFocus
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAnswer()}
+                      disabled={showFeedback}
+                      placeholder="Type the answer..."
+                      className="w-full bg-slate-900/50 border-2 border-slate-800 p-6 rounded-2xl outline-none focus:border-blue-500 transition-all font-bold text-lg md:text-2xl placeholder:text-slate-700"
+                    />
+                    {!showFeedback && (
+                      <button 
+                        onClick={() => handleAnswer()}
+                        className="absolute right-2 top-2 bottom-2 aspect-square bg-blue-600 rounded-xl flex items-center justify-center active:scale-90"
+                      >
+                        <Send className="w-5 h-5 text-white" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Feedback */}
+              {showFeedback && (
+                <div className={`p-8 border-t border-white/5 animate-in slide-in-from-bottom-10 duration-500 ${showFeedback.correct ? 'bg-green-500/5' : 'bg-red-500/5'}`}>
+                  <div className="flex gap-6">
+                    <div className={`p-3 h-fit rounded-xl ${showFeedback.correct ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                      {showFeedback.correct ? <CheckCircle2 className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-lg font-black uppercase tracking-tight mb-2 ${showFeedback.correct ? 'text-green-400' : 'text-red-400'}`}>
+                        {showFeedback.correct ? 'Neural Sync Confirmed' : 'Sync Error'}
+                      </p>
+                      
+                      {showFeedback.answer && !showFeedback.correct && (
+                        <p className="text-[10px] text-slate-500 mb-3 uppercase font-black tracking-widest">Expected: <span className="text-white italic">{showFeedback.answer}</span></p>
+                      )}
+
+                      <div className="bg-black/50 p-5 rounded-2xl border border-white/5 mb-6 shadow-inner">
+                        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed font-medium italic">
+                          "{showFeedback.fact}"
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={nextStep}
+                        className="w-full sm:w-auto bg-white text-black px-10 py-4 rounded-xl font-black text-[10px] tracking-widest uppercase hover:bg-blue-600 hover:text-white transition-all transform active:scale-95"
+                      >
+                        Continue Sequence <ChevronRight className="w-3 h-3 inline ml-1" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* FOOTER STATS */}
+      <footer className="max-w-4xl mx-auto mt-12 mb-8 border-t border-white/5 pt-8 grid grid-cols-2 gap-4">
+         <div className="bg-slate-900/30 p-4 rounded-2xl border border-white/5 flex items-center gap-4">
+            <BarChart3 className="w-5 h-5 text-blue-500" />
+            <div>
+               <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">Total Mastered</p>
+               <p className="text-sm font-black text-white">{unlockedAchievements.length} / {achievements.length}</p>
+            </div>
+         </div>
+         <div className="bg-slate-900/30 p-4 rounded-2xl border border-white/5 flex items-center gap-4">
+            <Medal className="w-5 h-5 text-indigo-500" />
+            <div>
+               <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">Chapters Indexed</p>
+               <p className="text-sm font-black text-white">18 Units</p>
+            </div>
+         </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
