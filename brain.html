@@ -9,6 +9,12 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;600;900&display=swap');
         
@@ -65,21 +71,41 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #020408; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useCallback } = React;
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
+        // Firebase Config and Init
+        const firebaseConfig = JSON.parse(__firebase_config);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'neuro-final-elite-v10';
+
+        // Fix for Lucide removeChild error: Wrap in a span and don't let React track the i tag directly after Lucide replaces it
         const Icon = ({ name, className = "w-5 h-5" }) => {
-            useEffect(() => { 
-                if (window.lucide) {
-                    window.lucide.createIcons(); 
+            const containerRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide && containerRef.current) {
+                    window.lucide.createIcons();
                 }
-            }, [name, className]);
-            return <i data-lucide={name} className={className}></i>;
+            }, [name]);
+            return (
+                <span ref={containerRef} className="inline-flex items-center justify-center">
+                    <i data-lucide={name} className={className}></i>
+                </span>
+            );
         };
 
         const getSimilarity = (input, target) => {
@@ -101,148 +127,108 @@
 
         const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
-        // --- BRAIN FACTS MASTER DATABASE ---
+        // --- BRAIN FACTS MASTER DATABASE (ULTIMATE EXPANSION) ---
         const DATA_BANK = {
             basics: [
                 { level: 1, text: "How many neurons are in a human brain?", answer: "86 billion", options: ["10b", "86 billion", "1t", "500m"], correct: 1, fact: "Neurons communicate via complex electrical and chemical circuits." },
-                { level: 2, text: "Voltage of a resting neuron?", answer: "-70 mV", options: ["0 mV", "-70 mV", "+30 mV", "-50 mV"], correct: 1, fact: "Maintained by ion pumps like the Sodium-Potassium pump." },
-                { level: 1, text: "Primary excitatory neurotransmitter?", answer: "Glutamate", options: ["GABA", "Dopamine", "Glutamate", "Serotonin"], correct: 2, fact: "Used by roughly 50% of excitatory synapses." },
-                { level: 2, text: "Glial cells producing CNS myelin?", answer: "Oligodendrocytes", options: ["Schwann", "Astrocytes", "Oligodendrocytes", "Microglia"], correct: 2, fact: "Myelin insulation can increase speed by 100x." },
+                { level: 2, text: "Voltage of a resting neuron?", answer: "-70 mV", options: ["0 mV", "-70 mV", "+30 mV", "-50 mV"], correct: 1, fact: "Maintained by ion pumps and selectively permeable channels." },
+                { level: 1, text: "Primary excitatory neurotransmitter?", answer: "Glutamate", options: ["GABA", "Dopamine", "Glutamate", "Serotonin"], correct: 2, fact: "Used by about 50% of excitatory synapses." },
+                { level: 2, text: "Glia producing myelin in the CNS?", answer: "Oligodendrocytes", options: ["Schwann", "Astrocytes", "Oligodendrocytes", "Microglia"], correct: 2, fact: "Wrap axons in a fatty sheath to increase signal speed." },
+                { level: 3, text: "Term for a neuron's interior becoming more negative?", answer: "Hyperpolarized", options: ["Depolarized", "Hyperpolarized", "Neutral", "Excited"], correct: 1, fact: "Moves the neuron further from its firing threshold." },
                 { level: 2, text: "Main brain immune cells?", answer: "Microglia", options: ["Astrocytes", "Microglia", "Ependymal", "Neurons"], correct: 1, fact: "Microglia function as phagocytes to protect the brain." },
-                { level: 1, text: "Largest part of the human brain?", answer: "Cerebrum", options: ["Cerebrum", "Cerebellum", "Brainstem", "Thalamus"], correct: 0, fact: "Divided into two hemispheres connected by the corpus callosum." },
-                { level: 2, text: "Protein transporting vesicles down axons?", answer: "Kinesins", options: ["Kinesins", "Enzymes", "Receptors", "Ions"], correct: 0, fact: "They 'walk' along microtubules towards the terminal." },
-                { level: 3, text: "Earliest vertebrate brains resemble which modern organism?", answer: "Amphioxus", options: ["Amphioxus", "Zebrafish", "Fruit fly", "Roundworm"], correct: 0, fact: "Amphioxus has a simple hollow nerve cord." },
-                { level: 3, text: "Voltage needed to trigger an action potential?", answer: "Threshold", options: ["Resting", "Threshold", "Polarized", "Hyper"], correct: 1, fact: "If the sum of signals matches this, ion channels open automatically." },
-                { level: 2, text: "Primary inhibitory neurotransmitter?", answer: "GABA", options: ["Glutamate", "GABA", "Dopamine", "Acetylcholine"], correct: 1, fact: "Acts as a 'brake' to prevent over-firing." },
-                { level: 3, text: "Technical term for a neuron's interior becoming more negative?", answer: "Hyperpolarized", options: ["Depolarized", "Hyperpolarized", "Static", "Neutral"], correct: 1, fact: "This decreases the likelihood of generating an electrical signal." },
+                { level: 1, text: "Largest part of the human brain?", answer: "Cerebrum", options: ["Cerebrum", "Cerebellum", "Brainstem", "Thalamus"], correct: 0, fact: "Divided into two large hemispheres." },
+                { level: 3, text: "What builds peptide-based neurotransmitters in the soma?", answer: "Ribosomes", options: ["Mitochondria", "Ribosomes", "Golgi", "Vesicles"], correct: 1, fact: "Built in the ribosome-rich space of the cell body." },
                 { level: 2, text: "Gaps in the myelin sheath allowing leaping signals?", answer: "Nodes of Ranvier", options: ["Hillocks", "Nodes of Ranvier", "Clefts", "Spines"], correct: 1, fact: "They facilitate saltatory conduction." },
-                { level: 1, text: "The bridge connecting two brain hemispheres?", answer: "Corpus Callosum", options: ["Pons", "Corpus Callosum", "Medulla", "Thalamus"], correct: 1, fact: "It is the largest bundle of nerve fibers in the brain." },
-                { level: 3, text: "What builds peptide-based neurotransmitters in the cell body?", answer: "Ribosomes", options: ["Mitochondria", "Ribosomes", "Golgi", "Vesicles"], correct: 1, fact: "Terminal doesn't contain machinery for building proteins." },
-                { level: 2, text: "Ratio of glia to neurons in the human brain?", answer: "1:1", options: ["10:1", "1:1", "5:1", "100:1"], correct: 1, fact: "The ratio varies considerably from region to region." },
-                // PLUS 5 NEW
-                { level: 3, text: "Two types of GABA receptors: Ionotropic and...?", answer: "Metabotropic", options: ["Nicotinic", "Metabotropic", "Dopaminergic", "Hormonal"], correct: 1, fact: "Metabotropic GABA receptors open ion channels that release potassium ions." },
-                { level: 2, text: "Process of a synaptic vesicle emptying its contents?", answer: "Exocytosis", options: ["Endocytosis", "Exocytosis", "Diffusion", "Osmosis"], correct: 1, fact: "Calcium entry triggers vesicles to fuse with the membrane." },
-                { level: 3, text: "Term for chemical changes to chromatin regulating gene activity?", answer: "Epigenetics", options: ["Proteomics", "Epigenetics", "Genomics", "Synthetics"], correct: 1, fact: "Chemical changes like methylation can shut down or activate genes." },
-                { level: 2, text: "Which organelle packages neurotransmitters in the cell body?", answer: "Golgi apparatus", options: ["Nucleus", "Golgi apparatus", "Ribosome", "Mitochondria"], correct: 1, fact: "Vesicles bud off from the wall of the Golgi apparatus." },
-                { level: 3, text: "Small neuropeptide controlling the transition into sleep?", answer: "Orexin", options: ["Melatonin", "Orexin", "Adenosine", "Vasopressin"], correct: 1, fact: "Produced in the lateral hypothalamus; its loss causes narcolepsy." }
+                { level: 3, text: "Two types of GABA receptors: Ionotropic and...?", answer: "Metabotropic", options: ["Nicotinic", "Metabotropic", "Dopaminergic", "Hormonal"], correct: 1, fact: "Metabotropic receptors use biochemical cascades." },
+                // PLUS 5 NEW BASICS
+                { level: 3, text: "Which ion is found at high concentration outside a resting neuron?", answer: "Sodium", options: ["Potassium", "Sodium", "Magnesium", "Glutamate"], correct: 1, fact: "Resting potential depends on uneven distribution of ions." },
+                { level: 2, text: "What part of the neuron integrates incoming signals?", answer: "Axon hillock", options: ["Dendrite", "Soma", "Axon hillock", "Terminal"], correct: 2, fact: "It acts as a junction between the soma and the axon." },
+                { level: 3, text: "Enzyme synthesizing acetylcholine in the terminal?", answer: "ChAT", options: ["AChE", "ChAT", "MAO", "Tyrosine Hydroxylase"], correct: 1, fact: "Choline acetyltransferase (ChAT) is the synthesis enzyme." },
+                { level: 2, text: "Main inhibitory neurotransmitter of the spinal cord?", answer: "Glycine", options: ["GABA", "Glycine", "Serotonin", "Glutamate"], correct: 1, fact: "Glycine acts primarily in the brainstem and spinal cord." },
+                { level: 1, text: "Extension of a neuron that sends signals to others?", answer: "Axon", options: ["Dendrite", "Soma", "Axon", "Glia"], correct: 2, fact: "Axons can extend over a meter in some neurons." }
             ],
             senses: [
-                { level: 1, text: "Retinal cells Resolving fine detail?", answer: "Cones", options: ["Rods", "Cones", "Ganglion", "Bipolar"], correct: 1, fact: "Cones are concentrated in the fovea for maximum acuity." },
+                { level: 1, text: "Retinal cells Resolving fine detail?", answer: "Cones", options: ["Rods", "Cones", "Ganglion", "Bipolar"], correct: 1, fact: "Concentrated in the fovea for maximum acuity." },
                 { level: 2, text: "Sense bypassing the thalamus entirely?", answer: "Smell", options: ["Vision", "Hearing", "Touch", "Smell"], correct: 3, fact: "Smell signals go directly to the olfactory bulbs." },
-                { level: 1, text: "Snail-shell organ for hearing?", answer: "Cochlea", options: ["Stapes", "Cochlea", "Pinna", "Utricle"], correct: 1, fact: "Hair cells in the cochlea respond to fluid pressure." },
-                { level: 2, text: "Area of highest visual acuity in the retina?", answer: "Fovea", options: ["Macula", "Fovea", "Optic disk", "Iris"], correct: 1, fact: "It contains only red and green cones." },
-                { level: 3, text: "Term for identifying two points on skin as distinct?", answer: "Two-point discrimination", options: ["Tactile acuity", "Two-point discrimination", "Touch map", "Nociception"], correct: 1, fact: "Acuity is highest on fingertips and lips." },
-                { level: 2, text: "Fibers detecting immediate, sharp pain?", answer: "A-delta fibers", options: ["C fibers", "A-beta", "A-delta fibers", "Gamma"], correct: 2, fact: "Myelinated fibers transmit signals very fast." },
-                { level: 1, text: "Retinal cells making the optic nerve?", answer: "Ganglion cells", options: ["Photoreceptors", "Bipolar", "Ganglion cells", "Interneurons"], correct: 2, fact: "Axons from these cells exit the back of the eye." },
-                { level: 2, text: "Five basic tastes: sweet, sour, salty, bitter, and...?", answer: "Umami", options: ["Spicy", "Umami", "Savory", "Metallic"], correct: 1, fact: "Umami means savory in Japanese." },
-                { level: 1, text: "Leading cause of blindness over 55 in the US?", answer: "Macular degeneration", options: ["Cataracts", "Glaucoma", "Macular degeneration", "Stroke"], correct: 2, fact: "Death of macula photoreceptors." },
-                { level: 3, text: "Passage from the outer ear to the eardrum?", answer: "External Auditory Canal", options: ["Pinna", "Oval window", "External Auditory Canal", "Eustachian"], correct: 2, fact: "Passes through the pinnae to the tympanic membrane." },
-                { level: 2, text: "Signal transduction method in hearing cells?", answer: "Stereocilia", options: ["Vesicles", "Stereocilia", "Axons", "Cones"], correct: 1, fact: "Microscopic hair-like structures bend to open ion channels." },
-                { level: 1, text: "Crossover junction for visual fibers?", answer: "Optic chiasm", options: ["Corpus callosum", "Optic chiasm", "Thalamus", "Pons"], correct: 1, fact: "Allows mapping of visual fields to opposite hemispheres." },
-                { level: 3, text: "Where do taste and smell info converge in the brain?", answer: "Inferior frontal lobe", options: ["Thalamus", "Inferior frontal lobe", "V1", "Pons"], correct: 1, fact: "Allows for the integrated perception of flavor." },
-                { level: 2, text: "Which receptor activation results in 'itch'?", answer: "Histamine", options: ["Nociceptor", "Histamine", "AMPA", "GABA"], correct: 1, fact: "Skin irritation triggers histamine release inside the body." },
-                // PLUS 5 NEW
-                { level: 3, text: "Three types of cones: Red, Green, and...?", answer: "Blue", options: ["Yellow", "Blue", "Purple", "White"], correct: 1, fact: "Combinations of these three allow us to see the color spectrum." },
-                { level: 2, text: "Which membrane separates the middle ear from the inner ear?", answer: "Oval window", options: ["Eardrum", "Oval window", "Basilar", "Tectorial"], correct: 1, fact: "Pressure waves in the cochlea fluid begin at this membrane." },
-                { level: 3, text: "Visual processing stream integrating spatial relationships?", answer: "Dorsal stream", options: ["Ventral", "Dorsal stream", "Medial", "Lateral"], correct: 1, fact: "Heads up toward the parietal lobe; the 'Where' stream." },
-                { level: 2, text: "Three tiny bones in middle ear: Malleus, Incus, and...?", answer: "Stapes", options: ["Cochlea", "Stapes", "Oval", "Pinna"], correct: 1, fact: "They amplify vibrations funneled into the ear canal." },
-                { level: 3, text: "Smallest unmyelinated fibers transmitting slow pain?", answer: "C fibers", options: ["A-delta", "C fibers", "A-beta", "Gamma"], correct: 1, fact: "Produce a dull, diffuse ache harder to pinpoint." }
+                { level: 1, text: "Snail-shell organ for hearing?", answer: "Cochlea", options: ["Stapes", "Cochlea", "Pinna", "Utricle"], correct: 1, fact: "Transduces mechanical waves into electrical signals." },
+                { level: 2, text: "Area of highest visual acuity in the retina?", answer: "Fovea", options: ["Macula", "Fovea", "Optic disk", "Iris"], correct: 1, fact: "Densely packed with red and green cones." },
+                { level: 3, text: "Crossover junction for visual fibers?", answer: "Optic chiasm", options: ["Corpus callosum", "Optic chiasm", "Thalamus", "Pons"], correct: 1, fact: "Allows mapping of visual fields to opposite hemispheres." },
+                { level: 2, text: "Three tiny bones in middle ear: Malleus, Incus, and...?", answer: "Stapes", options: ["Cochlea", "Stapes", "Oval", "Pinna"], correct: 1, fact: "Amplify vibrations funneled into the ear canal." },
+                { level: 3, text: "Technical name for the 'What' visual stream?", answer: "Ventral stream", options: ["Dorsal", "Ventral stream", "Medial", "Lateral"], correct: 1, fact: "Travels to the temporal lobe for object recognition." },
+                { level: 2, text: "Membrane separating middle from inner ear?", answer: "Oval window", options: ["Eardrum", "Oval window", "Basilar", "Tectorial"], correct: 1, fact: "Stapes vibrations hit this membrane." },
+                // PLUS 5 NEW SENSES
+                { level: 2, text: "Cells in the nose replaced throughout life?", answer: "Olfactory neurons", options: ["Photoreceptors", "Hair cells", "Olfactory neurons", "Taste buds"], correct: 2, fact: "The only sensory neurons continually replaced." },
+                { level: 1, text: "Sense of taste technical name?", answer: "Gustation", options: ["Olfaction", "Gustation", "Somatosensation", "Nociception"], correct: 1, fact: "Humans have 5,000 to 10,000 taste buds." },
+                { level: 3, text: "Visual 'Where' stream destination lobe?", answer: "Parietal lobe", options: ["Frontal", "Parietal lobe", "Occipital", "Temporal"], correct: 1, fact: "Analyzes spatial relationships and motion." },
+                { level: 3, text: "Photoreceptor most sensitive in dim light?", answer: "Rods", options: ["Rods", "Cones", "Ganglion", "Amacrine"], correct: 0, fact: "Rods make up 95% of human photoreceptors." },
+                { level: 2, text: "Specialized fibers for dull, diffuse pain?", answer: "C fibers", options: ["A-delta", "C fibers", "A-beta", "Gamma"], correct: 1, fact: "Small and unmyelinated fibers." }
             ],
             movement: [
-                { level: 1, text: "Neurons directly controlling muscle?", answer: "Alpha motor neurons", options: ["Gamma", "Alpha motor neurons", "Pyramidal", "Interneurons"], correct: 1, fact: "An alpha motor neuron plus its muscle fibers is a motor unit." },
-                { level: 2, text: "Transmitter at the neuromuscular junction?", answer: "Acetylcholine", options: ["Dopamine", "Glutamate", "Acetylcholine", "GABA"], correct: 2, fact: "Acetylcholine causes muscle fibers to contract." },
-                { level: 1, text: "Structure for balance and motor learning?", answer: "Cerebellum", options: ["Thalamus", "Cerebellum", "Basal Ganglia", "Pons"], correct: 1, fact: "Coordinates timing and integration of muscle action." },
-                { level: 2, text: "Muscle receptors for length and stretch?", answer: "Muscle spindles", options: ["Tendon organs", "Muscle spindles", "Nociceptors", "Glia"], correct: 1, fact: "Trigger the stretch reflex like the knee jerk." },
-                { level: 3, text: "Reflex lifting foot from potential injury?", answer: "Flexion withdrawal", options: ["Stretch", "Flexion withdrawal", "Myotatic", "Inhibition"], correct: 1, fact: "The opposite leg extends to keep balance." },
-                { level: 2, text: "Neurons keeping muscle spindles taut?", answer: "Gamma motor neurons", options: ["Alpha", "Gamma motor neurons", "Interneurons", "Glia"], correct: 1, fact: "Allows brain to adjust system sensitivity." },
-                { level: 1, text: "Inability to move in Parkinson's?", answer: "Akinesia", options: ["Akinesia", "Chorea", "Tremor", "Atrophy"], correct: 0, fact: "Result of extreme dopamine depletion." },
-                { level: 3, text: "Spinal circuits for rhythmic walking?", answer: "Central pattern generators", options: ["Reflex arcs", "Central pattern generators", "Basal loops", "Motor units"], correct: 1, fact: "Evolved in primitive vertebrates for swimming." },
-                { level: 2, text: "Brainstem part influencing posture and breathing?", answer: "Pons", options: ["Midbrain", "Pons", "Medulla", "Thalamus"], correct: 1, fact: "Located below the cerebellum." },
-                { level: 1, text: "Damage to which structure causes jerky, arrhythmic gait?", answer: "Cerebellum", options: ["Basal Ganglia", "Thalamus", "Cerebellum", "Striatum"], correct: 2, fact: "Essential for fluid movement coordination." },
+                { level: 1, text: "Neurons directly controlling muscle?", answer: "Alpha motor neurons", options: ["Gamma", "Alpha motor neurons", "Pyramidal", "Interneurons"], correct: 1, fact: "An alpha motor neuron plus its fibers is a motor unit." },
+                { level: 2, text: "Transmitter at the neuromuscular junction?", answer: "Acetylcholine", options: ["Dopamine", "Glutamate", "Acetylcholine", "GABA"], correct: 2, fact: "Causes muscle fiber depolarization and contraction." },
+                { level: 1, text: "Structure for balance and motor learning?", answer: "Cerebellum", options: ["Thalamus", "Cerebellum", "Basal Ganglia", "Pons"], correct: 1, fact: "Fine-tunes timing and muscle integration." },
                 { level: 3, text: "Loss of inhibitory neurons in basal ganglia causes?", answer: "Huntington's disease", options: ["Parkinson's", "Huntington's disease", "ALS", "Epilepsy"], correct: 1, fact: "Eliminates suppression of random movements." },
-                { level: 2, text: "Specialized receptors in tendons for force?", answer: "Golgi tendon organs", options: ["Muscle spindles", "Golgi tendon organs", "Dermoreceptors", "Nociceptors"], correct: 1, fact: "They increase movement precision during force." },
-                { level: 1, text: "Disease causing motor neuron death and paralysis?", answer: "ALS", options: ["MS", "ALS", "Parkinson's", "Dementia"], correct: 1, fact: "Amyotrophic Lateral Sclerosis kills alpha motor neurons." },
-                // PLUS 5 NEW
-                { level: 2, text: "Simultaneous contraction of agonists and antagonists?", answer: "Co-contraction", options: ["Reflex", "Co-contraction", "Tension", "Stretch"], correct: 1, fact: "Stabilizes joints, like holding an object at arm's length." },
-                { level: 3, text: "Structure relaying dopamine to basal ganglia from midbrain?", answer: "Substantia Nigra", options: ["Thalamus", "Substantia Nigra", "Amygdala", "Soma"], correct: 1, fact: "Its degeneration is the hallmark of Parkinson's disease." },
-                { level: 2, text: "Muscles that straighten a joint?", answer: "Extensors", options: ["Flexors", "Extensors", "Synergists", "Ligaments"], correct: 1, fact: "Work in opposition to flexors." },
-                { level: 1, text: "Lobe coordinating voluntary movements and personality?", answer: "Frontal Lobe", options: ["Occipital", "Parietal", "Frontal Lobe", "Temporal"], correct: 2, fact: "Coordinates higher cognitive skills and planning." },
-                { level: 3, text: "Skilled, rapid movements started by agonists and stopped by...?", answer: "Antagonists", options: ["Flexors", "Extensors", "Antagonists", "Interneurons"], correct: 2, fact: "This allow limbs to halt with great speed and precision." }
+                { level: 2, text: "Receptors detecting muscle length?", answer: "Muscle spindles", options: ["Tendon organs", "Muscle spindles", "Nociceptors", "Glia"], correct: 1, fact: "Trigger the myotatic stretch reflex." },
+                { level: 3, text: "Reflex lifting foot from a tack?", answer: "Flexion withdrawal", options: ["Stretch", "Flexion withdrawal", "Myotatic", "Inhibition"], correct: 1, fact: "Opposite leg extends for balance." },
+                // PLUS 5 NEW MOVEMENT
+                { level: 1, text: "Lobe coordinates voluntary movement and speech?", answer: "Frontal", options: ["Parietal", "Occipital", "Frontal", "Temporal"], correct: 2, fact: "Includes the primary motor cortex." },
+                { level: 2, text: "Receptors in tendons detecting force?", answer: "Golgi tendon organs", options: ["Muscle spindles", "Golgi tendon organs", "Joint receptors", "Nociceptors"], correct: 1, fact: "Protect muscle from excessive tension." },
+                { level: 3, text: "Major dopamine pathway connected to movement?", answer: "Nigrostriatal", options: ["Mesolimbic", "Nigrostriatal", "Mesocortical", "Tuberoinfundibular"], correct: 1, fact: "Connects substantia nigra to the striatum." },
+                { level: 3, text: "Condition of uncontrolled, jerky movements?", answer: "Chorea", options: ["Rigidity", "Akinesia", "Chorea", "Ataxia"], correct: 2, fact: "Characteristic of Huntington's disease." },
+                { level: 2, text: "Structure inhibiting unwanted movements?", answer: "Basal Ganglia", options: ["Cerebellum", "Basal Ganglia", "Thalamus", "Medulla"], correct: 1, fact: "Regulates complex motor sequences." }
             ],
             cognition: [
                 { level: 1, text: "Structure vital for memory consolidation?", answer: "Hippocampus", options: ["Amygdala", "Hippocampus", "Thalamus", "PFC"], correct: 1, fact: "Converts short-term to long-term memory." },
                 { level: 2, text: "Cellular mechanism for memory strengthening?", answer: "LTP", options: ["LTP", "LTD", "Pruning", "Apoptosis"], correct: 0, fact: "Long-term potentiation increases synaptic strength." },
-                { level: 1, text: "Memory for facts and cultural knowledge?", answer: "Semantic", options: ["Episodic", "Semantic", "Working", "Procedural"], correct: 1, fact: "Handles definitions and world facts." },
-                { level: 3, text: "Gene vital for human speech sequences?", answer: "FOXP2", options: ["HTT", "APP", "FOXP2", "SOD1"], correct: 2, fact: "Mutations result in jaw/mouth sequence failures." },
-                { level: 2, text: "Structure integrating memory and fear?", answer: "Amygdala", options: ["Hippocampus", "Amygdala", "PFC", "Insula"], correct: 1, fact: "Coordinates fight-or-flight responses." },
-                { level: 1, text: "Brain's 'CEO' controlling attention?", answer: "Prefrontal Cortex", options: ["Temporal", "Prefrontal Cortex", "Parietal", "V1"], correct: 1, fact: "One of the last regions to develop fully." },
-                { level: 3, text: "Neurons in monkeys firing when watching others?", answer: "Mirror neurons", options: ["Grid", "Place", "Mirror neurons", "Basket"], correct: 2, fact: "Purported role in understanding actions." },
-                { level: 2, text: "Mental maps in hippocampus?", answer: "Place cells", options: ["Grid", "Place cells", "Concept", "Stellate"], correct: 1, fact: "They light up in familiar locations." },
-                { level: 1, text: "Short-term storage for visual images?", answer: "Working memory", options: ["Episodic", "Semantic", "Working memory", "LTP"], correct: 2, fact: "Limited to small amounts of data for seconds." },
-                { level: 3, text: "Bird species used to study speech models?", answer: "Birds", options: ["Mice", "Flies", "Birds", "Slugs"], correct: 2, fact: "Baby birds imitate vocal models during critical periods." },
-                { level: 2, text: "Word-related area in fusiform gyrus?", answer: "VWFA", options: ["FFA", "VWFA", "V1", "MT"], correct: 1, fact: "Visual Word Form Area recognizes written letters." },
-                { level: 3, text: "Skills in executive function: Inhibition, Working Memory, and...?", answer: "Shifting", options: ["LTP", "Shifting", "Recall", "Induction"], correct: 1, fact: "Also known as mental flexibility." },
-                { level: 2, text: "Hippocampus area where adult neurogenesis occurs?", answer: "Dentate gyrus", options: ["CA1", "Dentate gyrus", "Cortex", "Pons"], correct: 1, fact: "Critical for pattern separation." },
-                // PLUS 5 NEW
-                { level: 2, text: "Declarative memory of personal Experiences?", answer: "Episodic memory", options: ["Semantic", "Episodic memory", "Procedural", "Reflexive"], correct: 1, fact: "Includes recalled sights, sounds, and emotions of events." },
-                { level: 3, text: "Memory of definitions and historical dates?", answer: "Semantic memory", options: ["Working", "Semantic memory", "Episodic", "Skill"], correct: 1, fact: "Involves cortical regions well beyond the hippocampus." },
-                { level: 2, text: "Visual processing stream for 'What' recognition?", answer: "Ventral stream", options: ["Dorsal", "Ventral stream", "Medial", "Lateral"], correct: 1, fact: "Integrates shape/color with memories for recognition." },
-                { level: 3, text: "Understanding mental states of others term?", answer: "Theory of Mind", options: ["Mirroring", "LTP", "Theory of Mind", "Pruning"], correct: 2, fact: "Requires inferences about feelings and intentions." },
-                { level: 2, text: "Part of brain called the 'habit center'?", answer: "Basal ganglia", options: ["Amygdala", "Hippocampus", "Basal ganglia", "Thalamus"], correct: 2, fact: "Encodes learning of non-declarative procedural memories." }
+                { level: 1, text: "Memory for facts and world knowledge?", answer: "Semantic", options: ["Episodic", "Semantic", "Working", "Procedural"], correct: 1, fact: "Definitions and world data." },
+                { level: 3, text: "Gene vital for human speech sequences?", answer: "FOXP2", options: ["HTT", "APP", "FOXP2", "SOD1"], correct: 2, fact: "Mutations lead to speech deficits." },
+                { level: 2, text: "Brain's 'CEO' for executive function?", answer: "Prefrontal Cortex", options: ["Temporal", "Prefrontal Cortex", "Parietal", "V1"], correct: 1, fact: "Handles decision-making and planning." },
+                { level: 1, text: "Structure integrating memory and fear?", answer: "Amygdala", options: ["Hippocampus", "Amygdala", "Insula", "PFC"], correct: 1, fact: "Coordinates fight-or-flight responses." },
+                // PLUS 5 NEW COGNITION
+                { level: 2, text: "Memory of personal events and history?", answer: "Episodic memory", options: ["Semantic", "Working", "Episodic memory", "Skill"], correct: 2, fact: "Unique representations of experiences." },
+                { level: 3, text: "Understanding mental states of others?", answer: "Theory of Mind", options: ["Mirroring", "Theory of Mind", "LTP", "Recall"], correct: 1, fact: "Also known as mentalizing." },
+                { level: 2, text: "Area recognizing written letters and words?", answer: "VWFA", options: ["FFA", "VWFA", "V1", "MT"], correct: 1, fact: "Visual Word Form Area in the fusiform gyrus." },
+                { level: 3, text: "Navigation coordinates in entorhinal cortex?", answer: "Grid cells", options: ["Place cells", "Grid cells", "Concept cells", "Glia"], correct: 1, fact: "Track position without external cues." },
+                { level: 2, text: "Core skills of executive function: Inhibition, Working Memory, and...?", answer: "Shifting", options: ["Recall", "Shifting", "LTP", "Induction"], correct: 1, fact: "Allows behavior adjustment when rules change." }
             ],
             development: [
-                { level: 1, text: "Simple hollow tube the brain begins as?", answer: "Neural Tube", options: ["Blastocyst", "Neural Tube", "Cortex", "Ventricle"], correct: 1, fact: "Formed 3 weeks after gestation." },
-                { level: 2, text: "Programmed cell death in embryos?", answer: "Apoptosis", options: ["Pruning", "Apoptosis", "Induction", "Migration"], correct: 1, fact: "Activated if a neuron lacks trophic factors." },
-                { level: 3, text: "Oldest neurons form which layer of the cortex?", answer: "Deepest layer", options: ["Outermost", "Deepest layer", "Middle", "Glia"], correct: 1, fact: "Migration occurs in an inside-out manner." },
-                { level: 1, text: "Process of removing excess connections?", answer: "Synaptic Pruning", options: ["Neurogenesis", "Synaptic Pruning", "LTP", "Migration"], correct: 1, fact: "Makes the brain more efficient." },
-                { level: 2, text: "Factor for sensory neuron survival?", answer: "Nerve growth factor", options: ["Dopamine", "Nerve growth factor", "Insulin", "LTP"], correct: 1, fact: "A limited-quantity trophic factor." },
-                { level: 3, text: "Scaffolding used by neurons to reach final positions?", answer: "Radial glia", options: ["Axons", "Radial glia", "Microtubules", "Dendrites"], correct: 1, fact: "90% of migration in humans uses this mechanism." },
-                { level: 2, text: "Newborn average brain weight?", answer: "370 grams", options: ["100g", "370 grams", "1kg", "3kg"], correct: 1, fact: "Slightly less than a pound." },
-                { level: 1, text: "Last brain regions to reach full maturity?", answer: "Frontal lobes", options: ["Visual", "Temporal", "Frontal lobes", "Medulla"], correct: 2, fact: "Continues development until age 30." },
-                { level: 3, text: "Week gestation where signs of eyes appear?", answer: "Week 7", options: ["Week 3", "Week 7", "Week 12", "Week 20"], correct: 1, fact: "Hemispheres also begin to show at this time." },
-                { level: 2, text: "Enlargement at tip of growing axon?", answer: "Growth Cone", options: ["Synapse", "Growth Cone", "Dendrite", "Soma"], correct: 1, fact: "It actively explores for its precise destination." },
-                // PLUS 5 NEW
-                { level: 2, text: "Two types of stem cell division: Symmetric and...?", answer: "Asymmetric", options: ["Polar", "Asymmetric", "Binary", "Meiotic"], correct: 1, fact: "Asymmetric division gives one proliferative and one mature cell." },
-                { level: 3, text: "Protein guiding neurons around worm nerve ring?", answer: "Netrin", options: ["Ephrin", "Netrin", "Sonic", "Tau"], correct: 1, fact: "Netrins also guide mammalian spinal cord axons." },
-                { level: 2, text: "Process eliminating weak/unused synapses?", answer: "Synaptic pruning", options: ["Apoptosis", "Proliferation", "Synaptic pruning", "Migration"], correct: 2, fact: "Allows stronger active synapses to flourish." },
-                { level: 3, text: "Glial cells wrapping CNS axons in myelin?", answer: "Oligodendrocytes", options: ["Astrocytes", "Microglia", "Oligodendrocytes", "Schwann"], correct: 2, fact: "Wrap axons in a fatty sheath to increase speed 100x." },
-                { level: 2, text: "Average weight of an adult human brain?", answer: "3 pounds", options: ["1 lb", "3 pounds", "5 lbs", "10 lbs"], correct: 1, fact: "Adult brains contain roughly 86 billion neurons." }
+                { level: 1, text: "Brain's embryonic start structure?", answer: "Neural Tube", options: ["Blastocyst", "Neural Tube", "Cortex", "Ventricle"], correct: 1, fact: "Forms 3 weeks after gestation." },
+                { level: 2, text: "Programmed cell death term?", answer: "Apoptosis", options: ["Pruning", "Apoptosis", "Induction", "Migration"], correct: 1, fact: "Removes half of generated neurons." },
+                { level: 3, text: "Oldest neurons form which cortex layer?", answer: "Deepest layer", options: ["Outermost", "Deepest layer", "Middle", "Glia"], correct: 1, fact: "Migration occurs inside-out." },
+                { level: 3, text: "Scaffolding used by migrating neurons?", answer: "Radial glia", options: ["Axons", "Radial glia", "Microtubules", "Dendrites"], correct: 1, fact: "90% of human migration uses this." },
+                { level: 2, text: "Newborn average brain weight?", answer: "370 grams", options: ["100g", "370 grams", "1kg", "3kg"], correct: 1, fact: "Just less than a pound." },
+                // PLUS 5 NEW DEVELOPMENT
+                { level: 3, text: "Protein guiding neurons around nerve ring?", answer: "Netrin", options: ["Ephrin", "Netrin", "Sonic", "Tau"], correct: 1, fact: "Discovered in worms, similar in humans." },
+                { level: 2, text: "Process removing excess connections?", answer: "Synaptic Pruning", options: ["Apoptosis", "Proliferation", "Synaptic Pruning", "LTP"], correct: 2, fact: "Increases efficiency in childhood." },
+                { level: 3, text: "Division giving one proliferative and one mature cell?", answer: "Asymmetric", options: ["Polar", "Asymmetric", "Binary", "Meiotic"], correct: 1, fact: "Produces progenitor or mature cells." },
+                { level: 2, text: "Approximate brain size at age 5 vs adult?", answer: "90 percent", options: ["10%", "50%", "90 percent", "100%"], correct: 2, fact: "Rapid growth in early childhood." },
+                { level: 1, text: "Ability to adapt and modify connections?", answer: "Plasticity", options: ["Elasticity", "Plasticity", "Resilience", "Static"], correct: 1, fact: "Experience physically changes the brain." }
             ],
             clinical: [
-                { level: 1, text: "Condition with extra copy of chromosome 21?", answer: "Down Syndrome", options: ["Autism", "Dyslexia", "Down Syndrome", "Epilepsy"], correct: 2, fact: "Also known as Trisomy 21." },
+                { level: 1, text: "Extra copy of chromosome 21 condition?", answer: "Down Syndrome", options: ["Autism", "Dyslexia", "Down Syndrome", "Epilepsy"], correct: 2, fact: "Also known as Trisomy 21." },
                 { level: 2, text: "Standard clot-dissolver for stroke?", answer: "tPA", options: ["L-Dopa", "tPA", "SSRI", "Lithium"], correct: 1, fact: "Must be given within 3 hours." },
                 { level: 1, text: "Dopamine loss structure in Parkinson's?", answer: "Substantia Nigra", options: ["PFC", "Substantia Nigra", "Amygdala", "Pons"], correct: 1, fact: "Leads to tremor and rigidity." },
-                { level: 2, text: "Drug for opioid overdose reversal?", answer: "Naloxone", options: ["Methadone", "Naloxone", "Fentanyl", "Codeine"], correct: 1, fact: "Binds to receptors without effect." },
-                { level: 3, text: "Stress hormone damaging the Hippocampus?", answer: "Glucocorticoids", options: ["Melatonin", "Glucocorticoids", "Leptin", "GABA"], correct: 1, fact: "Chronic high levels inhibit neuron growth." },
-                { level: 3, text: "Gene mutation (C9ORF72) links ALS to?", answer: "Frontotemporal dementia", options: ["Alzheimer's", "Frontotemporal dementia", "Epilepsy", "ASD"], correct: 1, fact: "Some individuals show symptoms of both." },
-                { level: 2, text: "Hallucinations and motival loss in?", answer: "Schizophrenia", options: ["Panic", "OCD", "Schizophrenia", "ADHD"], correct: 2, fact: "Emerges between ages 15 and 25." },
-                { level: 2, text: "Myelin attack disease in CNS?", answer: "Multiple Sclerosis", options: ["ALS", "Multiple Sclerosis", "Parkinson's", "AD"], correct: 1, fact: "Scar tissue blocks signal transmission." },
-                { level: 1, text: "Disease also known as Lou Gehrig's?", answer: "ALS", options: ["ALS", "MS", "Epilepsy", "Huntington's"], correct: 0, fact: "Amyotrophic Lateral Sclerosis." },
-                { level: 2, text: "Treatment for sleep apnea collapse?", answer: "CPAP", options: ["L-Dopa", "CPAP", "SSRI", "Lithium"], correct: 1, fact: "Continuous positive airway pressure." },
-                // PLUS 5 NEW
-                { level: 2, text: "Primary addictive substance in tobacco?", answer: "Nicotine", options: ["Tar", "Nicotine", "Ethanol", "THC"], correct: 1, fact: "Arrives in the brain within 10 seconds of smoking." },
-                { level: 3, text: "Drug class targeting GABA to calm anxiety?", answer: "Benzodiazepines", options: ["SSRI", "Benzodiazepines", "Opioids", "Stimulants"], correct: 1, fact: "Diazepam (Valium) is a standard medication." },
-                { level: 3, text: "Protein hallmark of Parkinson's and Lewy Body?", answer: "Alpha-synuclein", options: ["Tau", "Amyloid", "Alpha-synuclein", "SOD1"], correct: 2, fact: "Entangles with other proteins in neuron bodies." },
-                { level: 2, text: "Leading cause of preventable death in US?", answer: "Tobacco", options: ["Alcohol", "Opioids", "Tobacco", "Sedentary"], correct: 2, fact: "Tobacco use leads to heart disease and stroke." },
-                { level: 3, text: "Drug used for heroin withdrawal treatment?", answer: "Methadone", options: ["Naloxone", "Methadone", "L-Dopa", "Ritalin"], correct: 1, fact: "Stimulates opioid receptors with limited high." }
+                { level: 3, text: "Gene mutation links ALS to dementia?", answer: "C9ORF72", options: ["APP", "HTT", "C9ORF72", "SOD1"], correct: 2, fact: "Links ALS to Frontotemporal dementia." },
+                { level: 2, text: "Reality loss and delusions in?", answer: "Schizophrenia", options: ["Panic", "OCD", "Schizophrenia", "ADHD"], correct: 2, fact: "Emerges age 15-25." },
+                // PLUS 5 NEW CLINICAL
+                { level: 2, text: "Leading cause of preventable death in US?", answer: "Tobacco", options: ["Alcohol", "Tobacco", "Opioids", "Cocaine"], correct: 1, fact: "Nicotine is highly addictive." },
+                { level: 1, text: "Most common learning disability?", answer: "Dyslexia", options: ["Autism", "ADHD", "Dyslexia", "Down"], correct: 2, fact: "Difficulty with reading fluency." },
+                { level: 3, text: "Protein hallmark of Parkinson's?", answer: "Alpha-synuclein", options: ["Tau", "Amyloid", "Alpha-synuclein", "Huntingtin"], correct: 2, fact: "Main component of Lewy bodies." },
+                { level: 2, text: "Overdose reversal drug for opioids?", answer: "Naloxone", options: ["Methadone", "Naloxone", "Fentanyl", "Codeine"], correct: 1, fact: "Blocks opioid receptors quickly." },
+                { level: 3, text: "Condition of acted-out dreams?", answer: "REM sleep behavior disorder", options: ["Sleepwalking", "REM sleep behavior disorder", "Apnea", "Insomnia"], correct: 1, fact: "Failure of normal muscle paralysis." }
             ],
             research: [
                 { level: 1, text: "Radio waves and magnets brain mapping?", answer: "MRI", options: ["EEG", "MRI", "PET", "NIRS"], correct: 1, fact: "Maps water distribution in tissues." },
-                { level: 2, text: "Magnetic pulse stimulator for PFC?", answer: "TMS", options: ["DBS", "TMS", "tDCS", "BMI"], correct: 1, fact: "Transcranial magnetic stimulation." },
-                { level: 2, text: "Method using light to control neurons?", answer: "Optogenetics", options: ["TMS", "Optogenetics", "CRISPR", "fMRI"], correct: 1, fact: "Requires genetic modification." },
-                { level: 3, text: "Modeling brain mathematically?", answer: "Computational Neuroscience", options: ["Neurolaw", "Computational Neuroscience", "BMI", "NIRS"], correct: 1, fact: "Tests models against biological data." },
-                { level: 2, text: "Tracing radioactive blood flow?", answer: "PET", options: ["MRI", "fMRI", "EEG", "PET"], correct: 3, fact: "Detects labeled markers like oxygen." },
-                { level: 3, text: "Tool measuring oxygen surface levels via laser?", answer: "NIRS", options: ["fMRI", "NIRS", "PET", "EEG"], correct: 1, fact: "Near-infrared spectroscopy is portable." },
-                { level: 2, text: "Field studying financial choices?", answer: "Neuroeconomics", options: ["Math", "Neuroeconomics", "Social", "Ethics"], correct: 1, fact: "Explores risk and reward mechanisms." },
-                { level: 1, text: "Gene editing tool from bacteria?", answer: "CRISPR", options: ["Lentivirus", "CRISPR", "RNAi", "DBS"], correct: 1, fact: "Clustered Regularly Interspaced Short Palindromic Repeats." },
-                { level: 2, text: "Magnetic field detection imaging tool?", answer: "MEG", options: ["EEG", "MEG", "fMRI", "PET"], correct: 1, fact: "Magnetoencephalography resolution is high." },
-                { level: 3, text: "Method for monitoring action via thin tubes?", answer: "Microdialysis", options: ["Mass spec", "Microdialysis", "Opto", "TMS"], correct: 1, fact: "Collects liquid outside neurons." },
-                // PLUS 5 NEW
-                { level: 2, text: "Technology using scalp electrodes for epilepsy?", answer: "EEG", options: ["fMRI", "PET", "EEG", "DBS"], correct: 2, fact: "Records net electrical activity of cortical cells." },
-                { level: 3, text: "Tool using lasers to see living neurons in animals?", answer: "Two-photon imaging", options: ["EEG", "Two-photon imaging", "MRI", "NIRS"], correct: 1, fact: "Enables observation of neuron growth after experience." },
-                { level: 2, text: "Study of organism structure mapping landmarks?", answer: "Anatomy", options: ["Physiology", "Anatomy", "Genetics", "Pharmacology"], correct: 1, fact: "In the brain, it starts with the neuron structure." },
-                { level: 3, text: "Branch analyzing samples via mass spectrometry?", answer: "Mass spectrometry", options: ["MRI", "PET", "Mass spectrometry", "EEG"], correct: 2, fact: "Ionizes compounds to identify them by mass." },
-                { level: 3, text: "Generic model template averaged from MRI scans?", answer: "Brain template", options: ["Brain template", "Neural grid", "fMRI map", "Cortex model"], correct: 0, fact: "Used as a baseline for predictive neuroimaging." }
+                { level: 2, text: "Light-controlled modified neurons method?", answer: "Optogenetics", options: ["TMS", "Optogenetics", "CRISPR", "fMRI"], correct: 1, fact: "Milliseconds circuit control." },
+                { level: 3, text: "Modeling brain mathematically field?", answer: "Computational Neuroscience", options: ["Neurolaw", "Computational Neuroscience", "BMI", "NIRS"], correct: 1, fact: "Tests models against biological data." },
+                { level: 3, text: "Precise DNA snip tool from bacteria?", answer: "CRISPR", options: ["Lentivirus", "CRISPR", "RNAi", "DBS"], correct: 1, fact: "Clustered Regularly Interspaced Short Palindromic Repeats." },
+                { level: 2, text: "Imaging magnetic fields from currents?", answer: "MEG", options: ["EEG", "MEG", "fMRI", "PET"], correct: 1, fact: "Magnetoencephalography resolution is high." },
+                // PLUS 5 NEW RESEARCH
+                { level: 3, text: "Oxygen surface level measuring laser tool?", answer: "NIRS", options: ["fMRI", "NIRS", "PET", "TMS"], correct: 1, fact: "Portable near-infrared spectroscopy." },
+                { level: 2, text: "Monitoring neurotransmitters via thin tubes?", answer: "Microdialysis", options: ["Mass spec", "Microdialysis", "Opto", "EEG"], correct: 1, fact: "Collects liquid from outside neurons." },
+                { level: 3, text: "Generic model template averaged from MRI?", answer: "Brain template", options: ["Brain template", "Neural grid", "fMRI map", "Anatomy"], correct: 0, fact: "Used in predictive neuroimaging." },
+                { level: 2, text: "Magnetic pulse stimulation for PFC?", answer: "TMS", options: ["DBS", "TMS", "BMI", "PET"], correct: 1, fact: "Transcranial magnetic stimulation." },
+                { level: 3, text: "Analysis identifying DNA copy repeats?", answer: "Microarrays", options: ["Mass spec", "Microarrays", "EEG", "NIRS"], correct: 1, fact: "Detects variations in copy number." }
             ]
         };
 
@@ -261,6 +247,10 @@
             const [view, setView] = useState('menu');
             const [score, setScore] = useState(0);
             const [level, setLevel] = useState(1);
+            const [user, setUser] = useState(null);
+            const [loadingData, setLoadingData] = useState(true);
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+
             const [currentMission, setCurrentMission] = useState(null);
             const [questions, setQuestions] = useState([]);
             const [qIdx, setQIdx] = useState(0);
@@ -273,9 +263,54 @@
             const rank = ["Cadet", "Scholar", "Researcher", "Expert", "Legend"][Math.min(level-1, 4)];
 
             useEffect(() => {
-                const newLvl = Math.floor(score / xpPerLevel) + 1;
-                if (newLvl > level) setLevel(newLvl);
-            }, [score]);
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await auth.signInAnonymously();
+                        }
+                    } catch (e) { console.error("Auth error", e); }
+                };
+                initAuth();
+                const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
+                return () => unsubscribe();
+            }, []);
+
+            useEffect(() => {
+                if (!user) return;
+                const userDoc = db.doc(`artifacts/${appId}/users/${user.uid}/profile/userData`);
+                const unsubscribe = userDoc.onSnapshot((docSnap) => {
+                    if (docSnap.exists) {
+                        const data = docSnap.data();
+                        setScore(data.score || 0);
+                        setLevel(data.level || 1);
+                    } else {
+                        setScore(0);
+                        setLevel(1);
+                    }
+                    setLoadingData(false);
+                }, (error) => {
+                    console.error("Firestore error:", error);
+                    setLoadingData(false);
+                });
+                return () => unsubscribe();
+            }, [user]);
+
+            const saveProgress = async (newScore, newLevel) => {
+                if (!user) return;
+                const userDoc = db.doc(`artifacts/${appId}/users/${user.uid}/profile/userData`);
+                await userDoc.set({ score: newScore, level: newLevel }, { merge: true });
+            };
+
+            const resetProgress = async () => {
+                if (!user) return;
+                const userDoc = db.doc(`artifacts/${appId}/users/${user.uid}/profile/userData`);
+                await userDoc.set({ score: 0, level: 1 });
+                setShowResetConfirm(false);
+                setScore(0);
+                setLevel(1);
+            };
 
             const startMission = (id) => {
                 const pool = id === 'mixed' ? Object.values(DATA_BANK).flat() : DATA_BANK[id];
@@ -300,15 +335,18 @@
                 }
 
                 if (isCorrect) {
-                    setScore(s => s + (showOptions ? 100 : 350));
+                    const gain = showOptions ? 100 : 350;
+                    const newScore = score + gain;
+                    const newLvl = Math.floor(newScore / xpPerLevel) + 1;
+                    setScore(newScore);
+                    saveProgress(newScore, newLvl);
                 }
-
                 setFeedback({ correct: isCorrect, fact: q.fact, answer: q.answer });
             };
 
             const handleNext = () => {
                 if (qIdx < questions.length - 1) {
-                    setQIdx(i => i + 1);
+                    setQIdx(qIdx + 1);
                     setInput('');
                     setShowOptions(false);
                     setFeedback(null);
@@ -324,10 +362,19 @@
                 return "bg-rose-600/30 text-rose-400 border-rose-500/50";
             };
 
+            if (loadingData) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-[#020408]">
+                        <div className="flex flex-col items-center gap-4">
+                            <Icon name="loader" className="w-8 h-8 text-blue-500 animate-spin" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Syncing Neural Data...</p>
+                        </div>
+                    </div>
+                );
+            }
+
             return (
                 <div className="max-w-md mx-auto min-h-screen flex flex-col pb-12">
-                    
-                    {/* FIXED HUD */}
                     <div className="fixed-hud p-5 shadow-2xl">
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-3">
@@ -346,7 +393,7 @@
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex justify-between text-[8px] font-black uppercase text-slate-500 tracking-tighter">
-                                <span>Mastery Progress</span>
+                                <span>Clearance Progress</span>
                                 <span>{score % xpPerLevel} / {xpPerLevel} XP</span>
                             </div>
                             <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -359,15 +406,14 @@
                         {view === 'menu' && (
                             <div className="space-y-6 animate-in fade-in duration-500">
                                 <div className="neuro-card p-6 rounded-[2rem] border border-white/5">
-                                    <h2 className="text-xl font-black mb-3 tracking-tighter italic text-center">Elite Study Mode</h2>
-                                    <p className="text-slate-400 text-xs leading-relaxed text-center">
-                                        Active recall sequences extracted from <span className="text-white">Brain Facts 8th Ed</span>. 
-                                        Categorized by <span className="text-blue-400 font-bold">Intel Levels</span>.
+                                    <h2 className="text-xl font-black mb-3 tracking-tighter italic">Elite Preparation Mode.</h2>
+                                    <p className="text-slate-400 text-xs leading-relaxed">
+                                        Data synced with <span className="text-white">Brain Facts 8th Ed</span>. 
+                                        Categorized by <span className="text-blue-400 font-bold tracking-widest text-[9px]">Intel Levels</span>.
                                     </p>
                                 </div>
-
                                 <div className="space-y-3">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Sequences</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Sequences</p>
                                     {MISSION_TYPES.map(m => (
                                         <button key={m.id} onClick={() => startMission(m.id)} className="w-full flex items-center gap-4 bg-slate-900/40 border border-white/10 p-5 rounded-2xl hover:border-blue-500/30 active:scale-[0.98] text-left transition-all">
                                             <div className={`p-3 rounded-2xl bg-slate-950 text-${m.color}-500 shadow-inner`}>
@@ -375,12 +421,13 @@
                                             </div>
                                             <div className="flex-1">
                                                 <h3 className="text-xs font-black uppercase tracking-tight text-slate-100">{m.title}</h3>
-                                                <p className="text-[9px] text-slate-500 font-medium italic">Verified Granularity Packs</p>
+                                                <p className="text-[9px] text-slate-500 font-medium italic">Intel Bundle Ready</p>
                                             </div>
                                             <Icon name="chevron-right" className="text-slate-700" />
                                         </button>
                                     ))}
                                 </div>
+                                <button onClick={() => setShowResetConfirm(true)} className="w-full py-4 text-[9px] font-black text-red-500/60 uppercase tracking-[0.2em] hover:text-red-500 transition-colors mt-8">Reset Neural Progress</button>
                             </div>
                         )}
 
@@ -397,30 +444,20 @@
                                 <div className="bg-[#0b0f1a] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl p-8 sm:p-12 relative">
                                     <div className="flex items-center justify-between mb-10">
                                         <div className="flex items-center gap-2">
-                                            <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                                            <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_#3b82f6]"></span>
                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Signal Active</span>
                                         </div>
-                                        <div className={`level-badge border ${getLevelColor(questions[qIdx].level)}`}>
-                                            INTEL LVL {questions[qIdx].level}
-                                        </div>
+                                        <div className={`level-badge border ${getLevelColor(questions[qIdx].level)}`}>INTEL LVL {questions[qIdx].level}</div>
                                     </div>
 
-                                    <h2 className="text-2xl sm:text-3xl font-black leading-tight text-white italic mb-12 tracking-tight">
-                                        {questions[qIdx].text}
-                                    </h2>
+                                    <h2 className="text-2xl sm:text-3xl font-black leading-tight text-white italic mb-12 tracking-tight">{questions[qIdx].text}</h2>
 
                                     {!feedback && (
                                         <div className="space-y-6">
                                             {!showOptions ? (
                                                 <div className="space-y-6">
                                                     <div className="relative">
-                                                        <input 
-                                                            type="text" autoFocus value={input} 
-                                                            onChange={e => setInput(e.target.value)} 
-                                                            onKeyDown={e => e.key === 'Enter' && input.length > 0 && submit()} 
-                                                            placeholder="Enter Nomenclature..." 
-                                                            className="w-full bg-slate-900/50 border-2 border-slate-800 p-6 rounded-2xl outline-none focus:border-blue-500 font-bold text-lg input-active transition-all" 
-                                                        />
+                                                        <input type="text" autoFocus value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && input.length > 0 && submit()} placeholder="Enter Intel..." className="w-full bg-slate-900/50 border-2 border-slate-800 p-6 rounded-2xl outline-none focus:border-blue-500 font-bold text-lg input-active transition-all" />
                                                         {input.length > 0 && (
                                                             <button onClick={() => submit()} className="absolute right-3 top-3 bottom-3 aspect-square bg-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-500 transition-all active:scale-90 shadow-lg"><Icon name="send" className="text-white" /></button>
                                                         )}
@@ -432,9 +469,7 @@
                                             ) : (
                                                 <div className="grid grid-cols-1 gap-3 animate-in slide-in-from-bottom-2">
                                                     {questions[qIdx].options.map((opt, i) => (
-                                                        <button key={i} onClick={() => submit(i)} className="w-full p-5 rounded-2xl text-left text-sm font-bold border-2 border-slate-800 bg-slate-900/40 hover:border-blue-500/50 active:scale-[0.98] transition-all">
-                                                            {opt}
-                                                        </button>
+                                                        <button key={i} onClick={() => submit(i)} className="w-full p-5 rounded-2xl text-left text-sm font-bold border-2 border-slate-800 bg-slate-900/40 hover:border-blue-500/50 active:scale-[0.98] transition-all">{opt}</button>
                                                     ))}
                                                 </div>
                                             )}
@@ -448,28 +483,18 @@
                                                     <Icon name={feedback.correct ? 'check-circle' : 'alert-triangle'} className="w-8 h-8" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className={`text-xl font-black uppercase tracking-tight mb-2 ${feedback.correct ? 'text-green-400' : 'text-red-400'}`}>
-                                                        {feedback.correct ? 'Verified Intel' : 'Sync Error'}
-                                                    </p>
-                                                    {!feedback.correct && (
-                                                        <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-2 italic text-white bg-red-900/30 inline-block px-2 rounded">Target: <span className="text-white italic bg-slate-800 px-2 py-0.5 rounded ml-1">{feedback.answer}</span></p>
-                                                    )}
-                                                    <p className="text-[10px] font-black text-slate-500 uppercase">
-                                                        Intel Reward: <span className="text-blue-400">+{feedback.correct ? (showOptions ? 150 : 350) : 0}</span>
-                                                    </p>
+                                                    <p className={`text-xl font-black uppercase tracking-tight mb-2 ${feedback.correct ? 'text-green-400' : 'text-red-400'}`}>{feedback.correct ? 'Verified Intel' : 'Sync Error'}</p>
+                                                    {!feedback.correct && <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-2 italic text-white bg-red-900/30 inline-block px-2 rounded">Target Data: {feedback.answer}</p>}
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase">Intel Gain: <span className="text-blue-400">+{feedback.correct ? (showOptions ? 100 : 350) : 0}</span></p>
                                                 </div>
                                             </div>
-                                            
                                             <div className="bg-black/50 p-6 rounded-3xl border border-white/5 mb-10 shadow-inner">
                                                 <p className="text-slate-300 text-xs sm:text-base leading-relaxed font-medium italic">
-                                                    <span className="text-blue-500 font-black not-italic mr-3 tracking-widest text-[9px] uppercase underline underline-offset-4">Lab_Note_Ref:</span>
+                                                    <span className="text-blue-500 font-black not-italic mr-3 tracking-widest text-[9px] uppercase underline underline-offset-4">Ref_Note:</span>
                                                     "{feedback.fact}"
                                                 </p>
                                             </div>
-
-                                            <button onClick={handleNext} className="w-full bg-white text-black py-5 rounded-3xl font-black text-[11px] tracking-[0.2em] uppercase active:scale-95 transition-all shadow-2xl hover:bg-blue-600 hover:text-white">
-                                                Next Sequence <Icon name="chevron-right" className="inline ml-1 w-4 h-4" />
-                                            </button>
+                                            <button onClick={handleNext} className="w-full bg-white text-black py-5 rounded-3xl font-black text-[11px] tracking-[0.2em] uppercase active:scale-95 transition-all shadow-2xl hover:bg-blue-600 hover:text-white">Synchronize Next <Icon name="chevron-right" className="inline ml-1 w-4 h-4" /></button>
                                         </div>
                                     )}
                                 </div>
@@ -477,10 +502,22 @@
                         )}
                     </main>
 
-                    {/* AMBIENT FOOTER */}
+                    {showResetConfirm && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 modal-overlay animate-in fade-in duration-300">
+                            <div className="bg-[#0b0f1a] border border-red-500/30 p-8 rounded-[2rem] w-full max-w-xs shadow-2xl">
+                                <h3 className="text-lg font-black uppercase text-red-500 mb-4 tracking-tighter">Wipe Neural Progress?</h3>
+                                <p className="text-slate-400 text-xs leading-relaxed mb-8">Permanently delete your score and levels? This action is irreversible.</p>
+                                <div className="flex flex-col gap-3">
+                                    <button onClick={resetProgress} className="w-full bg-red-600 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest text-white shadow-lg active:scale-95 transition-all">Confirm Wipe</button>
+                                    <button onClick={() => setShowResetConfirm(false)} className="w-full bg-slate-900 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-500 border border-white/5 active:scale-95 transition-all">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <footer className="fixed bottom-0 left-0 w-full p-4 flex justify-between items-center opacity-40 px-10 pointer-events-none bg-black/20 backdrop-blur-sm">
-                        <div className="text-[8px] font-black uppercase tracking-widest flex items-center gap-2"><Icon name="cpu" size={10} /> Neural_Net v10.5</div>
-                        <div className="text-[8px] font-black uppercase tracking-widest flex items-center gap-2">Data_Source: Brain Facts 8th Ed</div>
+                        <div className="text-[8px] font-black uppercase tracking-widest flex items-center gap-2"><Icon name="cpu" size={10} /> Neural_Net v10.7</div>
+                        <div className="text-[8px] font-black uppercase tracking-widest flex items-center gap-2">Database: Brain Facts 8th Ed</div>
                     </footer>
                 </div>
             );
