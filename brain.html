@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroExplorer Pro | Brain Bee Israel Elite</title>
+    <title>NeuroExplorer Pro | Brain Bee Israel Elite v15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -22,6 +22,7 @@
             --bg-dark: #020408;
             --card-gradient: linear-gradient(160deg, #0f172a 0%, #05080f 100%);
             --accent-blue: #3b82f6;
+            --streak-gold: #f59e0b;
         }
 
         body {
@@ -64,13 +65,35 @@
             text-transform: uppercase;
         }
 
+        .streak-badge {
+            animation: pulse-streak 1.5s infinite;
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--streak-gold);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        @keyframes pulse-streak {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #020408; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
 
         .modal-overlay {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+        }
+        
+        .explanation-box {
+            border-left: 4px solid var(--accent-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .map-node {
+            transition: all 0.3s ease;
         }
     </style>
 </head>
@@ -81,42 +104,44 @@
         const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
         // --- CONSOLE LOGGING HELPER ---
-        const log = (msg, data = "") => console.log(`[NeuroLab] ${msg}`, data);
+        const log = (msg, data = "") => console.log(`%c[NeuroLab] ${msg}`, "color: #3b82f6; font-weight: bold", data);
 
-        // --- DATABASE SETUP & SAFE ENV ACCESS ---
-        log("System Boot Initialized.");
-        
-        const getFirebaseConfig = () => {
+        // --- ENVIRONMENT INITIALIZATION ---
+        const getEnv = (key) => {
             try {
-                return typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                if (key === 'config') return typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                if (key === 'id') return typeof __app_id !== 'undefined' ? __app_id : 'neuro-elite-v15';
+                if (key === 'token') return typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             } catch (e) { return null; }
         };
 
-        const config = getFirebaseConfig();
-        let auth, db, appId;
+        const config = getEnv('config');
+        const appId = getEnv('id');
+        let auth, db;
 
         if (config) {
-            log("Cloud environment detected. Connecting to services...");
+            log("Config detected. Initializing Firebase Services...");
             if (!firebase.apps.length) firebase.initializeApp(config);
             auth = firebase.auth();
             db = firebase.firestore();
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'neuro-explorer-final';
         } else {
-            log("Local environment detected. Switching to Local Simulation mode.");
+            log("No remote config. Running in Local Memory Simulation.");
         }
 
+        // --- ICON COMPONENT (Safe from React/Lucide DOM conflicts) ---
         const Icon = ({ name, className = "w-5 h-5" }) => {
             const containerRef = useRef(null);
             useEffect(() => {
                 if (window.lucide && containerRef.current) window.lucide.createIcons();
             }, [name]);
             return (
-                <span ref={containerRef} className="inline-flex items-center justify-center">
+                <span ref={containerRef} className="inline-flex items-center justify-center pointer-events-none">
                     <i data-lucide={name} className={className}></i>
                 </span>
             );
         };
 
+        // --- FUZZY MATCHING (Levenshtein) ---
         const getSimilarity = (input, target) => {
             const a = input.toLowerCase().trim();
             const b = target.toLowerCase().trim();
@@ -132,116 +157,68 @@
                 }
             }
             const sim = matrix[b.length][a.length] <= Math.floor(b.length * 0.35);
-            if (sim && a !== b) log(`Fuzzy Match: Input "${a}" matched Target "${b}"`);
+            if (sim && a !== b) log(`Fuzzy Match Confirmed: "${a}" -> "${b}"`);
             return sim;
         };
 
         const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
-        // --- MASTER DATA BANK (ALL PREVIOUS + 35 NEW) ---
+        // --- LARGE MASTER DATA BANK (v15.0) ---
         const DATA_BANK = {
             basics: [
-                { level: 1, text: "How many neurons are in a human brain?", answer: "86 billion", options: ["10b", "86 billion", "1t", "500m"], correct: 1, fact: "Neurons communicate via complex electrical and chemical circuits." },
-                { level: 2, text: "Voltage of a resting neuron?", answer: "-70 mV", options: ["0 mV", "-70 mV", "+30 mV", "-50 mV"], correct: 1, fact: "Maintained by ion pumps like the Sodium-Potassium pump." },
-                { level: 1, text: "Primary excitatory neurotransmitter?", answer: "Glutamate", options: ["GABA", "Dopamine", "Glutamate", "Serotonin"], correct: 2, fact: "Used by roughly 50% of excitatory synapses." },
-                { level: 2, text: "Glia producing CNS myelin?", answer: "Oligodendrocytes", options: ["Schwann", "Astrocytes", "Oligodendrocytes", "Microglia"], correct: 2, fact: "Myelin insulation can increase speed by 100x." },
-                { level: 2, text: "Main brain immune cells?", answer: "Microglia", options: ["Astrocytes", "Microglia", "Ependymal", "Neurons"], correct: 1, fact: "Microglia function as phagocytes to protect the brain." },
-                { level: 1, text: "Largest part of the human brain?", answer: "Cerebrum", options: ["Cerebrum", "Cerebellum", "Brainstem", "Thalamus"], correct: 0, fact: "Divided into two hemispheres connected by the corpus callosum." },
-                { level: 3, text: "Technical term for a neuron's interior becoming more negative?", answer: "Hyperpolarized", options: ["Depolarized", "Hyperpolarized", "Neutral", "Excited"], correct: 1, fact: "This moves the neuron further from its firing threshold." },
-                { level: 3, text: "Small neuropeptide controlling the transition into sleep?", answer: "Orexin", options: ["Melatonin", "Orexin", "Adenosine", "Vasopressin"], correct: 1, fact: "Produced in the lateral hypothalamus; its loss causes narcolepsy." },
-                { level: 3, text: "Ratio of Sodium to Potassium ions moved by the Na/K pump?", answer: "3 to 2", options: ["1 to 1", "2 to 3", "3 to 2", "5 to 1"], correct: 2, fact: "Expels 3 Sodium ions for every 2 Potassium ions taken in." },
-                // NEW BASICS
-                { level: 2, text: "A change in a cell's electrical potential that dies out as it travels?", answer: "Graded potential", options: ["Action potential", "Graded potential", "Resting potential", "Refractory"], correct: 1, fact: "Unlike action potentials, graded potentials lose intensity over distance." },
-                { level: 3, text: "A specific protein complex that anchors vesicles to the presynaptic membrane?", answer: "SNARE complex", options: ["SNARE complex", "NMDA", "ATP", "Kinesin"], correct: 0, fact: "Calcium binding triggers the SNARE complex to pull vesicles into the membrane." },
-                { level: 2, text: "Which molecule provides the phosphate needed for neural energy transfers?", answer: "ATP", options: ["ATP", "GTP", "RNA", "DNA"], correct: 0, fact: "Adenosine triphosphate is the universal energy currency." },
-                { level: 3, text: "Which ion binds to synaptotagmin to trigger exocytosis?", answer: "Calcium", options: ["Sodium", "Potassium", "Calcium", "Magnesium"], correct: 2, fact: "Voltage-gated calcium channels are key at the axon terminal." },
-                { level: 1, text: "Name for the electrical impulse that travels down an axon?", answer: "Action potential", options: ["Graded potential", "Synapse", "Action potential", "Threshold"], correct: 2, fact: "It functions in an 'all-or-none' fashion." }
+                { level: 3, text: "Which protein handles cargo transport toward the cell body (retrograde)?", answer: "Dynein", options: ["Kinesin", "Dynein", "Actin", "Myosin"], correct: 1, fact: "Dynein 'walks' along microtubules to recycle components back to the soma.", context: "In neurons, retrograde transport is essential for recycling synaptic vesicles and bringing growth factors from the terminal back to the nucleus. Dynein is the primary motor protein for this direction." },
+                { level: 2, text: "Typical ratio of Sodium ions pumped out vs Potassium in?", answer: "3 to 2", options: ["2 to 1", "3 to 2", "1 to 1", "3 to 1"], correct: 1, fact: "The Sodium-Potassium pump uses ATP to maintain a negative resting potential.", context: "The Na+/K+-ATPase pump expels 3 Na+ ions for every 2 K+ ions it brings in, creating the negative interior voltage." },
+                { level: 3, text: "What builds small-molecule neurotransmitters in the axon terminal?", answer: "Enzymes", options: ["Ribosomes", "Enzymes", "Mitochondria", "Vesicles"], correct: 1, fact: "Specific metabolic enzymes catalyze synthesis locally.", context: "While large peptides must be built in the cell body, small molecules like GABA or dopamine are assembled at the synapse itself to save energy." },
+                { level: 1, text: "Brain region acting as the 'relay station' for almost all senses?", answer: "Thalamus", options: ["Hypothalamus", "Hippocampus", "Thalamus", "Amygdala"], correct: 2, fact: "The thalamus sorts and filters sensory data before it reaches the cortex.", context: "Every sense except smell must pass through the thalamus before being consciously perceived." },
+                { level: 2, text: "Glial cells that form the blood-brain barrier?", answer: "Astrocytes", options: ["Microglia", "Astrocytes", "Oligodendrocytes", "Schwann"], correct: 1, fact: "Their 'end-feet' wrap around blood vessels to control nutrient flow.", context: "Astrocytes protect the brain from toxins in the blood while providing metabolic support directly to neurons." }
             ],
             senses: [
-                { level: 1, text: "Retinal cells Resolving fine detail?", answer: "Cones", options: ["Rods", "Cones", "Ganglion", "Bipolar"], correct: 1, fact: "Cones are concentrated in the fovea for maximum acuity." },
-                { level: 2, text: "Sense bypassing the thalamus entirely?", answer: "Smell", options: ["Vision", "Hearing", "Touch", "Smell"], correct: 3, fact: "Smell signals go directly to the olfactory bulbs." },
-                { level: 1, text: "Snail-shell organ for hearing?", answer: "Cochlea", options: ["Stapes", "Cochlea", "Pinna", "Utricle"], correct: 1, fact: "Hair cells in the cochlea respond to fluid pressure." },
-                { level: 2, text: "Area of highest visual acuity in the retina?", answer: "Fovea", options: ["Macula", "Fovea", "Optic disk", "Iris"], correct: 1, fact: "It contains only red and green cones." },
-                { level: 3, text: "Visual processing stream integrating spatial relationships?", answer: "Dorsal stream", options: ["Ventral", "Dorsal stream", "Medial", "Lateral"], correct: 1, fact: "Heads up toward the parietal lobe; the 'Where' stream." },
-                { level: 3, text: "Specialized structures in the cochlea opening ion channels?", answer: "Stereocilia", options: ["Dendrites", "Stereocilia", "Cones", "Microvilli"], correct: 1, fact: "Their bending is the first step in hearing." },
-                { level: 2, text: "Which receptor activation results in 'itch'?", answer: "Histamine", options: ["Nociceptor", "Histamine", "AMPA", "GABA"], correct: 1, fact: "Skin irritation triggers histamine release inside the body." },
-                // NEW SENSES
-                { level: 3, text: "Visual neurons that fire when an object of a specific orientation moves across a receptive field?", answer: "Complex cells", options: ["Simple cells", "Complex cells", "Bipolar cells", "Amacrine cells"], correct: 1, fact: "Complex cells are found in the primary visual cortex (V1)." },
-                { level: 2, text: "Smallest muscle in the human body, found in the ear?", answer: "Stapedius", options: ["Masseter", "Stapedius", "Sartorius", "Gluteus"], correct: 1, fact: "It dampens the movement of the stapes to protect from loud sounds." },
-                { level: 3, text: "Which structure in the midbrain integrates auditory signals for orientation?", answer: "Inferior colliculus", options: ["Superior colliculus", "Inferior colliculus", "Thalamus", "Pons"], correct: 1, fact: "The inferior colliculus is a major auditory hub below the thalamus." },
-                { level: 2, text: "Chemicals released by damaged tissue that sensitize nociceptors?", answer: "Prostaglandins", options: ["Prostaglandins", "Hormones", "Vitamins", "Sugars"], correct: 0, fact: "Aspirin blocks the enzymes that produce prostaglandins." },
-                { level: 1, text: "Fluid-filled chamber in the ear for balance?", answer: "Semicircular canals", options: ["Cochlea", "Semicircular canals", "Pinna", "Ossicles"], correct: 1, fact: "They detect head rotation using fluid movement." }
+                { level: 3, text: "Mapping of sounds by frequency in the auditory system?", answer: "Tonotopy", options: ["Somatotopy", "Tonotopy", "Retinotopy", "Gustotopy"], correct: 1, fact: "Tonotopy is maintained from the cochlea up to the auditory cortex.", context: "Specific frequencies trigger specific spots on the basilar membrane, which are then mapped onto specific areas of the cortex." },
+                { level: 2, text: "Sense bypassing the thalamus on its way to the cortex?", answer: "Smell", options: ["Sight", "Hearing", "Smell", "Touch"], correct: 2, fact: "Olfactory signals go directly from the nose to the olfactory bulbs.", context: "This direct access to the limbic system explains why smell triggers vivid memories." },
+                { level: 3, text: "Retinal cells providing lateral inhibition to improve contrast?", answer: "Horizontal cells", options: ["Bipolar", "Amacrine", "Horizontal cells", "Cones"], correct: 2, fact: "They sharpen images before they leave the eye.", context: "Horizontal cells inhibit neighboring photoreceptors, allowing the brain to detect edges and boundaries." },
+                { level: 1, text: "High-resolution color vision cells concentrated in the fovea?", answer: "Cones", options: ["Rods", "Cones", "Ganglion", "Amacrine"], correct: 1, fact: "Humans have three types: red, green, and blue sensitive cones.", context: "Cones work best in bright light. The fovea is almost entirely made of cones." },
+                { level: 2, text: "Specialized pain fibers transmitting slow, dull aches?", answer: "C fibers", options: ["A-delta", "C fibers", "A-beta", "Gamma"], correct: 1, fact: "Responsible for lingering throbbing pain.", context: "Unmyelinated and small, they transmit signals slowly compared to A-delta fibers." }
             ],
             movement: [
-                { level: 1, text: "Neurons directly controlling muscle?", answer: "Alpha motor neurons", options: ["Gamma", "Alpha motor neurons", "Pyramidal", "Interneurons"], correct: 1, fact: "An alpha motor neuron plus its muscle fibers is a motor unit." },
-                { level: 2, text: "Transmitter at the neuromuscular junction?", answer: "Acetylcholine", options: ["Dopamine", "Glutamate", "Acetylcholine", "GABA"], correct: 2, fact: "Acetylcholine causes muscle fibers to contract." },
-                { level: 1, text: "Structure for balance and motor learning?", answer: "Cerebellum", options: ["Thalamus", "Cerebellum", "Basal Ganglia", "Pons"], correct: 1, fact: "Coordinates timing and integration of muscle action." },
-                { level: 3, text: "Loss of inhibitory neurons in basal ganglia causes?", answer: "Huntington's disease", options: ["Parkinson's", "Huntington's disease", "ALS", "Epilepsy"], correct: 1, fact: "Eliminates suppression of random movements." },
-                { level: 2, text: "Muscle receptors for length and stretch?", answer: "Muscle spindles", options: ["Tendon organs", "Muscle spindles", "Nociceptors", "Glia"], correct: 1, fact: "Trigger the knee-jerk stretch reflex." },
-                // NEW MOVEMENT
-                { level: 3, text: "Specific cortical area that activates during the mental rehearsal of a movement?", answer: "Supplementary motor area", options: ["Primary motor", "Premotor", "Supplementary motor area", "V1"], correct: 2, fact: "Often abbreviated as SMA; active before the movement starts." },
-                { level: 2, text: "Condition of excessive, stiff muscle tone resulting from upper motor neuron damage?", answer: "Spasticity", options: ["Atrophy", "Spasticity", "Chorea", "Tremor"], correct: 1, fact: "Results in over-active reflexes and limb resistance." },
-                { level: 3, text: "Group of axons that cross the midline in the medulla to control the opposite body side?", answer: "Pyramidal decussation", options: ["Corpus callosum", "Optic chiasm", "Pyramidal decussation", "Basal loop"], correct: 2, fact: "Why the left brain controls the right body side." },
-                { level: 2, text: "Neurons in the brainstem that coordinate complex rhythms like breathing?", answer: "Pre-Bötzinger complex", options: ["SCN", "Pre-Bötzinger complex", "Striatum", "Amygdala"], correct: 1, fact: "The master pacemaker for respiration." },
-                { level: 1, text: "Large brain region tucked under the occipital lobe?", answer: "Cerebellum", options: ["Pons", "Cerebellum", "Cerebrum", "Medulla"], correct: 1, fact: "Contains more neurons than the rest of the brain combined." }
+                { level: 3, text: "Spinal circuits producing rhythmic swm/walk patterns?", answer: "Central Pattern Generators", options: ["Reflex arcs", "Central Pattern Generators", "Motor units", "Basal loops"], correct: 1, fact: "They allow animals to walk even if brain connection is severed.", context: "CPGs are the reason primitive vertebrates can swim or walk with simple spinal signals." },
+                { level: 2, text: "Large brain region tucked under occipital lobe responsible for precision?", answer: "Cerebellum", options: ["Cerebrum", "Cerebellum", "Pons", "Medulla"], correct: 1, fact: "Contains more neurons than the rest of the brain combined.", context: "The cerebellum corrects errors in movement by comparing intended motion with actual feedback." },
+                { level: 3, text: "Crossover of motor tracks in the medulla?", answer: "Pyramidal decussation", options: ["Optic chiasm", "Corpus callosum", "Pyramidal decussation", "LGN"], correct: 2, fact: "Explain why left brain controls right body side.", context: "90% of the fibers in the corticospinal tract cross at this specific point." },
+                { level: 1, text: "Primary neurotransmitter of all voluntary muscle control?", answer: "Acetylcholine", options: ["Dopamine", "Glutamate", "GABA", "Acetylcholine"], correct: 3, fact: "Released at every neuromuscular junction.", context: "Motor neurons release acetylcholine to trigger the contraction of skeletal muscle fibers." },
+                { level: 2, text: "Sensors in muscle detecting length and speed of stretch?", answer: "Muscle spindles", options: ["Golgi tendon organs", "Muscle spindles", "Nociceptors", "Proprioceptors"], correct: 1, fact: "They trigger the automatic stretch reflex.", context: "These sensors are responsible for the 'knee-jerk' response during a physical exam." }
             ],
             cognition: [
-                { level: 1, text: "Structure vital for memory consolidation?", answer: "Hippocampus", options: ["Amygdala", "Hippocampus", "Thalamus", "PFC"], correct: 1, fact: "Converts short-term to long-term memory." },
-                { level: 2, text: "Cellular mechanism for memory strengthening?", answer: "LTP", options: ["LTP", "LTD", "Pruning", "Apoptosis"], correct: 0, fact: "Long-term potentiation increases synaptic strength." },
-                { level: 1, text: "Memory for facts and cultural knowledge?", answer: "Semantic", options: ["Episodic", "Semantic", "Working", "Procedural"], correct: 1, fact: "Handles definitions and world facts." },
-                { level: 3, text: "Gene vital for human speech sequences?", answer: "FOXP2", options: ["HTT", "APP", "FOXP2", "SOD1"], correct: 2, fact: "Mutations result in jaw/mouth sequence failures." },
-                { level: 2, text: "Structure integrating memory and fear?", answer: "Amygdala", options: ["Hippocampus", "Amygdala", "PFC", "Insula"], correct: 1, fact: "Coordinates fight-or-flight responses." },
-                // NEW COGNITION
-                { level: 3, text: "The term for the tendency for different people to perceive the same sound differently?", answer: "Perceptual constancy", options: ["Auditory illusion", "Perceptual constancy", "Semantic drift", "McGurk effect"], correct: 1, fact: "The brain 'fixes' incoming data to match expectations." },
-                { level: 2, text: "Hormone released by the heart that affects blood pressure and brain circuits?", answer: "ANP", options: ["ANP", "Insulin", "Cortisol", "GnRH"], correct: 0, fact: "Atrial Natriuretic Peptide works against the effects of stress." },
-                { level: 3, text: "Technical term for 'broken speech' with intact comprehension?", answer: "Broca's aphasia", options: ["Wernicke's", "Broca's aphasia", "Global", "Anomic"], correct: 1, fact: "Also known as non-fluent aphasia." },
-                { level: 2, text: "What is the core component of executive function that stops an impulsive act?", answer: "Inhibition", options: ["Working memory", "Shifting", "Inhibition", "Recall"], correct: 2, fact: "Inhibition is vital for social behavior and focus." },
-                { level: 1, text: "Recalling your first day of high school uses which memory?", answer: "Episodic memory", options: ["Semantic", "Episodic memory", "Procedural", "Reflexive"], correct: 1, fact: "Personal events are episodic; general knowledge is semantic." }
+                { level: 3, text: "Specific gene mutation causing severe inherited speech deficits?", answer: "FOXP2", options: ["HTT", "APP", "FOXP2", "SOD1"], correct: 2, fact: "Transcription factor regulating mouth/jaw coordination.", context: "Mutations prevent the coordination of rapid muscle sequences needed for talk." },
+                { level: 2, text: "Structure vital for forming new long-term declarative memories?", answer: "Hippocampus", options: ["Amygdala", "Hippocampus", "Thalamus", "PFC"], correct: 1, fact: "Acts as a 'gateway' to permanent cortical storage.", context: "Damage here causes the inability to form new memories, while old ones usually remain." },
+                { level: 3, text: "Cells in entorhinal cortex forming a spatial coordinate system?", answer: "Grid cells", options: ["Place cells", "Grid cells", "Mirror neurons", "Basket cells"], correct: 1, fact: "Allow navigation even in total darkness.", context: "Grid cells form a repeating hexagonal map that tracks distance and direction." },
+                { level: 1, text: "Brain's executive for attention and decision making?", answer: "Prefrontal Cortex", options: ["Temporal", "Prefrontal Cortex", "Parietal", "V1"], correct: 1, fact: "The most recently evolved part of the human brain.", context: "Located behind the forehead, it manages complex cognitive behavior." },
+                { level: 2, text: "Memory of general facts and world knowledge?", answer: "Semantic memory", options: ["Episodic", "Semantic", "Procedural", "Working"], correct: 1, fact: "Definitions and data independent of time learned.", context: "Different from episodic memory, which is linked to personal experience." }
             ],
             development: [
-                { level: 1, text: "Brain's embryonic start structure?", answer: "Neural Tube", options: ["Blastocyst", "Neural Tube", "Cortex", "Ventricle"], correct: 1, fact: "Forms 3 weeks after gestation." },
-                { level: 2, text: "Programmed cell death term?", answer: "Apoptosis", options: ["Pruning", "Apoptosis", "Induction", "Migration"], correct: 1, fact: "Removes half of generated neurons." },
-                { level: 3, text: "Initial neural tube bulge count?", answer: "Three", options: ["Two", "Three", "Four", "Five"], correct: 1, fact: "Become fore-, mid-, and hindbrain." },
-                { level: 1, text: "Removing excess connections in childhood?", answer: "Synaptic Pruning", options: ["Neurogenesis", "Synaptic Pruning", "LTP", "Migration"], correct: 1, fact: "Makes the network more efficient." },
-                { level: 3, text: "Oldest neurons form which layer of the cortex?", answer: "Deepest layer", options: ["Outermost", "Deepest layer", "Middle", "Glia"], correct: 1, fact: "Migration occurs inside-out." },
-                // NEW DEVELOPMENT
-                { level: 2, text: "Growth-promoting proteins such as NGF and BDNF?", answer: "Trophic factors", options: ["Transcription factors", "Trophic factors", "Hormones", "Enzymes"], correct: 1, fact: "They determine the survival and growth of specific neurons." },
-                { level: 3, text: "Technical term for the thickening end of the neural tube at week 4?", answer: "Neuromeres", options: ["Vesicles", "Neuromeres", "Somas", "Blastulas"], correct: 1, fact: "These segments will eventually form the hindbrain." },
-                { level: 2, text: "What creates the folds (gyri and sulci) in the human brain?", answer: "Surface area expansion", options: ["Skull pressure", "Surface area expansion", "Gravity", "Bone growth"], correct: 1, fact: "Folds allow more cortex to fit inside the skull." },
-                { level: 3, text: "Which protein is the main structural component of microtubules in axons?", answer: "Tubulin", options: ["Actin", "Tubulin", "Tau", "Myosin"], correct: 1, fact: "Tubulin dimers polymerize to form hollow microtubule tubes." },
-                { level: 1, text: "Process of creating new neurons?", answer: "Neurogenesis", options: ["Apoptosis", "Pruning", "Neurogenesis", "Myelination"], correct: 2, fact: "Most neurons are created before birth." }
+                { level: 3, text: "Division giving one stem cell and one mature neuron?", answer: "Asymmetric", options: ["Binary", "Asymmetric", "Meiotic", "Polar"], correct: 1, fact: "Generates neural diversity while sustaining the cell pool.", context: "Early development starts with symmetric division, then switches to asymmetric to build structures." },
+                { level: 2, text: "Programmed cell death term removing excess neurons?", answer: "Apoptosis", options: ["Necrosis", "Apoptosis", "Pruning", "Induction"], correct: 1, fact: "Roughly 50% of generated embryonic neurons are removed.", context: "A clean self-destruct sequence activated if a neuron lacks trophic support." },
+                { level: 3, text: "Molecule determining cell fate via a concentration gradient?", answer: "Sonic Hedgehog", options: ["Netrin", "Sonic Hedgehog", "Ephrin", "BDNF"], correct: 1, fact: "Secreted from the mesoderm below the spinal cord.", context: "Concentration determines if a cell becomes a motor neuron or interneuron." },
+                { level: 1, text: "Simple hollow tube brain begins as at week 3?", answer: "Neural tube", options: ["Blastocyst", "Neural tube", "Cortex", "Soma"], correct: 1, fact: "Closure failure leads to birth defects like spina bifida.", context: "The entire nervous system develops from this initial hollow cylinder." },
+                { level: 2, text: "Removing weak/unused connections in childhood?", answer: "Synaptic pruning", options: ["Apoptosis", "Migration", "Synaptic pruning", "LTP"], correct: 2, fact: "Makes the brain more efficient over time.", context: "Sculpts the brain by keeping only active, useful connections." }
             ],
             clinical: [
-                { level: 1, text: "Condition with extra copy of chromosome 21?", answer: "Down Syndrome", options: ["Autism", "Dyslexia", "Down Syndrome", "Epilepsy"], correct: 2, fact: "Also known as Trisomy 21." },
-                { level: 2, text: "Standard clot-dissolver for stroke?", answer: "tPA", options: ["L-Dopa", "tPA", "SSRI", "Lithium"], correct: 1, fact: "Must be given within 3 hours." },
-                { level: 3, text: "Hormone peaking before dawn for preparation?", answer: "Cortisol", options: ["Melatonin", "Cortisol", "Leptin", "Insulin"], correct: 1, fact: "Releases morning energy." },
-                { level: 2, text: "Most common learning disability?", answer: "Dyslexia", options: ["Autism", "Dyslexia", "Tourette", "Down"], correct: 1, fact: "Reading fluency issues." },
-                { level: 3, text: "Condition of acted-out dreams?", answer: "REM sleep behavior disorder", options: ["REM sleep behavior disorder", "Insomnia", "Sleepwalking", "Apnea"], correct: 0, fact: "Paralysis failure." },
-                // NEW CLINICAL
-                { level: 2, text: "The primary medicine used to treat Parkinson's symptoms?", answer: "Levodopa", options: ["Prozac", "Levodopa", "Lithium", "Warfarin"], correct: 1, fact: "Also called L-Dopa; it converts to dopamine in the brain." },
-                { level: 3, text: "Type of stroke caused by a burst blood vessel?", answer: "Hemorrhagic", options: ["Ischemic", "Hemorrhagic", "Focal", "Embolic"], correct: 1, fact: "Less common than ischemic strokes but often more fatal." },
-                { level: 2, text: "What is the hallmark protein of neurofibrillary tangles in AD?", answer: "Tau", options: ["Amyloid", "Tau", "Huntingtin", "Synuclein"], correct: 1, fact: "Tau collapses into tangles inside the neuron." },
-                { level: 3, text: "Brain region showing hyperactivity in many OCD patients?", answer: "Orbitofrontal cortex", options: ["V1", "Orbitofrontal cortex", "Cerebellum", "Pons"], correct: 1, fact: "Involved in checking behaviors and error detection." },
-                { level: 1, text: "Sudden, unexpected electrical disturbances in the brain?", answer: "Seizures", options: ["Strokes", "Seizures", "Tremors", "Panic attacks"], correct: 1, fact: "Epilepsy is diagnosed when seizures are recurring." }
+                { level: 3, text: "Gene mutation linking ALS to Frontotemporal dementia?", answer: "C9ORF72", options: ["HTT", "APP", "C9ORF72", "SOD1"], correct: 2, fact: "Repeat expansion mutation in non-coding DNA.", context: "Shows motor diseases and dementias can share the same genetic root." },
+                { level: 2, text: "Standard clot-dissolver for ischemic stroke?", answer: "tPA", options: ["L-Dopa", "tPA", "SSRI", "Lithium"], correct: 1, fact: "Must be given within 3-4 hours of onset.", context: "Dissolves blood clots to restore circulation; dangerous for hemorrhagic strokes." },
+                { level: 3, text: "Protein hallmark of neurofibrillary tangles in Alzheimer's?", answer: "Tau", options: ["Amyloid", "Tau", "Huntingtin", "Prion"], correct: 1, fact: "Collapses inside the cell, ruining the transport tracks.", context: "While plaques are extracellular, Tau tangles are intracellular." },
+                { level: 1, text: "Condition with an extra copy of chromosome 21?", answer: "Down Syndrome", options: ["Autism", "Down Syndrome", "Fragile X", "Epilepsy"], correct: 1, fact: "Also known as Trisomy 21.", context: "Associated with a significantly higher risk of early-onset Alzheimer's." },
+                { level: 2, text: "Drug for opioid overdose reversal?", answer: "Naloxone", options: ["Methadone", "Naloxone", "Fentanyl", "Ritalin"], correct: 1, fact: "Rapidly blocks opioid receptors.", context: "Commonly known as Narcan; it can restore breathing in minutes." }
             ],
             research: [
-                { level: 1, text: "Radio waves and magnets brain mapping?", answer: "MRI", options: ["EEG", "MRI", "PET", "NIRS"], correct: 1, fact: "Maps water distribution in tissues." },
-                { level: 2, text: "Light-controlled modified neurons method?", answer: "Optogenetics", options: ["TMS", "Optogenetics", "CRISPR", "fMRI"], correct: 1, fact: "Allows millisecond-scale control." },
-                { level: 3, text: "Modeling brain mathematically field?", answer: "Computational Neuroscience", options: ["Neurolaw", "Computational Neuroscience", "BMI", "NIRS"], correct: 0, fact: "Simulates neural networks." },
-                { level: 2, text: "Records brain's magnetic activity?", answer: "MEG", options: ["EEG", "MEG", "fMRI", "PET"], correct: 1, fact: "Magnetoencephalography." },
-                { level: 3, text: "Generic template averaged from MRI scans?", answer: "Brain template", options: ["Brain template", "Map", "Grid", "fMRI"], correct: 0, fact: "Predictive baseline." },
-                // NEW RESEARCH
-                { level: 2, text: "Technique used to measure regional blood flow using radioactive water?", answer: "PET", options: ["MRI", "PET", "EEG", "MEG"], correct: 1, fact: "Positron Emission Tomography." },
-                { level: 3, text: "Device that records the activity of single neurons in a living brain?", answer: "Microelectrode", options: ["EEG", "Microelectrode", "TMS", "MRI"], correct: 1, fact: "Allows researchers to 'hear' a single cell fire." },
-                { level: 3, text: "Tool that uses magnetic fields to induce electrical current in the cortex?", answer: "TMS", options: ["MRI", "EEG", "TMS", "NIRS"], correct: 2, fact: "Transcranial Magnetic Stimulation; non-invasive." },
-                { level: 2, text: "A field that combines law and neuroscience to understand crime?", answer: "Neurolaw", options: ["Neuroeconomics", "Neuroethics", "Neurolaw", "Socioneuro"], correct: 2, fact: "Explores brain evidence in court cases." },
-                { level: 1, text: "Measuring brain waves from sensors on the scalp?", answer: "EEG", options: ["fMRI", "EEG", "PET", "MRI"], correct: 1, fact: "Useful for monitoring sleep and epilepsy." }
+                { level: 3, text: "Tool using magnets to silence regions non-invasively?", answer: "TMS", options: ["DBS", "MRI", "TMS", "EEG"], correct: 2, fact: "Transcranial Magnetic Stimulation.", context: "Induces current to non-invasively activate or silence cortical neurons." },
+                { level: 2, text: "Light-controlled modified neurons research method?", answer: "Optogenetics", options: ["TMS", "Optogenetics", "CRISPR", "fMRI"], correct: 1, fact: "Uses light-sensitive proteins called opsins.", context: "Turns specific neurons on/off with millisecond precision." },
+                { level: 3, text: "Imaging tracking regional blood flow using radioactive water?", answer: "PET", options: ["MRI", "PET", "NIRS", "MEG"], correct: 1, fact: "Positron Emission Tomography.", context: "Excellent for labeling specific proteins or observing glucose usage." },
+                { level: 1, text: "Interface bypassing paralysis via thought computer interfaces?", answer: "Brain-Machine Interface", options: ["BMI", "DBS", "TMS", "PET"], correct: 0, fact: "Abbreviated as BMI.", context: "Translates neural intent into robotic or computer code." },
+                { level: 2, text: "Measuring net electrical activity from sensors on scalp?", answer: "EEG", options: ["fMRI", "EEG", "MEG", "PET"], correct: 1, fact: "Useful for identifying seizure locations.", context: "Excellent temporal resolution but poor spatial precision." }
             ]
         };
 
         const MISSION_TYPES = [
             { id: 'basics', title: 'Brain Basics', icon: 'zap', color: 'yellow' },
-            { id: 'senses', title: 'Senses & perception', icon: 'eye', color: 'purple' },
+            { id: 'senses', title: 'Senses & Perception', icon: 'eye', color: 'purple' },
             { id: 'movement', title: 'Action & Control', icon: 'activity', color: 'green' },
             { id: 'cognition', title: 'Mind & Memory', icon: 'target', color: 'rose' },
             { id: 'development', title: 'Neural Growth', icon: 'baby', color: 'blue' },
@@ -250,13 +227,28 @@
             { id: 'mixed', title: 'Grand Finals', icon: 'shuffle', color: 'indigo' }
         ];
 
+        const RANKS = [
+            { level: 1, name: "Neural Novice", xp: 0 },
+            { level: 2, name: "Synapse Specialist", xp: 1000 },
+            { level: 3, name: "Axon Apprentice", xp: 2000 },
+            { level: 4, name: "Dendrite Doctor", xp: 3500 },
+            { level: 5, name: "Myelin Master", xp: 5000 },
+            { level: 6, name: "Cortex Captain", xp: 7000 },
+            { level: 7, name: "Hippocampus Hero", xp: 9500 },
+            { level: 8, name: "Neuro Navigator", xp: 12500 },
+            { level: 9, name: "Cerebral Commander", xp: 16000 },
+            { level: 10, name: "Brain Bee Laureate", xp: 20000 }
+        ];
+
         const App = () => {
             const [view, setView] = useState('menu');
             const [score, setScore] = useState(0);
             const [level, setLevel] = useState(1);
+            const [streak, setStreak] = useState(0);
             const [user, setUser] = useState(null);
             const [loadingData, setLoadingData] = useState(true);
             const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const [showRoadmap, setShowRoadmap] = useState(false);
 
             const [currentMission, setCurrentMission] = useState(null);
             const [questions, setQuestions] = useState([]);
@@ -265,70 +257,74 @@
             const [showOptions, setShowOptions] = useState(false);
             const [feedback, setFeedback] = useState(null);
 
-            const xpPerLevel = 1000;
-            const progress = ((score % xpPerLevel) / xpPerLevel) * 100;
-            const rank = ["Cadet", "Scholar", "Researcher", "Expert", "Legend"][Math.min(level-1, 4)];
+            // Calculation Logic
+            const nextRank = RANKS.find(r => r.xp > score) || RANKS[RANKS.length - 1];
+            const prevRank = [...RANKS].reverse().find(r => r.xp <= score) || RANKS[0];
+            const xpInLevel = score - prevRank.xp;
+            const xpNeededForNext = nextRank.xp - prevRank.xp;
+            const progress = score >= RANKS[RANKS.length-1].xp ? 100 : (xpInLevel / xpNeededForNext) * 100;
 
-            // PERSISTENCE LOGIC
+            // Persistence
             useEffect(() => {
-                log("Persistence module checking configuration...");
+                log("Application Bootstrapping...");
                 if (!config) {
-                    log("Simulation Mode Active: Volatile memory persistence.");
+                    log("Simulation Mode: Persistence disabled.");
                     setLoadingData(false);
                     return;
                 }
                 const initAuth = async () => {
                     try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        const token = getEnv('token');
                         if (token) await auth.signInWithCustomToken(token);
                         else await auth.signInAnonymously();
-                    } catch (e) { log("Auth fallback active.", e); }
+                    } catch (e) { log("Auth bypass active."); }
                 };
                 initAuth();
                 const unsubscribe = auth.onAuthStateChanged((u) => {
                     setUser(u);
-                    if (u) log(`Neural Profile Bound: ${u.uid}`);
+                    if (u) log(`Connected User ID: ${u.uid}`);
                 });
                 return () => unsubscribe();
             }, []);
 
             useEffect(() => {
                 if (!user || !db) return;
-                log("Synchronizing with remote cortex...");
+                log("Syncing with Neural Cloud...");
                 const userDoc = db.doc(`artifacts/${appId}/users/${user.uid}/profile/userData`);
                 const unsubscribe = userDoc.onSnapshot((docSnap) => {
                     if (docSnap.exists) {
                         const data = docSnap.data();
                         setScore(data.score || 0);
                         setLevel(data.level || 1);
-                        log("Remote data loaded successfully.");
+                        log("Cloud Synchronized.");
                     }
                     setLoadingData(false);
-                }, (err) => { log("Sync interrupted", err); setLoadingData(false); });
+                }, (err) => { log("Sync error.", err); setLoadingData(false); });
                 return () => unsubscribe();
             }, [user]);
 
             const saveProgress = async (newScore, newLevel) => {
                 if (!user || !db) return;
-                log(`Decision: Saving progress point=${newScore}`);
+                log(`Decision: Progress committed point=${newScore}`);
                 const userDoc = db.doc(`artifacts/${appId}/users/${user.uid}/profile/userData`);
                 await userDoc.set({ score: newScore, level: newLevel }, { merge: true });
             };
 
             const resetProgress = async () => {
-                log("Decision: User triggered neural wipe.");
+                log("Decision: User triggered Factory Reset.");
                 if (user && db) {
                     const userDoc = db.doc(`artifacts/${appId}/users/${user.uid}/profile/userData`);
                     await userDoc.set({ score: 0, level: 1 });
                 }
                 setScore(0);
                 setLevel(1);
+                setStreak(0);
                 setShowResetConfirm(false);
                 setView('menu');
             };
 
             const startMission = (id) => {
-                log(`Sequence ${id} selected. Shuffling data units...`);
+                log(`Launching Cluster: ${id}`);
                 const pool = id === 'mixed' ? Object.values(DATA_BANK).flat() : DATA_BANK[id];
                 setQuestions(shuffle(pool).slice(0, 10));
                 setCurrentMission(MISSION_TYPES.find(m => m.id === id) || { title: 'GRAND MIXED FINALS' });
@@ -346,20 +342,30 @@
 
                 if (choiceIdx !== null) {
                     isCorrect = choiceIdx === q.correct;
-                    log(`Mode: Multiple Choice. Result: ${isCorrect}`);
+                    log(`Decision: MC Result=${isCorrect}`);
                 } else {
                     isCorrect = getSimilarity(input, q.answer);
-                    log(`Mode: Open Recall. Result: ${isCorrect}`);
+                    log(`Decision: Manual Recall Result=${isCorrect}`);
                 }
 
                 if (isCorrect) {
-                    const gain = showOptions ? 100 : 350;
-                    const newScore = score + gain;
-                    const newLvl = Math.floor(newScore / xpPerLevel) + 1;
+                    const baseGain = showOptions ? 150 : 350;
+                    const levelMultiplier = 1 + ((q.level - 1) * 0.25);
+                    const streakMultiplier = streak >= 5 ? 1.5 : (streak >= 3 ? 1.2 : 1);
+                    const totalGain = Math.floor(baseGain * levelMultiplier * streakMultiplier);
+                    
+                    const newScore = score + totalGain;
+                    const newLvl = RANKS.findIndex(r => r.xp > newScore);
+                    const levelToSave = newLvl === -1 ? RANKS.length : newLvl;
+                    
                     setScore(newScore);
-                    saveProgress(newScore, newLvl);
+                    setStreak(s => s + 1);
+                    setLevel(levelToSave);
+                    saveProgress(newScore, levelToSave);
+                } else {
+                    setStreak(0);
                 }
-                setFeedback({ correct: isCorrect, fact: q.fact, answer: q.answer });
+                setFeedback({ correct: isCorrect, fact: q.fact, answer: q.answer, context: q.context });
             };
 
             const handleNext = () => {
@@ -370,39 +376,35 @@
                     setFeedback(null);
                     window.scrollTo(0, 0);
                 } else {
-                    log("Final unit reached. Returning to Terminal.");
+                    log("Mission cleared.");
                     setView('menu');
                 }
-            };
-
-            const getLevelColor = (lvl) => {
-                if (lvl === 1) return "bg-green-600/30 text-green-400 border-green-500/50";
-                if (lvl === 2) return "bg-blue-600/30 text-blue-400 border-blue-500/50";
-                return "bg-rose-600/30 text-rose-400 border-rose-500/50";
             };
 
             if (loadingData) {
                 return (
                     <div className="min-h-screen flex items-center justify-center bg-[#020408]">
-                        <div className="flex flex-col items-center gap-4 text-center">
-                            <Icon name="loader" className="w-10 h-10 text-blue-500 animate-spin" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Accessing Neural Database...</p>
-                        </div>
+                        <Icon name="loader" className="w-10 h-10 text-blue-500 animate-spin" />
                     </div>
                 );
             }
 
             return (
                 <div className="max-w-md mx-auto min-h-screen flex flex-col pb-12">
-                    <div className="fixed-hud p-5 shadow-2xl">
+                    
+                    {/* FIXED HUD - Clickable */}
+                    <div 
+                        onClick={() => setShowRoadmap(true)}
+                        className="fixed-hud p-5 shadow-2xl cursor-pointer hover:bg-slate-900/40 transition-all group"
+                    >
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg">
+                                <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
                                     <Icon name="award" className="text-white" />
                                 </div>
                                 <div>
                                     <h1 className="font-black text-xs uppercase tracking-tight leading-none mb-1 text-white">Brain Bee <span className="text-blue-500 italic">Israel</span></h1>
-                                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest leading-none">{rank}</p>
+                                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest leading-none">{prevRank.name}</p>
                                 </div>
                             </div>
                             <div className="text-right">
@@ -410,13 +412,13 @@
                                 <p className="text-2xl font-black text-white leading-none tabular-nums">{score.toLocaleString()}</p>
                             </div>
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 relative">
                             <div className="flex justify-between text-[8px] font-black uppercase text-slate-500 tracking-tighter">
-                                <span>Clearance Progress</span>
-                                <span>{score % xpPerLevel} / {xpPerLevel} XP</span>
+                                <span>Level {level} Journey</span>
+                                <span>{score.toLocaleString()} / {nextRank.xp.toLocaleString()} XP</span>
                             </div>
-                            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                <div className="progress-fill h-full bg-blue-500 shadow-[0_0_10px_#3b82f6]" style={{ width: `${progress}%` }} />
+                            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                                <div className="progress-fill h-full bg-gradient-to-r from-blue-600 to-indigo-400 shadow-[0_0_10px_#3b82f6]" style={{ width: `${progress}%` }} />
                             </div>
                         </div>
                     </div>
@@ -424,38 +426,40 @@
                     <main className="flex-1 p-5 md:p-8">
                         {view === 'menu' && (
                             <div className="space-y-6 animate-in fade-in duration-500">
-                                <div className="neuro-card p-6 rounded-[2rem] border border-white/5">
-                                    <h2 className="text-xl font-black mb-3 tracking-tighter italic">Terminal Synchronized.</h2>
-                                    <p className="text-slate-400 text-xs leading-relaxed">
-                                        Data units Categorized by <span className="text-blue-400 font-bold uppercase tracking-widest text-[9px]">Intel Levels</span>. 
-                                        Manual input grants <span className="text-yellow-500 font-bold">350 XP</span> reward.
+                                <div className="neuro-card p-6 rounded-[2rem] border border-white/5 relative overflow-hidden">
+                                    <h2 className="text-xl font-black mb-3 tracking-tighter italic uppercase text-blue-400 relative z-10">Neural Interface.</h2>
+                                    <p className="text-slate-400 text-xs leading-relaxed relative z-10">
+                                        Refreshed Database v15.0. Tap the <span className="text-white font-bold">Progress Bar</span> above to view the <span className="text-blue-500 font-bold">Neural Roadmap</span>.
                                     </p>
+                                    <div className="absolute -right-6 -bottom-6 opacity-5 rotate-12"><Icon name="brain" className="w-32 h-32" /></div>
                                 </div>
                                 <div className="space-y-3">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Available Sequences</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Sequence Clusters</p>
                                     {MISSION_TYPES.map(m => (
                                         <button key={m.id} onClick={() => startMission(m.id)} className="w-full flex items-center gap-4 bg-slate-900/40 border border-white/10 p-5 rounded-2xl hover:border-blue-500/30 active:scale-[0.98] text-left transition-all">
-                                            <div className={`p-3 rounded-2xl bg-slate-950 text-${m.color}-500 shadow-inner`}>
-                                                <Icon name={m.icon} />
-                                            </div>
+                                            <div className={`p-3 rounded-2xl bg-slate-950 text-${m.color}-500 shadow-inner`}><Icon name={m.icon} /></div>
                                             <div className="flex-1">
                                                 <h3 className="text-xs font-black uppercase tracking-tight text-slate-100">{m.title}</h3>
-                                                <p className="text-[9px] text-slate-500 font-medium italic">Intel Pack Loaded</p>
+                                                <p className="text-[9px] text-slate-500 font-medium italic">Data Synchronization Ready</p>
                                             </div>
                                             <Icon name="chevron-right" className="text-slate-700" />
                                         </button>
                                     ))}
                                 </div>
-                                <button onClick={() => setShowResetConfirm(true)} className="w-full py-4 text-[9px] font-black text-red-500/60 uppercase tracking-[0.2em] hover:text-red-500 transition-colors mt-8">Reset Neural Progress</button>
+                                <button onClick={() => setShowResetConfirm(true)} className="w-full py-4 text-[9px] font-black text-red-500/60 uppercase tracking-[0.2em] hover:text-red-500 transition-colors mt-8">Reset All Neural Data</button>
                             </div>
                         )}
 
                         {view === 'play' && (
                             <div className="animate-in zoom-in-95 duration-500 pb-20">
                                 <div className="flex justify-between items-center mb-6">
-                                    <button onClick={() => setView('menu')} className="text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-red-400 transition-colors italic">Abort Signal</button>
+                                    <button onClick={() => setView('menu')} className="text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-red-400 transition-colors italic">Abort</button>
                                     <div className="flex gap-2">
-                                        <span className="px-3 py-1 bg-blue-600/10 rounded-lg border border-blue-500/20 text-[9px] font-black text-blue-400 uppercase tracking-widest truncate max-w-[120px]">{currentMission.title}</span>
+                                        {streak >= 3 && (
+                                            <div className="streak-badge px-3 py-1 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 shadow-lg">
+                                                <Icon name="zap" className="w-3 h-3 fill-current" /> {streak} STREAK
+                                            </div>
+                                        )}
                                         <span className="px-3 py-1 bg-slate-900 rounded-lg border border-white/5 text-[9px] font-black text-slate-500 uppercase">Unit {qIdx+1}/10</span>
                                     </div>
                                 </div>
@@ -466,7 +470,7 @@
                                             <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_#3b82f6]"></span>
                                             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Signal Active</span>
                                         </div>
-                                        <div className={`level-badge border ${getLevelColor(questions[qIdx].level)}`}>INTEL LVL {questions[qIdx].level}</div>
+                                        <div className={`level-badge border ${questions[qIdx].level === 1 ? 'bg-green-600/30 text-green-400' : questions[qIdx].level === 2 ? 'bg-blue-600/30 text-blue-400' : 'bg-rose-600/30 text-rose-400'}`}>INTEL LVL {questions[qIdx].level}</div>
                                     </div>
 
                                     <h2 className="text-2xl sm:text-3xl font-black leading-tight text-white italic mb-12 tracking-tight">{questions[qIdx].text}</h2>
@@ -476,19 +480,15 @@
                                             {!showOptions ? (
                                                 <div className="space-y-6">
                                                     <div className="relative">
-                                                        <input type="text" autoFocus value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && input.length > 0 && submit()} placeholder="Type Nomenclature..." className="w-full bg-slate-900/50 border-2 border-slate-800 p-6 rounded-2xl outline-none focus:border-blue-500 font-bold text-lg input-active transition-all" />
-                                                        {input.length > 0 && (
-                                                            <button onClick={() => submit()} className="absolute right-3 top-3 bottom-3 aspect-square bg-blue-600 hover:bg-blue-500 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-lg"><Icon name="send" className="text-white" /></button>
-                                                        )}
+                                                        <input type="text" autoFocus value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && input.length > 0 && submit()} placeholder="Enter Nomenclature..." className="w-full bg-slate-900/50 border-2 border-slate-800 p-6 rounded-2xl outline-none focus:border-blue-500 font-bold text-lg input-active transition-all" />
+                                                        {input.length > 0 && <button onClick={() => submit()} className="absolute right-3 top-3 bottom-3 aspect-square bg-blue-600 hover:bg-blue-500 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-lg"><Icon name="send" className="text-white" /></button>}
                                                     </div>
-                                                    <button onClick={() => setShowOptions(true)} className="w-full py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-blue-400 transition-all bg-slate-900/20 rounded-xl border border-white/5 flex items-center justify-center gap-2">
-                                                        <Icon name="help-circle" /> Use Multiple Choice (150 XP)
-                                                    </button>
+                                                    <button onClick={() => setShowOptions(true)} className="w-full py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-blue-400 transition-all bg-slate-900/20 rounded-xl border border-white/5 flex items-center justify-center gap-2"><Icon name="help-circle" /> stuck? Reveal choices</button>
                                                 </div>
                                             ) : (
                                                 <div className="grid grid-cols-1 gap-3 animate-in slide-in-from-bottom-2">
                                                     {questions[qIdx].options.map((opt, i) => (
-                                                        <button key={i} onClick={() => submit(i)} className="w-full p-5 rounded-2xl text-left text-sm font-bold border-2 border-slate-800 bg-slate-900/40 hover:border-blue-500/50 active:scale-[0.98] transition-all italic">{opt}</button>
+                                                        <button key={i} onClick={() => submit(i)} className="w-full p-5 rounded-2xl text-left font-bold border-2 border-slate-800 bg-slate-900/40 hover:border-blue-500/50 transition-all italic">{opt}</button>
                                                     ))}
                                                 </div>
                                             )}
@@ -498,21 +498,25 @@
                                     {feedback && (
                                         <div className="mt-10 pt-10 border-t border-white/5 animate-in slide-in-from-bottom-4 duration-500">
                                             <div className="flex gap-5 mb-8">
-                                                <div className={`p-4 h-fit rounded-2xl shadow-xl ${feedback.correct ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                                                    <Icon name={feedback.correct ? 'check-circle' : 'alert-triangle'} className="w-8 h-8" />
-                                                </div>
+                                                <div className={`p-4 h-fit rounded-2xl shadow-xl ${feedback.correct ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}><Icon name={feedback.correct ? 'check-circle' : 'alert-triangle'} className="w-8 h-8" /></div>
                                                 <div className="flex-1">
-                                                    <p className={`text-xl font-black uppercase tracking-tight mb-2 ${feedback.correct ? 'text-green-400' : 'text-red-400'}`}>{feedback.correct ? 'Verified Intel' : 'Sync Error'}</p>
-                                                    {!feedback.correct && <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-2 italic text-white bg-red-900/30 inline-block px-2 rounded">Target Data: {feedback.answer}</p>}
-                                                    <p className="text-[10px] font-black text-slate-500 uppercase">Intel Reward: <span className="text-blue-400">+{feedback.correct ? (showOptions ? 100 : 350) : 0}</span></p>
+                                                    <div className="flex items-center gap-2 mb-2"><p className={`text-xl font-black uppercase tracking-tight ${feedback.correct ? 'text-green-400' : 'text-red-400'}`}>{feedback.correct ? 'Verified' : 'Sync Error'}</p></div>
+                                                    <p className="text-[10px] text-slate-500 uppercase font-black mb-2 italic">Target Data: <span className="text-white bg-slate-800 px-2 py-0.5 rounded ml-1">{feedback.answer}</span></p>
                                                 </div>
                                             </div>
-                                            <div className="bg-black/50 p-6 rounded-3xl border border-white/5 mb-10 shadow-inner">
-                                                <p className="text-slate-300 text-xs sm:text-base leading-relaxed font-medium italic">
-                                                    <span className="text-blue-500 font-black not-italic mr-3 tracking-widest text-[9px] uppercase underline underline-offset-4">Ref_Note:</span>
-                                                    "{feedback.fact}"
-                                                </p>
-                                            </div>
+                                            
+                                            {/* Context Explainer (Only on wrong answers) */}
+                                            {!feedback.correct && feedback.context && (
+                                                <div className="explanation-box p-4 rounded-xl border border-blue-500/20 mb-8 animate-in slide-in-from-left-4 duration-500">
+                                                    <div className="flex items-center gap-2 mb-2 text-blue-400">
+                                                        <Icon name="info" className="w-4 h-4" />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">Context Analysis</span>
+                                                    </div>
+                                                    <p className="text-slate-400 text-xs leading-relaxed italic">{feedback.context}</p>
+                                                </div>
+                                            )}
+
+                                            <div className="bg-black/50 p-6 rounded-3xl border border-white/5 mb-10 shadow-inner"><p className="text-slate-300 text-xs sm:text-base italic">"{feedback.fact}"</p></div>
                                             <button onClick={handleNext} className="w-full bg-white text-black py-5 rounded-3xl font-black text-[11px] tracking-[0.2em] uppercase active:scale-95 transition-all shadow-2xl hover:bg-blue-600 hover:text-white">Synchronize Next <Icon name="chevron-right" className="inline ml-1 w-4 h-4" /></button>
                                         </div>
                                     )}
@@ -521,21 +525,60 @@
                         )}
                     </main>
 
+                    {/* ROADMAP MODAL */}
+                    {showRoadmap && (
+                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 modal-overlay animate-in fade-in duration-300">
+                            <div className="bg-[#0b0f1a] border border-blue-500/20 rounded-[2.5rem] w-full max-w-sm max-h-[85vh] overflow-hidden flex flex-col relative shadow-[0_0_50px_rgba(59,130,246,0.15)]">
+                                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-blue-500">Neural Roadmap</h3>
+                                    <button onClick={() => setShowRoadmap(false)} className="p-2 text-slate-500 hover:text-white"><Icon name="x" /></button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                                    {RANKS.map((r) => {
+                                        const isCompleted = score >= r.xp;
+                                        const isCurrent = level === r.level;
+                                        return (
+                                            <div key={r.level} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${isCurrent ? 'bg-blue-600/10 border-blue-500/40 shadow-lg' : isCompleted ? 'bg-green-600/5 border-green-500/20' : 'bg-slate-900/30 border-white/5 opacity-40'}`}>
+                                                <div className={`p-2 rounded-lg ${isCurrent ? 'bg-blue-600 text-white shadow-lg' : isCompleted ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-600'}`}>
+                                                    <Icon name={isCompleted && !isCurrent ? "check" : isCurrent ? "star" : "lock"} className="w-4 h-4" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                       <span className="text-[10px] font-black text-white uppercase">{r.name}</span>
+                                                       <span className="text-[8px] font-bold text-slate-500">LVL {r.level}</span>
+                                                    </div>
+                                                    <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                                                        <div className={`h-full transition-all duration-1000 ${isCurrent ? 'bg-blue-500' : isCompleted ? 'bg-green-500' : 'bg-slate-700'}`} style={{ width: isCompleted && !isCurrent ? '100%' : isCurrent ? `${progress}%` : '0%' }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="p-6 bg-slate-900/80 border-t border-white/5 text-center">
+                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Total Intelligence Accumulated</p>
+                                    <p className="text-xl font-black text-white">{score.toLocaleString()} XP</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* RESET MODAL */}
                     {showResetConfirm && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 modal-overlay animate-in fade-in duration-300">
-                            <div className="bg-[#0b0f1a] border border-red-500/30 p-8 rounded-[2rem] w-full max-w-xs shadow-2xl">
-                                <h3 className="text-lg font-black uppercase text-red-500 mb-4 tracking-tighter">Wipe Neural Progress?</h3>
+                            <div className="bg-[#0b0f1a] border border-red-500/30 p-8 rounded-[2rem] w-full max-w-xs shadow-2xl text-center">
+                                <h3 className="text-lg font-black uppercase text-red-500 mb-4 tracking-tighter">Wipe Progress?</h3>
                                 <p className="text-slate-400 text-xs leading-relaxed mb-8">This will permanently delete your score and levels. This action is irreversible.</p>
                                 <div className="flex flex-col gap-3">
-                                    <button onClick={resetProgress} className="w-full bg-red-600 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest text-white shadow-lg active:scale-95 transition-all">Confirm Wipe</button>
-                                    <button onClick={() => setShowResetConfirm(false)} className="w-full bg-slate-900 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-500 border border-white/5 active:scale-95 transition-all">Cancel</button>
+                                    <button onClick={resetProgress} className="w-full bg-red-600 py-4 rounded-xl font-black text-[10px] uppercase text-white shadow-lg active:scale-95 transition-all">Confirm Wipe</button>
+                                    <button onClick={() => setShowResetConfirm(false)} className="w-full bg-slate-900 py-4 rounded-xl font-black text-[10px] uppercase text-slate-500 border border-white/5 active:scale-95 transition-all">Cancel</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     <footer className="fixed bottom-0 left-0 w-full p-4 flex justify-between items-center opacity-40 px-10 pointer-events-none bg-black/20 backdrop-blur-sm">
-                        <div className="text-[8px] font-black uppercase tracking-widest flex items-center gap-2"><Icon name="cpu" size={10} /> Neural_Net v11.3</div>
+                        <div className="text-[8px] font-black uppercase tracking-widest flex items-center gap-2"><Icon name="cpu" size={10} /> Neural_Net v15.0</div>
                         <div className="text-[8px] font-black uppercase tracking-widest flex items-center gap-2">Source: Brain Facts 8th Ed</div>
                     </footer>
                 </div>
