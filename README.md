@@ -18,6 +18,8 @@ https://zbirer.github.io/apps/flight-simulator.html
 
 https://zbirer.github.io/apps/scheduler.html
 
+https://zbirer.github.io/apps/encryptor.html
+
 
 # prompt for json viewer
 
