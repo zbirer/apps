@@ -28,6 +28,8 @@
       * Decrypt now processes each line independently
       * Multiple encrypted texts can be decrypted in batch (one per line)
       * Removed emojis from interface for cleaner look
+      * Graceful error handling: lines that fail to decrypt are kept as-is
+      * Shows count of successfully decrypted vs skipped lines
     
     FEATURES:
     - AES-256-GCM encryption with PBKDF2 key derivation
@@ -519,26 +521,38 @@
                 return;
             }
             
-            try {
-                // Split by lines and decrypt each independently
-                const lines = editor.value.split('\n');
-                const decryptedLines = [];
-                
-                for (const line of lines) {
-                    if (line.trim()) {
-                        // Decrypt non-empty lines
+            // Split by lines and decrypt each independently
+            const lines = editor.value.split('\n');
+            const decryptedLines = [];
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (const line of lines) {
+                if (line.trim()) {
+                    try {
+                        // Try to decrypt non-empty lines
                         const decrypted = await decryptText(line.trim(), password);
                         decryptedLines.push(decrypted);
-                    } else {
-                        // Keep empty lines
-                        decryptedLines.push('');
+                        successCount++;
+                    } catch (e) {
+                        // If decryption fails, keep the original line
+                        decryptedLines.push(line);
+                        failCount++;
                     }
+                } else {
+                    // Keep empty lines
+                    decryptedLines.push('');
                 }
-                
-                editor.value = decryptedLines.join('\n');
+            }
+            
+            editor.value = decryptedLines.join('\n');
+            
+            if (successCount > 0 && failCount === 0) {
                 showToast('Decrypted successfully!');
-            } catch (e) {
-                showToast(e.message || 'Decryption failed!');
+            } else if (successCount > 0 && failCount > 0) {
+                showToast(`Decrypted ${successCount} line(s), ${failCount} line(s) skipped`);
+            } else {
+                showToast('No lines could be decrypted!');
             }
         }
 
