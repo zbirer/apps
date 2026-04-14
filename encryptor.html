@@ -1,0 +1,578 @@
+<!--
+    Encryptor - Secure Text Encryption Tool
+    
+    A standalone HTML page for encrypting and decrypting text using AES-256-GCM encryption.
+    
+    CHANGELOG:
+    - v1.0.0 (2026-04-14):
+      * Initial release with basic Base64 encryption
+      * Purple gradient theme
+      * Alignment controls (left/center/right)
+      * Color picker for text
+      * Auto-copy to clipboard
+    
+    - v2.0.0 (2026-04-14):
+      * Upgraded to AES-256-GCM encryption with master password
+      * Added black/dark theme
+      * Replaced alignment controls with LTR/RTL direction support for Hebrew/English
+      * Full window layout (no padding/centering)
+      * Modal password entry
+    
+    - v2.1.0 (2026-04-14):
+      * Moved master password to persistent toolbar input (removed modal)
+      * Added password visibility toggle with eye icon
+      * Improved toolbar layout
+    
+    - v2.2.0 (2026-04-14):
+      * Updated default text color to #a5a5a1 (lighter gray)
+      * Decrypt now processes each line independently
+      * Multiple encrypted texts can be decrypted in batch (one per line)
+      * Removed emojis from interface for cleaner look
+    
+    FEATURES:
+    - AES-256-GCM encryption with PBKDF2 key derivation
+    - Master password protection
+    - LTR/RTL text direction support
+    - Custom text color picker
+    - Copy encrypted text to clipboard
+    - Dark theme UI
+    - No external dependencies
+    
+    USAGE:
+    1. Enter your master password in the toolbar
+    2. Type or paste text in the editor
+    3. Click "Encrypt & Copy" to encrypt and copy to clipboard
+    4. Click "Decrypt" to decrypt encrypted text
+    5. Use LTR/RTL buttons for proper text direction
+    6. Use color picker to change text color
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryptor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0a0a;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .container {
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Condensed Header */
+        .header {
+            background: #000000;
+            color: #ffffff;
+            padding: 12px 24px;
+            text-align: center;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        /* Unified Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px;
+            background: #1f1f1f;
+            border-bottom: 1px solid #2a2a2a;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .separator {
+            width: 1px;
+            height: 24px;
+            background: #3a3a3a;
+            margin: 0 4px;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #3a3a3a;
+        }
+
+        .btn-primary:hover {
+            background: #3a3a3a;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-icon {
+            background: #2a2a2a;
+            color: #ffffff;
+            padding: 8px;
+            min-width: 36px;
+            justify-content: center;
+            border: 1px solid #3a3a3a;
+        }
+
+        .btn-icon:hover {
+            background: #3a3a3a;
+        }
+
+        .btn-icon.active {
+            background: #4a4a4a;
+            border-color: #5a5a5a;
+        }
+
+        /* Color Picker */
+        .color-picker-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-preview {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 2px solid #3a3a3a;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .color-preview:hover {
+            border-color: #5a5a5a;
+        }
+
+        input[type="color"] {
+            position: absolute;
+            opacity: 0;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+        }
+
+        /* Password Input */
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input {
+            padding: 8px 40px 8px 16px;
+            border: 2px solid #2a2a2a;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #0f0f0f;
+            color: #ffffff;
+            outline: none;
+            min-width: 200px;
+            transition: border-color 0.2s;
+        }
+
+        .password-input:focus {
+            border-color: #4a4a4a;
+        }
+
+        .password-input::placeholder {
+            color: #5a5a5a;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #7a7a7a;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: #ffffff;
+        }
+
+        .password-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .text-editor {
+            width: 100%;
+            flex: 1;
+            padding: 16px;
+            border: 2px solid #2a2a2a;
+            border-radius: 8px;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #0f0f0f;
+            color: #a5a5a1;
+        }
+
+        .text-editor:focus {
+            border-color: #4a4a4a;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2a2a2a;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            border: 1px solid #3a3a3a;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .separator {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Condensed Header -->
+        <div class="header">
+            <h1>Encryptor</h1>
+        </div>
+
+        <!-- Unified Toolbar -->
+        <div class="toolbar">
+            <!-- Master Password Input -->
+            <div class="toolbar-group">
+                <div class="password-container">
+                    <input 
+                        type="password" 
+                        id="masterPassword" 
+                        class="password-input"
+                        placeholder="Master password..."
+                    >
+                    <button class="password-toggle" onclick="togglePasswordVisibility()" title="Show/Hide password">
+                        <svg id="eyeIcon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vertical Separator -->
+            <div class="separator"></div>
+
+            <!-- Encrypt/Decrypt Actions -->
+            <div class="toolbar-group">
+                <button class="btn btn-primary" onclick="encryptAndCopy()">
+                    <span>Encrypt & Copy</span>
+                </button>
+                <button class="btn btn-primary" onclick="decrypt()">
+                    <span>Decrypt</span>
+                </button>
+            </div>
+
+            <!-- Vertical Separator -->
+            <div class="separator"></div>
+
+            <!-- Direction Controls (LTR/RTL) -->
+            <div class="toolbar-group">
+                <button class="btn btn-icon" onclick="setDirection('ltr')" id="dir-ltr" title="LTR (English)">
+                    LTR
+                </button>
+                <button class="btn btn-icon" onclick="setDirection('rtl')" id="dir-rtl" title="RTL (Hebrew)">
+                    RTL
+                </button>
+            </div>
+
+            <!-- Color Picker -->
+            <div class="color-picker-wrapper">
+                <div class="color-preview" style="background-color: #a5a5a1;" onclick="document.getElementById('colorPicker').click()"></div>
+                <input type="color" id="colorPicker" value="#a5a5a1" onchange="changeTextColor(this.value)">
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <textarea 
+                class="text-editor" 
+                id="textEditor" 
+                placeholder="Type or paste your text here..."
+                style="direction: ltr; color: #a5a5a1;"
+            ></textarea>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">Copied to clipboard!</div>
+
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('masterPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                // Eye with slash (hidden state)
+                eyeIcon.innerHTML = `
+                    <path d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"/>
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                `;
+            } else {
+                passwordInput.type = 'password';
+                // Normal eye (visible state)
+                eyeIcon.innerHTML = `
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                `;
+            }
+        }
+
+        // AES-like encryption using Web Crypto API
+        async function deriveKey(password, salt) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                'PBKDF2',
+                false,
+                ['deriveBits', 'deriveKey']
+            );
+            
+            return crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptText(text, password) {
+            const encoder = new TextEncoder();
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const key = await deriveKey(password, salt);
+            
+            const encrypted = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv },
+                key,
+                encoder.encode(text)
+            );
+            
+            // Combine salt + iv + encrypted data
+            const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+            combined.set(salt, 0);
+            combined.set(iv, salt.length);
+            combined.set(new Uint8Array(encrypted), salt.length + iv.length);
+            
+            // Convert to base64
+            return btoa(String.fromCharCode.apply(null, combined));
+        }
+
+        async function decryptText(encryptedText, password) {
+            try {
+                // Convert from base64
+                const combined = new Uint8Array(
+                    atob(encryptedText).split('').map(c => c.charCodeAt(0))
+                );
+                
+                // Extract salt, iv, and encrypted data
+                const salt = combined.slice(0, 16);
+                const iv = combined.slice(16, 28);
+                const data = combined.slice(28);
+                
+                const key = await deriveKey(password, salt);
+                
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    data
+                );
+                
+                const decoder = new TextDecoder();
+                return decoder.decode(decrypted);
+            } catch (e) {
+                throw new Error('Decryption failed. Wrong password or corrupted data.');
+            }
+        }
+
+        async function encryptAndCopy() {
+            const editor = document.getElementById('textEditor');
+            const password = document.getElementById('masterPassword').value;
+            
+            if (!editor.value.trim()) {
+                showToast('Nothing to encrypt!');
+                return;
+            }
+            
+            if (!password) {
+                showToast('Please enter a master password!');
+                return;
+            }
+            
+            try {
+                const encrypted = await encryptText(editor.value, password);
+                editor.value = encrypted;
+                
+                // Copy to clipboard
+                await navigator.clipboard.writeText(encrypted);
+                showToast('Encrypted & copied to clipboard!');
+            } catch (e) {
+                showToast('Encryption failed!');
+            }
+        }
+
+        async function decrypt() {
+            const editor = document.getElementById('textEditor');
+            const password = document.getElementById('masterPassword').value;
+            
+            if (!editor.value.trim()) {
+                showToast('Nothing to decrypt!');
+                return;
+            }
+            
+            if (!password) {
+                showToast('Please enter a master password!');
+                return;
+            }
+            
+            try {
+                // Split by lines and decrypt each independently
+                const lines = editor.value.split('\n');
+                const decryptedLines = [];
+                
+                for (const line of lines) {
+                    if (line.trim()) {
+                        // Decrypt non-empty lines
+                        const decrypted = await decryptText(line.trim(), password);
+                        decryptedLines.push(decrypted);
+                    } else {
+                        // Keep empty lines
+                        decryptedLines.push('');
+                    }
+                }
+                
+                editor.value = decryptedLines.join('\n');
+                showToast('Decrypted successfully!');
+            } catch (e) {
+                showToast(e.message || 'Decryption failed!');
+            }
+        }
+
+        function setDirection(dir) {
+            const editor = document.getElementById('textEditor');
+            editor.style.direction = dir;
+            editor.dir = dir;
+            
+            // Update active state
+            document.getElementById('dir-ltr').classList.remove('active');
+            document.getElementById('dir-rtl').classList.remove('active');
+            document.getElementById('dir-' + dir).classList.add('active');
+        }
+
+        function changeTextColor(color) {
+            const editor = document.getElementById('textEditor');
+            editor.style.color = color;
+            
+            // Update color preview
+            document.querySelector('.color-preview').style.backgroundColor = color;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Initialize LTR as active
+        document.getElementById('dir-ltr').classList.add('active');
+    </script>
+</body>
+</html>
