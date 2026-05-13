@@ -15,7 +15,7 @@
  * 1. Upload this file to GitHub/Gist.
  * 2. Get the "Raw" URL.
  * 3. Create a bookmark with the following URL:
- * javascript:(function(){var s=document.createElement('script');s.src='YOUR_RAW_URL';document.body.appendChild(s);})();
+ * javascript:(function(){var s=document.createElement('script');s.src='https://raw.githubusercontent.com/zbirer/apps/refs/heads/main/fullscreen.js';document.body.appendChild(s);})();
  * =========================================================================
  */
 
