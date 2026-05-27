@@ -2,6 +2,9 @@
 ================================================================================
 CHANGELOG: RSS Feed Viewer
 ================================================================================
+v1.4.6 - 2026-05-27
+- Added: Filter logic to automatically ignore RSS items with a publication timestamp in the future.
+
 v1.4.5 - 2026-05-27
 - Changed: Default image display setting configured to "No Images" (ללא תמונות) on initial startup.
 - Changed: Implemented an accordion-style mechanic so opening an article collapses all other open articles.
@@ -761,8 +764,13 @@ v1.0.0 - 2024-01-10
                 // Sort newest chronologically
                 itemsList.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-                // Primary filter out of key exclusions
+                // Primary filter out of key exclusions and future timestamps
+                const now = new Date();
                 loadedItems = itemsList.filter(item => {
+                    // Check if item publish date is in the future
+                    const itemDate = new Date(item.pubDate);
+                    if (itemDate > now) return false;
+
                     const combinedText = ((item.title || '') + ' ' + (item.description || '')).toLowerCase();
                     return !excludedWords.some(word => combinedText.includes(word));
                 });
