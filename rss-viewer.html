@@ -1,3 +1,35 @@
+<!-- 
+================================================================================
+CHANGELOG: RSS Feed Viewer
+================================================================================
+v1.3.2 - 2026-05-27
+- Changed: Container and items width expanded to 100% of the viewport window (removed max-width limitation).
+- Improved: Edge-to-edge full-bleed design for a modern wider desktop layout.
+
+v1.3.1 - 2026-05-27
+- Added: Structured Changelog comment block tracking historical changes.
+- Fixed: Standardized viewport and element scaling for optimal accessibility.
+
+v1.3.0 - 2024-11-12
+- Added: Auto-refresh interval (every 10 minutes) to keep content up-to-date.
+- Added: "Back to top" (חזרה למעלה) smooth scroll functionality for long descriptions.
+- Improved: Added defensive error handling for individual feeds within parallel fetching.
+
+v1.2.0 - 2024-06-05
+- Added: Content filtering system targeting excluded keywords (e.g., "ספורט", "כדורגל").
+- Added: Font size scale adjustments (normal, big, biggest) dynamically applied to components.
+- Added: Image visibility options (hide, small, medium, big) to control data usage and UI density.
+- Added: Category categorization structure (News, Tech, Flash).
+
+v1.1.0 - 2024-03-20
+- Added: System-friendly Dark Mode by default with manual Light Mode toggle override.
+- Added: Spin-animation loader (Throbber) to indicate network activities.
+- Improved: Enhanced typography and RTL alignment aesthetics for Hebrew localizations.
+
+v1.0.0 - 2024-01-10
+- Initial Release: Dynamic multi-source RSS fetching utilizing the rss2json API gateway.
+================================================================================
+-->
 <!DOCTYPE html>
 <html lang="he">
 <head>
@@ -12,22 +44,24 @@
             color: #e0e0e0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 20px;
+            align-items: flex-start;
+            padding: 0;
             margin: 0;
             direction: rtl;
             text-align: right;
             transition: background-color 0.3s, color 0.3s;
+            width: 100%;
+            min-height: 100vh;
         }
 
         .container {
             width: 100%;
-            max-width: 600px;
             background-color: #2d2d2d;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border-radius: 0;
+            box-shadow: none;
             padding: 20px;
             box-sizing: border-box;
+            min-height: 100vh;
         }
 
         /* Light Mode Overrides */
@@ -37,7 +71,6 @@
         }
         body.light-mode .container {
             background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .controls {
@@ -46,6 +79,11 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 15px;
+        }
+        body.light-mode .controls {
+            border-bottom: 1px solid #ddd;
         }
 
         .controls select, .controls button {
@@ -56,7 +94,7 @@
 
         .throbber {
             display: none;
-            margin: 0 auto 20px;
+            margin: 20px auto;
             width: 40px;
             height: 40px;
             border: 4px solid #0066cc;
@@ -72,7 +110,7 @@
 
         .rss-item {
             border-bottom: 1px solid #444;
-            padding: 10px 0;
+            padding: 15px 0;
             text-align: right;
         }
         body.light-mode .rss-item {
