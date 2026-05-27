@@ -2,6 +2,35 @@
 ================================================================================
 CHANGELOG: RSS Feed Viewer
 ================================================================================
+v1.4.5 - 2026-05-27
+- Changed: Default image display setting configured to "No Images" (ללא תמונות) on initial startup.
+- Changed: Implemented an accordion-style mechanic so opening an article collapses all other open articles.
+- Removed: "Copy Link" (העתקת קישור) action button from the expanded card drawer.
+
+v1.4.4 - 2026-05-27
+- Changed: Consolidated all controls (category tabs, select dropdowns, refresh, and theme toggle) into a single flat horizontal toolbar.
+- Improved: Implemented touch-overflow styling to prevent vertical wrapping on narrow screens, maximizing available vertical reading space.
+- Optimized: Condensed padding, button sizes, and select boxes for an ultra-focused high-density toolbar.
+
+v1.4.3 - 2026-05-27
+- Removed: Title "זרם" and the brand logo section completely for an ultra-focused toolbar.
+- Removed: Subtitle statistics element ("מציג X מאמרים...") and its JavaScript DOM updates.
+- Changed: Condensed the layout significantly (gaps, paddings, line-heights, card margins) to maximize visible articles per viewport.
+
+v1.4.2 - 2026-05-27
+- Changed: Consolidated all navigation, categories, dropdowns, and utility buttons into a single unified toolbar next to the logo.
+- Improved: Enhanced responsive toolbar wrapping to preserve slick design on smaller mobile viewports.
+
+v1.4.1 - 2026-05-27
+- Changed: Repositioned font-size, image-size, and dark mode toggle to the same controls row as categories.
+- Removed: Search box and RSS branding icon for a cleaner, ultra-minimalist layout.
+- Optimized: Simplified JavaScript logic by removing search-related event listeners.
+
+v1.4.0 - 2026-05-27
+- Overhauled UX ("Slick UX"): Added fluid glassmorphism header, responsive multi-column card grid, instant search, relative time displays, custom SVG icons, session read/unread indicators, and pulsing skeleton loaders.
+- Added: Real-time copy-to-clipboard Toast system with custom notification alert.
+- Improved: Unified responsive breakpoints for consistent mobile/desktop readability.
+
 v1.3.2 - 2026-05-27
 - Changed: Container and items width expanded to 100% of the viewport window (removed max-width limitation).
 - Improved: Edge-to-edge full-bleed design for a modern wider desktop layout.
@@ -31,186 +60,517 @@ v1.0.0 - 2024-01-10
 ================================================================================
 -->
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSS Feed Viewer</title>
+    <title>קורא RSS מתקדם</title>
     <style>
-        /* Default Dark Mode Styles */
+        /* Design Tokens & Theme Variables */
+        :root {
+            --bg-app: #0f172a;
+            --bg-card: #1e293b;
+            --bg-header: rgba(15, 23, 42, 0.85);
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #8b5cf6;
+            --accent-hover: #a78bfa;
+            --accent-dim: rgba(139, 92, 246, 0.1);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+            --radius-lg: 12px;
+            --radius-md: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .light-mode {
+            --bg-app: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-header: rgba(248, 250, 252, 0.85);
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-dim: rgba(99, 102, 241, 0.08);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Base & Resets */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg-app);
+            color: var(--text-primary);
             margin: 0;
+            padding: 0;
             direction: rtl;
             text-align: right;
-            transition: background-color 0.3s, color 0.3s;
-            width: 100%;
+            transition: var(--transition);
             min-height: 100vh;
         }
 
-        .container {
-            width: 100%;
-            background-color: #2d2d2d;
-            border-radius: 0;
-            box-shadow: none;
-            padding: 20px;
-            box-sizing: border-box;
+        /* Layout Grid Container */
+        .app-wrapper {
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
         }
 
-        /* Light Mode Overrides */
-        body.light-mode {
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        body.light-mode .container {
-            background-color: #fff;
+        /* Sticky Glass Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--bg-header);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
         }
 
-        .controls {
+        /* Single Non-Wrapping High-Density Toolbar */
+        .toolbar {
+            padding: 6px 12px;
             display: flex;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 15px;
-        }
-        body.light-mode .controls {
-            border-bottom: 1px solid #ddd;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
         }
 
-        .controls select, .controls button {
-            font-size: 14px;
-            padding: 5px;
+        .toolbar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 3px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .light-mode .category-tabs {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: var(--shadow);
+        }
+
+        /* Inline Actions Group */
+        .controls-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .controls-actions-group select {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 8px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .controls-actions-group select:hover {
+            border-color: var(--accent);
+        }
+
+        /* Compact Action Buttons */
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--accent);
+            background-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .icon-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.5;
+        }
+
+        /* Dashboard content */
+        .main-content {
+            padding: 12px 16px;
+            flex-grow: 1;
+        }
+
+        .feed-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            width: 100%;
+        }
+
+        /* Slick Condensed Article Cards */
+        .rss-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+            box-sizing: border-box;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
             cursor: pointer;
         }
 
-        .throbber {
-            display: none;
-            margin: 20px auto;
-            width: 40px;
-            height: 40px;
-            border: 4px solid #0066cc;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .rss-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 100%;
+            background-color: transparent;
+            transition: var(--transition);
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .rss-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: 0 6px 12px -4px rgba(0, 0, 0, 0.3);
         }
 
-        .rss-item {
-            border-bottom: 1px solid #444;
-            padding: 15px 0;
-            text-align: right;
-        }
-        body.light-mode .rss-item {
-            border-bottom: 1px solid #ddd;
+        .rss-card.read {
+            opacity: 0.75;
+            border-color: var(--border-color);
         }
 
-        .rss-item:last-child {
-            border-bottom: none;
+        .rss-card.active::before {
+            background-color: var(--accent);
         }
 
-        .rss-item h2 {
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .badge-source {
+            background-color: var(--accent-dim);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 50px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1px;
+            text-transform: uppercase;
+        }
+
+        .meta-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .card-title {
             margin: 0;
-            cursor: pointer;
-            color: #4da3ff;
-        }
-        body.light-mode .rss-item h2 {
-            color: #0066cc;
-        }
-
-        .rss-item .meta {
-            color: #aaa;
-            margin-top: 5px;
-        }
-        body.light-mode .rss-item .meta {
-            color: #777;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: var(--text-primary);
+            transition: var(--transition);
         }
 
-        .rss-item .description {
+        .rss-card:hover .card-title {
+            color: var(--accent);
+        }
+
+        /* Expanded content drawer inside cards */
+        .card-expanded-content {
             display: none;
             margin-top: 10px;
-            font-size: 22px;
-            line-height: 1.5;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+            animation: fadeIn 0.2s ease;
         }
 
-        .rss-item h2 a {
-            color: #ff9f43;
-            text-decoration: none;
-            margin-right: 10px;
-            font-size: 0.7em;
-        }
-        body.light-mode .rss-item h2 a {
-            color: #e67e22;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .back-to-top {
-            display: block;
+        .card-description {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-top: 10px;
-            text-align: center;
-            color: #4da3ff;
-            text-decoration: none;
-            font-size: 14px;
+            gap: 8px;
         }
 
-        img {
-            max-width: 100%;
-            height: auto;
+        .card-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .card-btn:hover {
+            border-color: var(--accent);
+            background-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .card-btn-primary {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .card-btn-primary:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: #ffffff;
+        }
+
+        /* Pulsing Skeleton Loader CSS */
+        .skeleton-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .skeleton-block {
+            background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-app) 50%, var(--border-color) 75%);
+            background-size: 200% 100%;
+            animation: skeletonLoading 1.5s infinite;
             border-radius: 4px;
-            margin-top: 10px;
         }
+
+        @keyframes skeletonLoading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Back to top floating button */
+        .floating-to-top {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            z-index: 1000;
+        }
+
+        .floating-to-top:hover {
+            transform: translateY(-2px);
+            background-color: var(--accent-hover);
+        }
+
+        /* Floating Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transform: translateY(100px);
+            opacity: 0;
+            animation: slideInUp 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideInUp {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .toast.hide {
+            animation: fadeOutDown 0.3s forwards ease-in;
+        }
+
+        @keyframes fadeOutDown {
+            to { transform: translateY(20px); opacity: 0; }
+        }
+
+        .toast-icon {
+            color: #10b981; /* Green success */
+            display: flex;
+            align-items: center;
+        }
+
+        /* Empty Feed state */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            color: var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin: 0 0 6px;
+            font-size: 18px;
+        }
+
+        /* High Density Typography sizing modifiers */
+        .font-normal .card-title { font-size: 14px; }
+        .font-normal .card-description { font-size: 12px; }
+        .font-big .card-title { font-size: 16px; }
+        .font-big .card-description { font-size: 14px; }
+        .font-biggest .card-title { font-size: 19px; }
+        .font-biggest .card-description { font-size: 16px; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="controls">
-            <select id="font-size">
-                <option value="normal">רגיל</option>
-                <option value="big">גדול</option>
-                <option value="biggest" selected>הכי גדול</option>
-            </select>
-            <select id="image-size">
-                <option value="hide">הסתר תמונות</option>
-                <option value="normal">תמונה קטנה</option>
-                <option value="medium">בינוני</option>
-                <option value="big">גדול</option>
-            </select>
-            <select id="category">
-                <option value="news">חדשות</option>
-                <option value="tech">טכנולוגיה</option>
-                <option value="flash">מבזקים</option>
-            </select>
-            <button id="theme-toggle">מצב בהיר</button>
-            <button id="refresh">רענן</button>
-        </div>
+<body class="font-biggest">
+    <div class="app-wrapper">
+        <header>
+            <div class="toolbar">
+                <!-- Categorization custom pill tabs -->
+                <div class="category-tabs" id="category-tabs">
+                    <button class="tab-btn active" data-category="news">חדשות</button>
+                    <button class="tab-btn" data-category="tech">טכנולוגיה</button>
+                    <button class="tab-btn" data-category="flash">מבזקים</button>
+                </div>
 
-        <div class="throbber"></div>
-        <div id="rss-content"></div>
+                <div class="controls-actions-group">
+                    <select id="font-size" title="גודל גופן">
+                        <option value="normal">גופן רגיל</option>
+                        <option value="big">גופן גדול</option>
+                        <option value="biggest" selected>גופן הכי גדול</option>
+                    </select>
+                    <select id="image-size" title="תצוגת תמונות">
+                        <option value="hide" selected>ללא תמונות</option>
+                        <option value="normal">תמונה קטנה</option>
+                        <option value="medium">תמונה בינונית</option>
+                        <option value="big">תמונה גדולה</option>
+                    </select>
+                    <button class="icon-btn" id="refresh" title="רענון פידים">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="theme-toggle" title="שינוי ערכת נושא">
+                        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="feed-grid" id="rss-content">
+                <!-- Javascript will inject Cards or Loader blocks here -->
+            </div>
+        </main>
     </div>
 
+    <!-- Floating UI Utilities -->
+    <button class="floating-to-top" id="to-top-btn" title="חזרה למעלה">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+        </svg>
+    </button>
+    <div class="toast-container" id="toast-container"></div>
+
     <script>
-        const FONT_SIZE_NORMAL_TITLE = '18px';
-        const FONT_SIZE_BIG_TITLE = '22px';
-        const FONT_SIZE_BIGGEST_TITLE = '26px';
-
-        const FONT_SIZE_NORMAL_DESC = '16px';
-        const FONT_SIZE_BIG_DESC = '20px';
-        const FONT_SIZE_BIGGEST_DESC = '24px';
-
-        const FONT_SIZE_NORMAL_META = '12px';
-        const FONT_SIZE_BIG_META = '14px';
-        const FONT_SIZE_BIGGEST_META = '16px';
+        // Local state management
+        let loadedItems = [];
+        const readItems = new Set();
+        let selectedCategory = 'news';
 
         const feedUrls = {
             news: [
@@ -246,156 +606,333 @@ v1.0.0 - 2024-01-10
                 'https://www.inn.co.il/Rss.aspx?act=.1',
                 'https://www.makorrishon.co.il/rss',
                 'https://www.israelhayom.co.il/rss'
-
             ]
         };
 
-        // Theme Toggle Logic
+        // UI Element Selectors
         const themeBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const refreshBtn = document.getElementById('refresh');
+        const categoryTabsContainer = document.getElementById('category-tabs');
+        const rssContent = document.getElementById('rss-content');
+        const toTopBtn = document.getElementById('to-top-btn');
+        const fontSizeSelect = document.getElementById('font-size');
+        const imageSizeSelect = document.getElementById('image-size');
+
+        // Theme Toggle Logic with custom vector state toggles
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('light-mode');
             const isLight = document.body.classList.contains('light-mode');
-            themeBtn.textContent = isLight ? 'מצב כהה' : 'מצב בהיר';
+            
+            if (isLight) {
+                themeIcon.innerHTML = `
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                `;
+                themeBtn.title = "מעבר למצב כהה";
+            } else {
+                themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+                themeBtn.title = "מעבר למצב בהיר";
+            }
         });
 
-        // Auto Refresh (Every 10 minutes)
+        // Trigger Category Pill-button switching
+        categoryTabsContainer.addEventListener('click', (e) => {
+            const targetBtn = e.target.closest('.tab-btn');
+            if (!targetBtn) return;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            targetBtn.classList.add('active');
+            
+            selectedCategory = targetBtn.dataset.category;
+            loadRSS();
+        });
+
+        // Font and Image controls
+        fontSizeSelect.addEventListener('change', () => {
+            document.body.classList.remove('font-normal', 'font-big', 'font-biggest');
+            document.body.classList.add(`font-${fontSizeSelect.value}`);
+        });
+
+        imageSizeSelect.addEventListener('change', adjustImageSizes);
+
+        // Auto Refresh trigger
         setInterval(() => {
-            console.log("Auto-refreshing feed...");
+            console.log("Auto-refreshing active feeds...");
             loadRSS();
         }, 10 * 60 * 1000);
 
-        document.getElementById('refresh').addEventListener('click', loadRSS);
-        document.getElementById('category').addEventListener('change', loadRSS);
+        refreshBtn.addEventListener('click', loadRSS);
 
-        function loadRSS() {
-            const category = document.getElementById('category').value;
-            const urls = feedUrls[category] || [];
-            const rssContent = document.getElementById('rss-content');
-            const throbber = document.querySelector('.throbber');
+        // Relative time helper string builder in Hebrew
+        function getRelativeTimeString(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
             
-            // Words to exclude
-            const excludedWords = ['כדורגל', 'כדורסל', 'ספורט'];
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) return `לפני ${interval} שנים`;
+            
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return `לפני ${interval} חודשים`;
+            
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return interval === 1 ? 'אתמול' : `לפני ${interval} ימים`;
+            
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return `לפני ${interval} שעות`;
+            
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return `לפני ${interval} דקות`;
+            
+            return 'ממש עכשיו';
+        }
 
+        // Display Skeleton Screen blocks as placehold loaders
+        function showSkeletons() {
             rssContent.innerHTML = '';
-            throbber.style.display = 'block';
+            
+            for (let i = 0; i < 12; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton-card';
+                skeleton.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <div class="skeleton-block" style="width: 70px; height: 14px;"></div>
+                        <div class="skeleton-block" style="width: 50px; height: 12px;"></div>
+                    </div>
+                    <div class="skeleton-block" style="width: 100%; height: 20px; margin-top: 6px;"></div>
+                    <div class="skeleton-block" style="width: 80%; height: 20px;"></div>
+                    <div class="skeleton-block" style="width: 35%; height: 14px; margin-top: 8px;"></div>
+                `;
+                rssContent.appendChild(skeleton);
+            }
+        }
+
+        // Custom Floating Alerts (Toast)
+        function triggerToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <span class="toast-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Main parser feed aggregator
+        function loadRSS() {
+            const urls = feedUrls[selectedCategory] || [];
+            showSkeletons();
+
+            const excludedWords = ['כדורגל', 'כדורסל', 'ספורט'];
 
             Promise.all(urls.map(url =>
                 fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
                     .then(response => response.json())
-                    .catch(err => ({ items: [] }))
+                    .catch(() => ({ items: [] }))
             ))
             .then(feeds => {
-                const allItems = feeds.flatMap(feed => feed.items || []);
-                allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+                let itemsList = feeds.flatMap(feed => feed.items || []);
+                
+                // Exclude duplicate posts based on target guidelines
+                const uniqueItemsMap = new Map();
+                itemsList.forEach(item => {
+                    uniqueItemsMap.set(item.guid || item.link || item.title, item);
+                });
+                itemsList = Array.from(uniqueItemsMap.values());
 
-                throbber.style.display = 'none';
+                // Sort newest chronologically
+                itemsList.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-                allItems.forEach(item => {
-                    // Filter Logic: check if title or description contains excluded words
-                    const combinedText = (item.title + " " + item.description).toLowerCase();
-                    const shouldSkip = excludedWords.some(word => combinedText.includes(word));
-
-                    if (shouldSkip) return; // Skip this iteration
-
-                    const rssItem = document.createElement('div');
-                    rssItem.className = 'rss-item';
-
-                    const title = document.createElement('h2');
-                    title.textContent = item.title;
-                    title.addEventListener('click', () => {
-                        const description = rssItem.querySelector('.description');
-                        const backToTopLink = rssItem.querySelector('.back-to-top');
-                        const isVisible = description.style.display === 'block';
-
-                        description.style.display = isVisible ? 'none' : 'block';
-                        backToTopLink.style.display = isVisible ? 'none' : 'block';
-                    });
-
-                    const link = document.createElement('a');
-                    link.href = item.link;
-                    link.target = '_blank';
-                    link.textContent = ' (לכתבה)';
-                    title.appendChild(link);
-
-                    const meta = document.createElement('div');
-                    meta.className = 'meta';
-
-                    const pubDate = new Date(item.pubDate);
-                    const hours = String(pubDate.getHours()).padStart(2, '0');
-                    const minutes = String(pubDate.getMinutes()).padStart(2, '0');
-
-                    const host = item.link ? new URL(item.link).hostname.replace('www.', '') : 'RSS';
-                    meta.textContent = `${pubDate.toLocaleDateString('he-IL')} ${hours}:${minutes} | ${host}`;
-
-                    const description = document.createElement('p');
-                    description.className = 'description';
-                    description.innerHTML = item.description;
-
-                    const backToTopLink = document.createElement('a');
-                    backToTopLink.href = '#';
-                    backToTopLink.className = 'back-to-top';
-                    backToTopLink.textContent = '↑ חזרה למעלה';
-                    backToTopLink.style.display = 'none';
-                    backToTopLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    });
-
-                    rssItem.appendChild(title);
-                    rssItem.appendChild(meta);
-                    rssItem.appendChild(description);
-                    rssItem.appendChild(backToTopLink);
-                    rssContent.appendChild(rssItem);
+                // Primary filter out of key exclusions
+                loadedItems = itemsList.filter(item => {
+                    const combinedText = ((item.title || '') + ' ' + (item.description || '')).toLowerCase();
+                    return !excludedWords.some(word => combinedText.includes(word));
                 });
 
-                adjustFontSize();
-                adjustImageSize();
+                renderFeedItems();
             })
             .catch(() => {
-                throbber.style.display = 'none';
-                rssContent.innerHTML = '<div class="rss-item"><h2>שגיאה בטעינת הפידים</h2></div>';
+                rssContent.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h3>שגיאה בחיבור לערוצי התוכן</h3>
+                        <p>אנא ודא את חיבור הרשת שלך ונסה שוב</p>
+                    </div>
+                `;
             });
         }
 
-        document.getElementById('font-size').addEventListener('change', adjustFontSize);
-        document.getElementById('image-size').addEventListener('change', adjustImageSize);
+        // Client-side rendering loops
+        function renderFeedItems() {
+            const filtered = loadedItems;
+            rssContent.innerHTML = '';
 
-        function adjustFontSize() {
-            const size = document.getElementById('font-size').value;
-            let fontTitle, fontDesc, fontMeta;
-
-            switch (size) {
-                case 'big':
-                    fontTitle = FONT_SIZE_BIG_TITLE; fontDesc = FONT_SIZE_BIG_DESC; fontMeta = FONT_SIZE_BIG_META;
-                    break;
-                case 'biggest':
-                    fontTitle = FONT_SIZE_BIGGEST_TITLE; fontDesc = FONT_SIZE_BIGGEST_DESC; fontMeta = FONT_SIZE_BIGGEST_META;
-                    break;
-                default:
-                    fontTitle = FONT_SIZE_NORMAL_TITLE; fontDesc = FONT_SIZE_NORMAL_DESC; fontMeta = FONT_SIZE_NORMAL_META;
-                    break;
+            if (filtered.length === 0) {
+                rssContent.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h3>לא נמצאו כתבות</h3>
+                        <p>נסה להחליף קטגוריה</p>
+                    </div>
+                `;
+                return;
             }
 
-            document.querySelectorAll('.rss-item h2').forEach(el => el.style.fontSize = fontTitle);
-            document.querySelectorAll('.rss-item .description').forEach(el => el.style.fontSize = fontDesc);
-            document.querySelectorAll('.rss-item .meta').forEach(el => el.style.fontSize = fontMeta);
+            filtered.forEach((item, index) => {
+                const card = document.createElement('div');
+                const itemId = item.guid || item.link || item.title;
+                card.className = `rss-card${readItems.has(itemId) ? ' read' : ''}`;
+                
+                // Get clean visual provider name
+                const rawHost = item.link ? new URL(item.link).hostname.replace('www.', '') : 'RSS';
+                const parsedHost = translateHost(rawHost);
+
+                const pubDate = new Date(item.pubDate);
+                const relativeTime = getRelativeTimeString(pubDate);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="card-header">
+                            <span class="badge-source">${parsedHost}</span>
+                            <span class="meta-time" title="${pubDate.toLocaleString('he-IL')}">${relativeTime}</span>
+                        </div>
+                        <h2 class="card-title">${item.title}</h2>
+                    </div>
+                    
+                    <div class="card-expanded-content" id="expanded-${index}">
+                        <div class="card-description">${item.description}</div>
+                        <div class="card-actions">
+                            <a href="${item.link}" target="_blank" class="card-btn card-btn-primary">
+                                לקריאת המאמר המלא
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                `;
+
+                // Handle item expansions & read-status toggling
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.card-btn') || e.target.closest('a')) return;
+
+                    const expander = card.querySelector('.card-expanded-content');
+                    const isVisible = expander.style.display === 'block';
+
+                    if (!isVisible) {
+                        // Collapse all other expanded cards
+                        document.querySelectorAll('.rss-card').forEach(otherCard => {
+                            if (otherCard !== card) {
+                                otherCard.classList.remove('active');
+                                const otherExpander = otherCard.querySelector('.card-expanded-content');
+                                if (otherExpander) otherExpander.style.display = 'none';
+                            }
+                        });
+
+                        expander.style.display = 'block';
+                        card.classList.add('active');
+                        readItems.add(itemId);
+                        card.classList.add('read');
+                    } else {
+                        expander.style.display = 'none';
+                        card.classList.remove('active');
+                    }
+                });
+
+                rssContent.appendChild(card);
+            });
+
+            adjustImageSizes();
         }
 
-        function adjustImageSize() {
-            const size = document.getElementById('image-size').value;
+        // Image size dynamic scale handlers
+        function adjustImageSizes() {
+            const size = imageSizeSelect.value;
             let maxWidth, display;
+            
             switch (size) {
                 case 'hide': maxWidth = '0'; display = 'none'; break;
-                case 'medium': maxWidth = '60%'; display = 'block'; break;
+                case 'medium': maxWidth = '65%'; display = 'block'; break;
                 case 'big': maxWidth = '100%'; display = 'block'; break;
-                default: maxWidth = '30%'; display = 'block'; break;
+                default: maxWidth = '35%'; display = 'block'; break;
             }
-            document.querySelectorAll('.rss-item img').forEach(img => {
+
+            document.querySelectorAll('.rss-card img').forEach(img => {
                 img.style.maxWidth = maxWidth;
                 img.style.display = display;
+                img.style.borderRadius = "6px";
+                img.style.margin = "8px 0 0 0";
+                img.style.height = "auto";
             });
         }
 
+        // Helper label dictionaries
+        function getCategoryName(key) {
+            const names = { news: 'חדשות', tech: 'טכנולוגיה', flash: 'מבזקים' };
+            return names[key] || '';
+        }
+
+        function translateHost(host) {
+            const hosts = {
+                'walla.co.il': 'וואלה',
+                'maariv.co.il': 'מעריב',
+                'mako.co.il': 'מאקו',
+                'rcs.mako.co.il': 'מאקו',
+                'ynet.co.il': 'Ynet',
+                'now14.co.il': 'ערוץ 14',
+                'inn.co.il': 'ערוץ 7',
+                'makorrishon.co.il': 'מקור ראשון',
+                'israelhayom.co.il': 'ישראל היום',
+                'askpavel.co.il': 'אסק פאבל',
+                'tgspot.co.il': 'TGspot',
+                'themarker.com': 'דה מרקר',
+                'theverifier.co.il': 'The Verifier'
+            };
+            return hosts[host] || host;
+        }
+
+        // Float-to-top layout dynamic control listeners
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                toTopBtn.style.display = 'flex';
+            } else {
+                toTopBtn.style.display = 'none';
+            }
+        });
+
+        toTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
             loadRSS();
         });
