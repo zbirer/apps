@@ -2,6 +2,11 @@
 ================================================================================
 CHANGELOG: RSS Feed Viewer
 ================================================================================
+v1.4.7 - 2026-05-28
+- Changed: Refreshes (manual and automatic) now preserve rendered feed items without clearing the UI.
+- Added: Implemented a smooth rotation animation on the refresh toolbar icon to act as the loading indicator.
+- Improved: Skeleton loaders are now restricted to initial category switches and empty states to prevent layout flashes.
+
 v1.4.6 - 2026-05-27
 - Added: Filter logic to automatically ignore RSS items with a publication timestamp in the future.
 
@@ -232,6 +237,18 @@ v1.0.0 - 2024-01-10
             width: 14px;
             height: 14px;
             stroke-width: 2.5;
+            transition: transform 0.2s ease;
+        }
+
+        /* Rotating animation triggered when refreshing */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+        }
+
+        .icon-btn.loading svg {
+            animation: spin 1s linear infinite;
+            color: var(--accent);
         }
 
         /* Dashboard content */
@@ -646,7 +663,7 @@ v1.0.0 - 2024-01-10
             }
         });
 
-        // Trigger Category Pill-button switching
+        // Trigger Category Pill-button switching (Full load with skeleton fallback)
         categoryTabsContainer.addEventListener('click', (e) => {
             const targetBtn = e.target.closest('.tab-btn');
             if (!targetBtn) return;
@@ -655,7 +672,7 @@ v1.0.0 - 2024-01-10
             targetBtn.classList.add('active');
             
             selectedCategory = targetBtn.dataset.category;
-            loadRSS();
+            loadRSS(false); // Category switch gets full reload / clean skeletons
         });
 
         // Font and Image controls
@@ -666,13 +683,14 @@ v1.0.0 - 2024-01-10
 
         imageSizeSelect.addEventListener('change', adjustImageSizes);
 
-        // Auto Refresh trigger
+        // Auto Refresh trigger (Silent background update)
         setInterval(() => {
             console.log("Auto-refreshing active feeds...");
-            loadRSS();
+            loadRSS(true);
         }, 10 * 60 * 1000);
 
-        refreshBtn.addEventListener('click', loadRSS);
+        // Manual refresh trigger (Silent background update)
+        refreshBtn.addEventListener('click', () => loadRSS(true));
 
         // Relative time helper string builder in Hebrew
         function getRelativeTimeString(date) {
@@ -696,7 +714,7 @@ v1.0.0 - 2024-01-10
             return 'ממש עכשיו';
         }
 
-        // Display Skeleton Screen blocks as placehold loaders
+        // Display Skeleton Screen blocks as placehold loaders (used for empty/initial categories only)
         function showSkeletons() {
             rssContent.innerHTML = '';
             
@@ -740,9 +758,18 @@ v1.0.0 - 2024-01-10
         }
 
         // Main parser feed aggregator
-        function loadRSS() {
+        // isSilent parameter controls whether we preserve screen items or clear them for skeletons
+        function loadRSS(isSilent = false) {
             const urls = feedUrls[selectedCategory] || [];
-            showSkeletons();
+            
+            // Turn on the animated loading state on the refresh button
+            refreshBtn.classList.add('loading');
+
+            // Only show skeletons if we explicitly want a full reload,
+            // or if there are no existing items rendered on screen yet.
+            if (!isSilent || loadedItems.length === 0) {
+                showSkeletons();
+            }
 
             const excludedWords = ['כדורגל', 'כדורסל', 'ספורט'];
 
@@ -752,6 +779,9 @@ v1.0.0 - 2024-01-10
                     .catch(() => ({ items: [] }))
             ))
             .then(feeds => {
+                // Stop toolbar button rotation animation
+                refreshBtn.classList.remove('loading');
+
                 let itemsList = feeds.flatMap(feed => feed.items || []);
                 
                 // Exclude duplicate posts based on target guidelines
@@ -778,17 +808,25 @@ v1.0.0 - 2024-01-10
                 renderFeedItems();
             })
             .catch(() => {
-                rssContent.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        <h3>שגיאה בחיבור לערוצי התוכן</h3>
-                        <p>אנא ודא את חיבור הרשת שלך ונסה שוב</p>
-                    </div>
-                `;
+                // Stop toolbar button rotation animation
+                refreshBtn.classList.remove('loading');
+
+                // If it failed and we had items, notify the user without wiping the page
+                if (isSilent && loadedItems.length > 0) {
+                    triggerToast('שגיאה בסנכרון הנתונים');
+                } else {
+                    rssContent.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <h3>שגיאה בחיבור לערוצי התוכן</h3>
+                            <p>אנא ודא את חיבור הרשת שלך ונסה שוב</p>
+                        </div>
+                    `;
+                }
             });
         }
 
@@ -942,7 +980,7 @@ v1.0.0 - 2024-01-10
 
         // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
-            loadRSS();
+            loadRSS(false); // Initial load performs full load with initial skeletons
         });
     </script>
 </body>
