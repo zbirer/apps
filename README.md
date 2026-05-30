@@ -20,6 +20,8 @@ https://zbirer.github.io/apps/scheduler.html
 
 https://zbirer.github.io/apps/encryptor.html
 
+https://zbirer.github.io/apps/markdown_preview.html
+
 
 # prompt for json viewer
 
