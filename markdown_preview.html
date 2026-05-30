@@ -307,6 +307,27 @@
 
         <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
 
+        <!-- Section 1.5: Navigation Controls (Start & TOC) -->
+        <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0 gap-1">
+            <!-- Start button -->
+            <button onclick="scrollToStart()" class="px-2.5 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1 whitespace-nowrap" title="Scroll back to start of document">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+                </svg>
+                <span>Start</span>
+            </button>
+
+            <!-- Table of Contents button -->
+            <button onclick="toggleTOCModal()" class="px-2.5 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1 whitespace-nowrap" title="Open Table of Contents Menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+                <span>TOC</span>
+            </button>
+        </div>
+
+        <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
+
         <!-- Section 2: Display Settings (Line Numbers, Text Size, Blank Space) -->
         <div class="flex items-center gap-3 bg-slate-100/70 dark:bg-slate-900/60 p-1 px-3 py-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
             
@@ -320,7 +341,7 @@
 
             <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
 
-            <!-- Text Size Selector -->
+            <!-- Text Size Selector (Extended up to 40px) -->
             <div class="flex items-center gap-1.5 shrink-0">
                 <label for="select-text-size" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Size:</label>
                 <select id="select-text-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500">
@@ -331,6 +352,10 @@
                     <option value="18px">18px</option>
                     <option value="20px">20px</option>
                     <option value="24px">24px</option>
+                    <option value="28px">28px</option>
+                    <option value="32px">32px</option>
+                    <option value="36px">36px</option>
+                    <option value="40px">40px</option>
                 </select>
             </div>
 
@@ -388,6 +413,17 @@
         </button>
     </div>
 
+    <!-- HEADER CONTEXT BAR (Displays parent H1 and H2 headers relevant to top visible line in preview) -->
+    <div id="breadcrumb-bar" class="bg-slate-100/50 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800/80 px-6 py-2 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0 select-none overflow-x-auto whitespace-nowrap scrollbar-none">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+        <span class="text-slate-400 dark:text-slate-600 font-bold uppercase tracking-wider text-[9px] mr-1">Current Section:</span>
+        <span id="breadcrumb-content" class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold">
+            <span class="text-slate-400 dark:text-slate-500 italic">Document Start</span>
+        </span>
+    </div>
+
     <!-- Workspace Container (Flex Area) -->
     <main id="workspace" class="flex-1 flex flex-col md:flex-row overflow-hidden relative select-none">
         
@@ -441,7 +477,7 @@
                     </span>
                     <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Comment Manager</span>
                 </div>
-                <button id="btn-copy-comments-top" onclick="copyAllComments()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-all hover:scale-102 animate-pulse">
+                <button id="btn-copy-comments-top" onclick="copyAllComments()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-all hover:scale-102">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                     </svg>
@@ -495,8 +531,41 @@
         <span id="toast-message">Copied to Clipboard!</span>
     </div>
 
+    <!-- Custom Table of Contents (TOC) Modal Simulator -->
+    <div id="toc-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200 flex flex-col max-h-[75vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-850 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Table of Contents</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jump directly to document sections (H1, H2)</p>
+                    </div>
+                </div>
+                <button onclick="closeTOCModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Scrollable Headings container -->
+            <div id="toc-list" class="flex-1 overflow-y-auto py-4 space-y-1.5 select-none pr-1">
+                <!-- Loaded Dynamically -->
+            </div>
+            
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-850 flex justify-end shrink-0">
+                <button onclick="closeTOCModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Browser Alert/Prompt Modal Simulator (Safe for sandboxed iframes) -->
-    <div id="prompt-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200">
+    <div id="prompt-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
         <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200">
             <div class="flex items-start gap-3.5 mb-4">
                 <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl shrink-0">
@@ -564,6 +633,10 @@
         const selectedLineLabel = document.getElementById('selected-line-label');
         const toolbarBtnComment = document.getElementById('toolbar-btn-comment');
         const toolbarBtnCopy = document.getElementById('toolbar-btn-copy');
+
+        const tocModal = document.getElementById('toc-modal');
+        const tocList = document.getElementById('toc-list');
+        const breadcrumbContent = document.getElementById('breadcrumb-content');
 
         // Config marked.js
         marked.setOptions({
@@ -863,7 +936,7 @@ Use nested bullet outlines for organizing files:
                             row.insertBefore(metricTd, row.firstChild);
                         });
 
-                        // Standard Table cell aesthetic overrides
+                        // Standard Table cell overrides
                         table.querySelectorAll('thead th:not(:first-child)').forEach(th => {
                             th.className = "px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800";
                         });
@@ -966,6 +1039,9 @@ Use nested bullet outlines for organizing files:
 
             preview.innerHTML = html;
             updateStats();
+            
+            // Trigger Context Breadcrumb Update
+            setTimeout(updateActiveHeadingContext, 50);
         }
 
         // Toggle Line Numbers layout visibility
@@ -1092,6 +1168,143 @@ Use nested bullet outlines for organizing files:
             executeCopy(targetLine, `Copied line ${lineNum} to clipboard!`);
         }
 
+        // Scroll back to start/top of the page
+        function scrollToStart() {
+            editor.scrollTop = 0;
+            preview.scrollTop = 0;
+            selectLine(1);
+            showToast("Jumped to Start of document!");
+        }
+
+        // TOC Modal Handling Logic
+        function toggleTOCModal() {
+            if (tocModal.classList.contains('hidden')) {
+                generateTOC();
+                tocModal.classList.remove('hidden');
+                setTimeout(() => {
+                    tocModal.classList.remove('opacity-0');
+                    tocModal.querySelector('div').classList.remove('scale-95');
+                    tocModal.querySelector('div').classList.add('scale-100');
+                }, 15);
+            } else {
+                closeTOCModal();
+            }
+        }
+
+        function closeTOCModal() {
+            tocModal.classList.add('opacity-0');
+            tocModal.querySelector('div').classList.remove('scale-100');
+            tocModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                tocModal.classList.add('hidden');
+            }, 180);
+        }
+
+        // Create TOC indices dynamically
+        function generateTOC() {
+            const text = editor.value;
+            const lines = text.split('\n');
+            let html = '';
+            let headingCount = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+                const lineNum = i + 1;
+
+                if (trimmed.startsWith('# ')) {
+                    headingCount++;
+                    const headingText = trimmed.slice(2).trim();
+                    html += `
+                        <div onclick="jumpToLine(${lineNum})" class="py-2.5 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors border-l-4 border-indigo-500 pl-3">
+                            <span class="text-xs font-mono font-bold text-indigo-500/80 dark:text-indigo-400/80">#${lineNum}</span>
+                            <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate flex-1">${escapeHtml(headingText)}</span>
+                        </div>
+                    `;
+                } else if (trimmed.startsWith('## ')) {
+                    headingCount++;
+                    const headingText = trimmed.slice(3).trim();
+                    html += `
+                        <div onclick="jumpToLine(${lineNum})" class="py-2 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors pl-8">
+                            <span class="text-xs font-mono text-slate-400 dark:text-slate-500">#${lineNum}</span>
+                            <span class="text-sm font-semibold text-slate-600 dark:text-slate-300 truncate flex-1">${escapeHtml(headingText)}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            if (headingCount === 0) {
+                html = `
+                    <div class="py-8 text-center text-slate-400 dark:text-slate-600">
+                        <p class="text-sm font-medium">No H1 (#) or H2 (##) headings found in this document.</p>
+                    </div>
+                `;
+            }
+            tocList.innerHTML = html;
+        }
+
+        // Scroll elements to exact requested headings
+        function jumpToLine(lineNum) {
+            selectLine(lineNum);
+            
+            // Scroll Preview Viewport
+            const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            // Sync Editor Viewport approximation
+            const lines = editor.value.split('\n');
+            const textHeight = editor.scrollHeight;
+            const totalLines = lines.length;
+            const percentage = (lineNum - 1) / totalLines;
+            editor.scrollTop = percentage * textHeight - (editor.clientHeight / 3);
+            
+            closeTOCModal();
+            showToast(`Jumped to Heading #${lineNum}`);
+        }
+
+        // Trace scrolling in preview to identify the currently active parent sections (Context breadcrumbs)
+        function updateActiveHeadingContext() {
+            const lineElements = preview.querySelectorAll('[data-line]');
+            let currentH1 = '';
+            let currentH2 = '';
+            const containerTop = preview.getBoundingClientRect().top;
+            
+            for (let el of lineElements) {
+                const rect = el.getBoundingClientRect();
+                // Check if element is above or close to the visible top threshold
+                if (rect.top - containerTop <= 110) { 
+                    const h1 = el.querySelector('h1');
+                    const h2 = el.querySelector('h2');
+                    if (h1) {
+                        currentH1 = h1.innerText;
+                        currentH2 = ''; // Reset child subheadings
+                    } else if (h2) {
+                        currentH2 = h2.innerText;
+                    }
+                } else {
+                    break; // Stop parsing as we went below viewport top
+                }
+            }
+            
+            if (!currentH1 && !currentH2) {
+                breadcrumbContent.innerHTML = `<span class="text-slate-400 dark:text-slate-500 italic">Document Start</span>`;
+            } else {
+                let breadcrumbHTML = '';
+                if (currentH1) {
+                    breadcrumbHTML += `<span class="text-indigo-600 dark:text-indigo-400 font-bold">${escapeHtml(currentH1)}</span>`;
+                }
+                if (currentH2) {
+                    breadcrumbHTML += `
+                        <span class="text-slate-300 dark:text-slate-700 font-bold">/</span>
+                        <span class="text-slate-700 dark:text-slate-250 font-semibold">${escapeHtml(currentH2)}</span>
+                    `;
+                }
+                breadcrumbContent.innerHTML = breadcrumbHTML;
+            }
+        }
+
         // Build comment list using requested format template
         function generateCommentsExportText() {
             let exportBlocks = [];
@@ -1176,6 +1389,19 @@ Use nested bullet outlines for organizing files:
             }
         }
 
+        // Synced Scrolling mechanism
+        function handleScroll(source, target) {
+            if (!syncScrollingActive) return;
+            if (isScrolling) {
+                isScrolling = false;
+                return;
+            }
+            
+            isScrolling = true;
+            const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
+            target.scrollTop = percentage * (target.scrollHeight - target.clientHeight);
+        }
+
         // --- Workspace Draggable Splitting Panel Handler ---
         workspaceDivider.addEventListener('mousedown', startWorkspaceResize);
         workspaceDivider.addEventListener('touchstart', startWorkspaceResize, { passive: true });
@@ -1249,6 +1475,7 @@ Use nested bullet outlines for organizing files:
             localStorage.setItem('theme', 'dark');
         }
 
+        // Turn Light Mode on
         function disableDarkMode() {
             document.documentElement.classList.remove('dark');
             iconSun.classList.add('hidden');
@@ -1290,6 +1517,16 @@ Use nested bullet outlines for organizing files:
             if (selectedLineNumber > linesCount) {
                 selectLine(1);
             }
+        });
+
+        // Sync Scrolling listeners
+        editor.addEventListener('scroll', () => {
+            handleScroll(editor, preview);
+        });
+
+        preview.addEventListener('scroll', () => {
+            handleScroll(preview, editor);
+            updateActiveHeadingContext();
         });
 
         // View State click handlers
@@ -1338,7 +1575,7 @@ Use nested bullet outlines for organizing files:
             }
         });
 
-        // Listeners for prompt modal input
+        // Listeners for prompt modal inputs
         promptInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 savePromptModal();
