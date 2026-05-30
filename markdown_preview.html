@@ -64,6 +64,18 @@
             background: #94a3b8;
         }
 
+        /* Toolbar custom thin scrollbar for smaller layouts */
+        .toolbar-scroll::-webkit-scrollbar {
+            height: 5px;
+        }
+        .toolbar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 3px;
+        }
+        .toolbar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
         /* Apply dynamic sizing */
         #editor {
             font-size: var(--global-text-size) !important;
@@ -86,6 +98,14 @@
         .empty-line-spacer {
             height: var(--empty-line-height) !important;
             transition: height 0.15s ease-out;
+        }
+
+        /* Hide Line Numbers CSS class trigger */
+        .line-number-span {
+            display: none !important;
+        }
+        .show-line-numbers .line-number-span {
+            display: inline-block !important;
         }
 
         /* Custom Markdown Rendering Styling */
@@ -234,18 +254,17 @@
     <header class="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shrink-0 shadow-sm z-10">
         <div class="flex items-center space-x-3">
             <div class="bg-indigo-600 text-white p-2 rounded-lg shadow-md shadow-indigo-200 dark:shadow-none">
-                <!-- SVG Logo -->
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
             </div>
             <div>
                 <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-indigo-400 dark:from-indigo-400 dark:to-indigo-200 bg-clip-text text-transparent">NovaMD</h1>
-                <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Inline Comment-Review System</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Unified Document review workspace</p>
             </div>
         </div>
 
-        <!-- Utility Buttons (Load Sample, Clear, Theme, Export) -->
+        <!-- Utility Templates Area -->
         <div class="flex items-center gap-2">
             <!-- Sample Loader -->
             <button id="btn-sample" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300">
@@ -262,60 +281,49 @@
                 </svg>
                 Clear
             </button>
-
-            <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1"></span>
-
-            <!-- Light/Dark Mode Toggle (Consolidated Theme Controller) -->
-            <button id="btn-theme" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors shadow-sm text-slate-600 dark:text-slate-300" title="Toggle Theme">
-                <!-- Sun Icon -->
-                <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 4.343l-.707-.707M12 7a5 5 0 110 10 5 5 0 010-10z" />
-                </svg>
-                <!-- Moon Icon -->
-                <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            </button>
         </div>
     </header>
 
-    <!-- Toolbar and Controller Area (Always Visible Controls) -->
-    <div class="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 shrink-0 shadow-sm">
+    <!-- UNIFIED MASTER TOOLBAR (Consolidated, Always Visible, Single-Line Flow) -->
+    <div class="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-nowrap items-center gap-3 shrink-0 shadow-sm z-10 overflow-x-auto toolbar-scroll select-none">
         
-        <!-- View Toggle Controls (Left) -->
-        <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl shadow-inner border border-slate-200/50 dark:border-slate-800/40">
-            <!-- Editor Toggle Button -->
-            <button id="toggle-editor" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
+        <!-- Section 1: View Modes Selector -->
+        <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
+            <!-- Editor Only -->
+            <button id="toggle-editor" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
                 <span>Editor Only</span>
             </button>
             
-            <!-- Split Toggle Button -->
-            <button id="toggle-split" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                </svg>
+            <!-- Split View -->
+            <button id="toggle-split" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm whitespace-nowrap">
                 <span>Split View</span>
             </button>
             
-            <!-- Preview Toggle Button -->
-            <button id="toggle-preview" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+            <!-- Preview Only -->
+            <button id="toggle-preview" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
                 <span>Preview Only</span>
             </button>
         </div>
 
-        <!-- NEW: Workspace Sizing & Layout Controls (Always Visible - Middle) -->
-        <div class="flex items-center gap-4 bg-slate-100/70 dark:bg-slate-900 p-1 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800/40">
-            <!-- Text Size Dropdown Selector -->
-            <div class="flex items-center gap-1.5">
-                <label for="select-text-size" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Size:</label>
-                <select id="select-text-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow">
+        <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
+
+        <!-- Section 2: Display Settings (Line Numbers, Text Size, Blank Space) -->
+        <div class="flex items-center gap-3 bg-slate-100/70 dark:bg-slate-900/60 p-1 px-3 py-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
+            
+            <!-- Line Numbers Switch Toggle (Default Hidden) -->
+            <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 transition-colors flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" title="Toggle Line Numbers Display">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span>Line Numbers</span>
+            </button>
+
+            <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
+
+            <!-- Text Size Selector -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                <label for="select-text-size" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Size:</label>
+                <select id="select-text-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500">
                     <option value="12px">12px</option>
                     <option value="14px">14px</option>
                     <option value="15px" selected>15px</option>
@@ -326,54 +334,58 @@
                 </select>
             </div>
 
-            <!-- Custom Spacing Divider -->
             <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
 
             <!-- Empty Line Spacing Dropdown Selector -->
-            <div class="flex items-center gap-1.5">
-                <label for="select-empty-size" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Empty space:</label>
-                <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow">
-                    <option value="4px">4px (Tight)</option>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <label for="select-empty-size" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Gaps:</label>
+                <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value="4px">4px</option>
                     <option value="8px">8px</option>
-                    <option value="16px" selected>16px (Normal)</option>
+                    <option value="16px" selected>16px</option>
                     <option value="24px">24px</option>
-                    <option value="32px">32px (Spacious)</option>
+                    <option value="32px">32px</option>
                     <option value="48px">48px</option>
                 </select>
             </div>
         </div>
 
-        <!-- Clipboard and Export Actions (Right) -->
-        <div class="flex items-center gap-2 ml-auto">
-            <!-- Notification Toast Container inside UI -->
-            <div id="action-toast" class="opacity-0 translate-y-1 transition-all duration-300 text-xs bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 rounded-lg shadow font-medium mr-2 hidden sm:block">
-                Copied successfully!
-            </div>
+        <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
 
-            <!-- Copy Markdown -->
-            <button id="btn-copy-md" class="p-2 sm:px-3 sm:py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 text-slate-600 dark:text-slate-300" title="Copy Raw Markdown">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <!-- Section 3: Active Line Review Controls (Include Comment & Copy) -->
+        <div class="flex items-center gap-2 bg-indigo-50/50 dark:bg-indigo-950/20 p-1 px-3 py-1 rounded-xl border border-indigo-100/60 dark:border-indigo-900/40 shrink-0">
+            <span id="selected-line-label" class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                Line <span class="text-indigo-600 dark:text-indigo-400 font-bold">#1</span>
+            </span>
+
+            <!-- Comment Selected Line button -->
+            <button id="toolbar-btn-comment" onclick="commentSelectedLine()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition-colors whitespace-nowrap" title="Write feedback comment for selected line">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span>Comment</span>
+            </button>
+
+            <!-- Copy Selected Line button -->
+            <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 flex items-center gap-1.5 transition-colors whitespace-nowrap" title="Copy raw selected line content">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                 </svg>
-                <span class="hidden sm:inline">Copy MD</span>
-            </button>
-
-            <!-- Copy Rendered HTML -->
-            <button id="btn-copy-html" class="p-2 sm:px-3 sm:py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 text-slate-600 dark:text-slate-300" title="Copy Rendered HTML">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-                <span class="hidden sm:inline">Copy HTML</span>
-            </button>
-
-            <!-- Download MD File -->
-            <button id="btn-download" class="p-2 sm:px-3 sm:py-1.5 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors flex items-center gap-1.5 shadow-sm shadow-indigo-100 dark:shadow-none" title="Download .md File">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span class="hidden sm:inline">Download</span>
+                <span>Copy Line</span>
             </button>
         </div>
+
+        <!-- Section 4: Theme switcher -->
+        <button id="btn-theme" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors shadow-sm text-slate-600 dark:text-slate-300 ml-auto shrink-0" title="Toggle Theme">
+            <!-- Sun Icon -->
+            <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 4.343l-.707-.707M12 7a5 5 0 110 10 5 5 0 010-10z" />
+            </svg>
+            <!-- Moon Icon -->
+            <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+        </button>
     </div>
 
     <!-- Workspace Container (Flex Area) -->
@@ -417,7 +429,7 @@
                     </svg>
                     Interactive Document Review
                 </span>
-                <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Real-time comments ready</span>
+                <span class="text-xs text-slate-400 dark:text-slate-500 font-medium select-none">Click any line below to select it</span>
             </div>
 
             <!-- Top Comments Copy Export Action bar -->
@@ -429,7 +441,7 @@
                     </span>
                     <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Comment Manager</span>
                 </div>
-                <button id="btn-copy-comments-top" onclick="copyAllComments()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-all hover:scale-102">
+                <button id="btn-copy-comments-top" onclick="copyAllComments()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-all hover:scale-102 animate-pulse">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                     </svg>
@@ -469,7 +481,6 @@
             </span>
         </div>
 
-        <!-- Sync Indicator & Framework info -->
         <div class="flex items-center gap-2">
             <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Document Live Mode</span>
@@ -499,7 +510,6 @@
                 </div>
             </div>
             
-            <!-- Input text box matching standard browser popup interfaces -->
             <div class="mb-5">
                 <input type="text" id="prompt-input" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800 dark:text-slate-100 font-sans" placeholder="Type your comment or question here..." />
             </div>
@@ -525,9 +535,6 @@
         const btnSample = document.getElementById('btn-sample');
         const btnClear = document.getElementById('btn-clear');
         const btnTheme = document.getElementById('btn-theme');
-        const btnCopyMd = document.getElementById('btn-copy-md');
-        const btnCopyHtml = document.getElementById('btn-copy-html');
-        const btnDownload = document.getElementById('btn-download');
         
         const toggleEditor = document.getElementById('toggle-editor');
         const toggleSplit = document.getElementById('toggle-split');
@@ -553,6 +560,10 @@
         const promptSubtitle = document.getElementById('prompt-subtitle');
         const promptInput = document.getElementById('prompt-input');
         const promptBtnDelete = document.getElementById('prompt-btn-delete');
+
+        const selectedLineLabel = document.getElementById('selected-line-label');
+        const toolbarBtnComment = document.getElementById('toolbar-btn-comment');
+        const toolbarBtnCopy = document.getElementById('toolbar-btn-copy');
 
         // Config marked.js
         marked.setOptions({
@@ -641,6 +652,8 @@ Use nested bullet outlines for organizing files:
         // Interactive Review Comments State
         let comments = {}; // key: line number (1-based), value: comment string
         let activeInputLineNum = null;
+        let selectedLineNumber = 1; // Default selected line to 1
+        let showLineNumbers = false; // Default line numbers is hide
 
         // Helper to escape HTML securely
         function escapeHtml(str) {
@@ -651,6 +664,13 @@ Use nested bullet outlines for organizing files:
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        // Helper to check if a line belongs to a markdown table block
+        function isTableLine(line) {
+            if (!line) return false;
+            const trimmed = line.trim();
+            return trimmed.startsWith('|') || (trimmed.includes('|') && trimmed.endsWith('|'));
         }
 
         // Load Initial State
@@ -699,6 +719,14 @@ Use nested bullet outlines for organizing files:
                 splitPercentage = parseFloat(savedSplitPercentage);
             }
 
+            // Load line numbers toggle state
+            const savedLineNums = localStorage.getItem('novamd-show-linenums');
+            if (savedLineNums === 'true') {
+                showLineNumbers = true;
+            } else {
+                showLineNumbers = false;
+            }
+
             // Sync View on startup based on width
             if (window.innerWidth < 768) {
                 setView('editor');
@@ -707,10 +735,11 @@ Use nested bullet outlines for organizing files:
             }
 
             renderMarkdown();
-            updateStats();
+            updateLineNumbersUI();
+            updateSelectedLineUI();
         }
 
-        // Render Markdown into line-by-line interactive blocks
+        // Render Markdown into line-by-line interactive blocks, detecting tables and code blocks dynamically
         function renderMarkdown() {
             const rawText = editor.value;
             const lines = rawText.split('\n');
@@ -733,12 +762,135 @@ Use nested bullet outlines for organizing files:
                     }
                 }
 
-                // Compile content inside each line block
+                // TABLE DETECTOR (Only works outside code blocks)
+                let isTable = false;
+                if (!inCodeBlock && i + 1 < lines.length) {
+                    const nextLine = lines[i+1].trim();
+                    // GFM delimiter line format validation (must contain pipes and dashes/colons/spaces only)
+                    const isDelimiter = nextLine.startsWith('|') && /^\|[\|:\-\s]+$/.test(nextLine);
+                    if (isTableLine(line) && isDelimiter) {
+                        isTable = true;
+                    }
+                }
+
+                if (isTable) {
+                    // Group consecutive table lines
+                    let tableLines = [];
+                    let j = i;
+                    while (j < lines.length && (isTableLine(lines[j]) || (j === i + 1 && /^\|[\|:\-\s]+$/.test(lines[j].trim())))) {
+                        tableLines.push(lines[j]);
+                        j++;
+                    }
+
+                    // Compile GFM table as a single styled block
+                    const tableHtmlRaw = marked.parse(tableLines.join('\n'));
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = tableHtmlRaw;
+                    const table = tempDiv.querySelector('table');
+
+                    if (table) {
+                        table.className = "min-w-full border-collapse my-4";
+
+                        // 1. Process Header Row
+                        const theadTr = table.querySelector('thead tr');
+                        if (theadTr) {
+                            const headerLineNum = i + 1;
+                            let dotIndicator = '';
+                            if (comments[headerLineNum]) {
+                                const commentVal = comments[headerLineNum];
+                                dotIndicator = `
+                                    <span class="w-3 h-3 rounded-full bg-indigo-500 dark:bg-indigo-400 border border-white dark:border-slate-950 shadow animate-pulse shrink-0 inline-block" 
+                                          title="Comment: ${escapeHtml(commentVal)}"></span>
+                                `;
+                            }
+
+                            const highlightClass = (headerLineNum === selectedLineNumber)
+                                ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-l-4 border-indigo-500'
+                                : 'border-l-4 border-transparent';
+
+                            theadTr.setAttribute('onclick', `selectLine(${headerLineNum}); event.stopPropagation();`);
+                            theadTr.setAttribute('data-line', headerLineNum);
+                            theadTr.className = `group cursor-pointer hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-all duration-150 ${highlightClass}`;
+
+                            // Prepend line indicator column
+                            const metricTh = document.createElement('th');
+                            metricTh.className = "w-14 select-none mr-2 py-2 px-3 bg-slate-100 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800";
+                            metricTh.innerHTML = `
+                                <div class="flex items-center gap-1.5 justify-start">
+                                    <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${headerLineNum}</span>
+                                    <div class="w-4 h-4 flex items-center justify-center shrink-0">
+                                        ${dotIndicator}
+                                    </div>
+                                </div>
+                            `;
+                            theadTr.insertBefore(metricTh, theadTr.firstChild);
+                        }
+
+                        // 2. Process Body Rows
+                        const tbodyRows = table.querySelectorAll('tbody tr');
+                        tbodyRows.forEach((row, rowIndex) => {
+                            // GFM body row starts after the delimiter (line index i + 2)
+                            const currentLineNum = i + 3 + rowIndex;
+
+                            let dotIndicator = '';
+                            if (comments[currentLineNum]) {
+                                const commentVal = comments[currentLineNum];
+                                dotIndicator = `
+                                    <span class="w-3 h-3 rounded-full bg-indigo-500 dark:bg-indigo-400 border border-white dark:border-slate-950 shadow animate-pulse shrink-0 inline-block" 
+                                          title="Comment: ${escapeHtml(commentVal)}"></span>
+                                `;
+                            }
+
+                            const highlightClass = (currentLineNum === selectedLineNumber)
+                                ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-l-4 border-indigo-500'
+                                : 'border-l-4 border-transparent';
+
+                            row.setAttribute('onclick', `selectLine(${currentLineNum}); event.stopPropagation();`);
+                            row.setAttribute('data-line', currentLineNum);
+                            row.className = `group cursor-pointer hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-all duration-150 border-b border-slate-100 dark:border-slate-800/50 ${highlightClass}`;
+
+                            // Prepend line indicator column
+                            const metricTd = document.createElement('td');
+                            metricTd.className = "w-14 select-none mr-2 py-2 px-3 border-r border-slate-150 dark:border-slate-800/50";
+                            metricTd.innerHTML = `
+                                <div class="flex items-center gap-1.5 justify-start">
+                                    <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${currentLineNum}</span>
+                                    <div class="w-4 h-4 flex items-center justify-center shrink-0">
+                                        ${dotIndicator}
+                                    </div>
+                                </div>
+                            `;
+                            row.insertBefore(metricTd, row.firstChild);
+                        });
+
+                        // Standard Table cell aesthetic overrides
+                        table.querySelectorAll('thead th:not(:first-child)').forEach(th => {
+                            th.className = "px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800";
+                        });
+
+                        table.querySelectorAll('tbody td:not(:first-child)').forEach(td => {
+                            td.className = "px-4 py-2 text-sm text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800/50";
+                        });
+
+                        const wrapperDiv = document.createElement('div');
+                        wrapperDiv.className = "my-4 overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm bg-white dark:bg-slate-950 select-none";
+                        wrapperDiv.appendChild(table);
+
+                        html += wrapperDiv.outerHTML;
+                    } else {
+                        html += `<div class="p-4 text-red-500">Table compile error</div>`;
+                    }
+
+                    // Fast-forward outer loop index past parsed table rows
+                    i = j - 1;
+                    continue;
+                }
+
+                // Compile standard content line block
                 let contentHtml = '';
                 if (isCodeFence) {
                     contentHtml = `<code class="font-mono text-slate-400 dark:text-slate-500 text-xs block whitespace-pre">${escapeHtml(line)}</code>`;
                 } else if (inCodeBlock) {
-                    // Pre-compile syntax highlighted code lines
                     let highlighted = '';
                     try {
                         if (codeLanguage && hljs.getLanguage(codeLanguage)) {
@@ -751,7 +903,6 @@ Use nested bullet outlines for organizing files:
                     }
                     contentHtml = `<pre class="m-0 p-0 bg-transparent overflow-x-auto"><code class="hljs ${codeLanguage} font-mono text-xs block whitespace-pre">${highlighted || '&nbsp;'}</code></pre>`;
                 } else {
-                    // Standard inline/block line styling
                     const trimmed = line.trim();
                     if (trimmed === '') {
                         contentHtml = `<div class="empty-line-spacer"></div>`;
@@ -764,50 +915,31 @@ Use nested bullet outlines for organizing files:
                     }
                 }
 
-                // Comment Dot Indication
+                // Comment Dot Indication (Always visible when a comment exists)
                 let dotIndicator = '';
                 if (comments[lineNumber]) {
                     const commentVal = comments[lineNumber];
                     dotIndicator = `
-                        <span onclick="triggerAddComment(${lineNumber})" 
-                              class="w-3 h-3 rounded-full bg-indigo-500 dark:bg-indigo-400 border border-white dark:border-slate-950 shadow cursor-pointer animate-pulse shrink-0 inline-block" 
-                              title="Comment: ${escapeHtml(commentVal)} (Click to edit)"></span>
+                        <span class="w-3 h-3 rounded-full bg-indigo-500 dark:bg-indigo-400 border border-white dark:border-slate-950 shadow animate-pulse shrink-0 inline-block" 
+                              title="Comment: ${escapeHtml(commentVal)}"></span>
                     `;
                 }
 
-                // Hover Actions: Copy Line Content & Edit/Add Comment
-                const actionGroup = `
-                    <div class="flex items-center gap-1">
-                        <!-- Copy Line Button -->
-                        <button onclick="copyLineContent(${lineNumber})" 
-                                class="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-slate-800 rounded-md shadow border border-slate-200 dark:border-slate-700 hover:scale-105" 
-                                title="Copy raw line content">
-                            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>
-                        </button>
-                        <!-- Comment Speech Trigger Button -->
-                        <button onclick="triggerAddComment(${lineNumber})" 
-                                class="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-slate-800 rounded-md shadow border border-slate-200 dark:border-slate-700 hover:scale-105" 
-                                title="Comment on line ${lineNumber}">
-                            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
-                        </button>
-                    </div>
-                `;
+                // Verify active selection highlighting classes
+                const highlightClasses = (lineNumber === selectedLineNumber)
+                    ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-500'
+                    : 'border-transparent';
 
                 // Build line block container
                 html += `
-                    <div class="group relative flex items-start py-2 px-4 hover:bg-slate-100/40 dark:hover:bg-slate-900/20 rounded-lg transition-all duration-150 border-b border-slate-100/40 dark:border-slate-800/20" data-line="${lineNumber}">
-                        <!-- Line Metric column (Line Number, Comment Indicator, Actions) -->
-                        <div class="w-24 flex items-center justify-between shrink-0 select-none mr-3 gap-1.5">
-                            <span class="text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${lineNumber}</span>
-                            <div class="w-4 h-4 flex items-center justify-center">
+                    <div onclick="selectLine(${lineNumber})" 
+                         class="group relative flex items-start py-2 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
+                         data-line="${lineNumber}">
+                        <!-- Line Metric column (Line Number & Comment Indicator) -->
+                        <div class="w-14 flex items-center shrink-0 select-none mr-2 gap-1.5 justify-start">
+                            <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${lineNumber}</span>
+                            <div class="w-4 h-4 flex items-center justify-center shrink-0">
                                 ${dotIndicator}
-                            </div>
-                            <div class="w-14 flex justify-end">
-                                ${actionGroup}
                             </div>
                         </div>
                         <!-- Compiled Markdown Line wrapper -->
@@ -836,7 +968,61 @@ Use nested bullet outlines for organizing files:
             updateStats();
         }
 
-        // Trigger Inline Comment dialog simulator (Browser Prompt emulation)
+        // Toggle Line Numbers layout visibility
+        function toggleLineNumbers() {
+            showLineNumbers = !showLineNumbers;
+            localStorage.setItem('novamd-show-linenums', showLineNumbers);
+            updateLineNumbersUI();
+        }
+
+        function updateLineNumbersUI() {
+            const previewEl = document.getElementById('preview');
+            const toggleBtn = document.getElementById('btn-toggle-linenums');
+            
+            if (showLineNumbers) {
+                previewEl.classList.add('show-line-numbers');
+                toggleBtn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+                toggleBtn.classList.remove('bg-slate-100', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400', 'border-slate-200', 'dark:border-slate-800');
+            } else {
+                previewEl.classList.remove('show-line-numbers');
+                toggleBtn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+                toggleBtn.classList.add('bg-slate-100', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400', 'border-slate-200', 'dark:border-slate-800');
+            }
+        }
+
+        // Select line item on preview click
+        function selectLine(lineNumber) {
+            selectedLineNumber = lineNumber;
+            
+            // Fast class updates directly on the DOM
+            document.querySelectorAll('[data-line]').forEach(el => {
+                const currentNum = parseInt(el.getAttribute('data-line'));
+                if (currentNum === selectedLineNumber) {
+                    el.classList.add('bg-indigo-50/40', 'dark:bg-indigo-950/20', 'border-indigo-500');
+                    el.classList.remove('border-transparent');
+                } else {
+                    el.classList.remove('bg-indigo-50/40', 'dark:bg-indigo-950/20', 'border-indigo-500');
+                    el.classList.add('border-transparent');
+                }
+            });
+
+            updateSelectedLineUI();
+        }
+
+        function updateSelectedLineUI() {
+            selectedLineLabel.innerHTML = `Line <span class="text-indigo-600 dark:text-indigo-400 font-bold font-mono">#${selectedLineNumber}</span>`;
+        }
+
+        // Selected line toolbar operations
+        function commentSelectedLine() {
+            triggerAddComment(selectedLineNumber);
+        }
+
+        function copySelectedLine() {
+            copyLineContent(selectedLineNumber);
+        }
+
+        // Trigger Inline Comment dialog simulator
         function triggerAddComment(lineNum) {
             activeInputLineNum = lineNum;
             const existingComment = comments[lineNum] || '';
@@ -844,7 +1030,6 @@ Use nested bullet outlines for organizing files:
             promptSubtitle.innerText = `Add review comment / feedback for Line ${lineNum}`;
             promptInput.value = existingComment;
 
-            // Manage delete button visibility based on existing comment
             if (existingComment.trim() !== '') {
                 promptBtnDelete.classList.remove('hidden');
                 promptBtnDelete.onclick = () => {
@@ -855,7 +1040,6 @@ Use nested bullet outlines for organizing files:
                 promptBtnDelete.classList.add('hidden');
             }
 
-            // Reveal prompt box modal
             promptModal.classList.remove('hidden');
             setTimeout(() => {
                 promptModal.classList.remove('opacity-0');
@@ -908,7 +1092,7 @@ Use nested bullet outlines for organizing files:
             executeCopy(targetLine, `Copied line ${lineNum} to clipboard!`);
         }
 
-        // Build comment list using requested verbatim format template
+        // Build comment list using requested format template
         function generateCommentsExportText() {
             let exportBlocks = [];
             const sortedLineNumbers = Object.keys(comments).map(Number).sort((a, b) => a - b);
@@ -924,7 +1108,6 @@ Use nested bullet outlines for organizing files:
                     commentIndex++;
                 }
             }
-            // Return formatted blocks with empty lines in between
             return exportBlocks.length > 0 ? exportBlocks.join('\n\n') + '\n' : '';
         }
 
@@ -944,11 +1127,9 @@ Use nested bullet outlines for organizing files:
             const charCount = text.length;
             const wordCount = text === "" ? 0 : text.split(/\s+/).filter(Boolean).length;
             
-            // Math stats
             statChars.innerText = charCount.toLocaleString();
             statWords.innerText = wordCount.toLocaleString();
             
-            // Calculate read time assuming 200 WPM
             const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
             statRead.innerText = `${readMinutes} min`;
         }
@@ -957,7 +1138,6 @@ Use nested bullet outlines for organizing files:
         function setView(mode) {
             currentMode = mode;
             
-            // Highlight View Toggle controls
             const activeClass = ["bg-white", "dark:bg-slate-800", "text-indigo-600", "dark:text-indigo-400", "shadow-sm"];
             const inactiveClass = ["text-slate-600", "dark:text-slate-400", "hover:text-slate-900", "dark:hover:text-white"];
 
@@ -966,7 +1146,6 @@ Use nested bullet outlines for organizing files:
                 inactiveClass.forEach(c => btn.classList.add(c));
             });
 
-            // Set layout & elements visibility with respect to user resizing width preference
             if (mode === 'editor') {
                 toggleEditor.classList.add(...activeClass);
                 toggleEditor.classList.remove(...inactiveClass);
@@ -992,7 +1171,7 @@ Use nested bullet outlines for organizing files:
                 editorContainer.classList.remove('hidden');
                 editorContainer.style.width = `${splitPercentage}%`;
                 previewContainer.classList.remove('hidden');
-                previewContainer.style.width = ''; // Let right container fill remaining layout flex space
+                previewContainer.style.width = ''; 
                 workspaceDivider.classList.remove('hidden');
             }
         }
@@ -1005,7 +1184,6 @@ Use nested bullet outlines for organizing files:
             if (currentMode !== 'split') return;
             isResizing = true;
             
-            // Apply defensive resizing styles (prevents cursor tracking glitches over textarea/preview scrolling context)
             document.body.classList.add('resizing-active');
             workspaceDivider.classList.add('bg-indigo-200', 'dark:bg-indigo-950/60', 'border-indigo-500');
 
@@ -1028,7 +1206,6 @@ Use nested bullet outlines for organizing files:
             const containerRect = workspace.getBoundingClientRect();
             let percentage = ((clientX - containerRect.left) / containerRect.width) * 100;
             
-            // Constrain splitting boundaries to keep both panels readable (15% to 85% limit range)
             if (percentage < 15) percentage = 15;
             if (percentage > 85) percentage = 85;
 
@@ -1037,6 +1214,7 @@ Use nested bullet outlines for organizing files:
             localStorage.setItem('novamd-split-percentage', percentage);
         }
 
+        // Mouseup split stop
         function stopWorkspaceResize() {
             if (!isResizing) return;
             isResizing = false;
@@ -1079,11 +1257,11 @@ Use nested bullet outlines for organizing files:
             localStorage.setItem('theme', 'light');
         }
 
-        // Copy Text via execCommand to handle iframe security constraints reliably
+        // Copy Text via execCommand
         function executeCopy(textToCopy, successMsg) {
             const textarea = document.createElement('textarea');
             textarea.value = textToCopy;
-            textarea.style.position = 'fixed'; // Prevent scrolling to bottom of screen
+            textarea.style.position = 'fixed'; 
             document.body.appendChild(textarea);
             textarea.select();
             
@@ -1092,7 +1270,7 @@ Use nested bullet outlines for organizing files:
                 if (successful) {
                     showToast(successMsg);
                 } else {
-                    showToast("Failed to copy. Try manual copy.");
+                    showToast("Failed to copy.");
                 }
             } catch (err) {
                 showToast("Error copying content.");
@@ -1107,6 +1285,11 @@ Use nested bullet outlines for organizing files:
         editor.addEventListener('input', (e) => {
             renderMarkdown();
             localStorage.setItem('novamd-content', e.target.value);
+            // Select first line if currently active line becomes out of range
+            const linesCount = e.target.value.split('\n').length;
+            if (selectedLineNumber > linesCount) {
+                selectLine(1);
+            }
         });
 
         // View State click handlers
@@ -1114,7 +1297,7 @@ Use nested bullet outlines for organizing files:
         toggleSplit.addEventListener('click', () => setView('split'));
         togglePreview.addEventListener('click', () => setView('preview'));
 
-        // NEW: Dynamic Configuration dropdown event change listeners
+        // Dynamic Configuration dropdown event change listeners
         selectTextSize.addEventListener('change', (e) => {
             document.documentElement.style.setProperty('--global-text-size', e.target.value);
             localStorage.setItem('novamd-text-size', e.target.value);
@@ -1130,6 +1313,7 @@ Use nested bullet outlines for organizing files:
             editor.value = defaultSample;
             renderMarkdown();
             localStorage.setItem('novamd-content', defaultSample);
+            selectLine(1);
             showToast("Template loaded successfully!");
         });
 
@@ -1140,6 +1324,7 @@ Use nested bullet outlines for organizing files:
             localStorage.removeItem('novamd-comments');
             renderMarkdown();
             localStorage.setItem('novamd-content', '');
+            selectLine(1);
             showToast("Workspace and comments cleared.");
             editor.focus();
         });
@@ -1153,42 +1338,7 @@ Use nested bullet outlines for organizing files:
             }
         });
 
-        // Copy Raw Markdown Button
-        btnCopyMd.addEventListener('click', () => {
-            const rawMD = editor.value;
-            executeCopy(rawMD, "Markdown copied to clipboard!");
-        });
-
-        // Copy Rendered HTML Button
-        btnCopyHtml.addEventListener('click', () => {
-            const htmlContent = preview.innerHTML;
-            executeCopy(htmlContent, "Compiled HTML copied!");
-        });
-
-        // Download as Markdown file
-        btnDownload.addEventListener('click', () => {
-            const markdownText = editor.value;
-            if (!markdownText.trim()) {
-                showToast("Canvas is empty. Add text first.");
-                return;
-            }
-            
-            const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "novamd_document.md");
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            showToast("Downloaded novamd_document.md!");
-        });
-
-        // Listeners for prompt interaction
+        // Listeners for prompt modal input
         promptInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 savePromptModal();
@@ -1197,7 +1347,7 @@ Use nested bullet outlines for organizing files:
             }
         });
 
-        // Handle Responsive window resizing to keep editor clean
+        // Handle Responsive window resizing
         window.addEventListener('resize', () => {
             if (window.innerWidth < 768 && currentMode === 'split') {
                 setView('editor');
