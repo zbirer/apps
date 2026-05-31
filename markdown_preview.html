@@ -419,7 +419,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
         <span class="text-slate-400 dark:text-slate-600 font-bold uppercase tracking-wider text-[9px] mr-1">Current Section:</span>
-        <span id="breadcrumb-content" class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold">
+        <span id="breadcrumb-content" class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold" dir="auto">
             <span class="text-slate-400 dark:text-slate-500 italic">Document Start</span>
         </span>
     </div>
@@ -441,7 +441,7 @@
             </div>
 
             <!-- Text Area with Custom Styling -->
-            <textarea id="editor" class="flex-1 w-full p-6 outline-none bg-transparent font-mono text-slate-800 dark:text-slate-200 leading-relaxed resize-none overflow-y-auto select-text" placeholder="Type or paste your Markdown here..."></textarea>
+            <textarea id="editor" class="flex-1 w-full p-6 outline-none bg-transparent font-mono text-slate-800 dark:text-slate-200 leading-relaxed resize-none overflow-y-auto select-text" placeholder="Type or paste your Markdown here..." dir="auto"></textarea>
         </div>
 
         <!-- DRAGGABLE: Workspace Separation Bar (User movable splitter handle) -->
@@ -936,13 +936,15 @@ Use nested bullet outlines for organizing files:
                             row.insertBefore(metricTd, row.firstChild);
                         });
 
-                        // Standard Table cell overrides
+                        // Standard Table cell overrides and RTL auto detection
                         table.querySelectorAll('thead th:not(:first-child)').forEach(th => {
                             th.className = "px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800";
+                            th.setAttribute('dir', 'auto');
                         });
 
                         table.querySelectorAll('tbody td:not(:first-child)').forEach(td => {
                             td.className = "px-4 py-2 text-sm text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800/50";
+                            td.setAttribute('dir', 'auto');
                         });
 
                         const wrapperDiv = document.createElement('div');
@@ -1003,7 +1005,7 @@ Use nested bullet outlines for organizing files:
                     ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-500'
                     : 'border-transparent';
 
-                // Build line block container
+                // Build line block container with dir="auto" for RTL alignment support
                 html += `
                     <div onclick="selectLine(${lineNumber})" 
                          class="group relative flex items-start py-2 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
@@ -1015,9 +1017,9 @@ Use nested bullet outlines for organizing files:
                                 ${dotIndicator}
                             </div>
                         </div>
-                        <!-- Compiled Markdown Line wrapper -->
+                        <!-- Compiled Markdown Line wrapper with dir="auto" -->
                         <div class="flex-1 min-w-0">
-                            <div class="markdown-body text-slate-800 dark:text-slate-200">
+                            <div class="markdown-body text-slate-800 dark:text-slate-200" dir="auto">
                                 ${contentHtml}
                             </div>
                         </div>
@@ -1200,7 +1202,7 @@ Use nested bullet outlines for organizing files:
             }, 180);
         }
 
-        // Create TOC indices dynamically
+        // Create TOC indices dynamically with dir="auto"
         function generateTOC() {
             const text = editor.value;
             const lines = text.split('\n');
@@ -1217,8 +1219,8 @@ Use nested bullet outlines for organizing files:
                     const headingText = trimmed.slice(2).trim();
                     html += `
                         <div onclick="jumpToLine(${lineNum})" class="py-2.5 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors border-l-4 border-indigo-500 pl-3">
-                            <span class="text-xs font-mono font-bold text-indigo-500/80 dark:text-indigo-400/80">#${lineNum}</span>
-                            <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate flex-1">${escapeHtml(headingText)}</span>
+                            <span class="text-xs font-mono font-bold text-indigo-500/80 dark:text-indigo-400/80 shrink-0">#${lineNum}</span>
+                            <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
                         </div>
                     `;
                 } else if (trimmed.startsWith('## ')) {
@@ -1226,8 +1228,8 @@ Use nested bullet outlines for organizing files:
                     const headingText = trimmed.slice(3).trim();
                     html += `
                         <div onclick="jumpToLine(${lineNum})" class="py-2 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors pl-8">
-                            <span class="text-xs font-mono text-slate-400 dark:text-slate-500">#${lineNum}</span>
-                            <span class="text-sm font-semibold text-slate-600 dark:text-slate-300 truncate flex-1">${escapeHtml(headingText)}</span>
+                            <span class="text-xs font-mono text-slate-400 dark:text-slate-500 shrink-0">#${lineNum}</span>
+                            <span class="text-sm font-semibold text-slate-600 dark:text-slate-300 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
                         </div>
                     `;
                 }
