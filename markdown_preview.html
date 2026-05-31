@@ -2,6 +2,9 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
+* Commit: feat/draggable-non-blur-comment-modal
+  - Removed screen blur and darkened backdrop overlay from the comment modal to keep background text perfectly visible.
+  - Added dynamic mouse and touch event-driven dragging to the comment dialog modal, anchored to its header.
 * Commit: feat/top-toolbar-comments-and-delayed-tooltips
   - Added a "View Comments" popup modal button to the top header toolbar to inspect reviews.
   - Moved the "Copy All Comments" clipboard button directly to the top header toolbar under "Export Comments".
@@ -639,17 +642,24 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         </div>
     </div>
 
-    <!-- סימולטור פופאפ קלט ייעודי (להוספת הערות בתוך ה review) -->
-    <div id="prompt-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200">
-            <div class="flex items-start gap-3.5 mb-4">
+    <!-- סימולטור פופאפ קלט ייעודי (להוספת הערות בתוך ה-review) - ללא טשטוש רקע, תומך גרירה חופשית -->
+    <div id="prompt-modal" class="fixed inset-0 bg-black/10 dark:bg-black/30 z-50 hidden opacity-0 transition-all duration-200 select-none">
+        <div id="prompt-card" class="fixed bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200/85 dark:border-slate-800/85 p-6 transform scale-95 transition-all duration-200 pointer-events-auto">
+            
+            <!-- אזור הכותרת וגרירת החלון -->
+            <div id="prompt-drag-handle" class="flex items-start gap-3.5 mb-4 cursor-grab select-none active:cursor-grabbing border-b border-slate-100 dark:border-slate-800/60 pb-3" title="Click and drag to move this window">
                 <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                 </div>
-                <div>
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Review Comment System</h3>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span>Review Comment System</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16" />
+                        </svg>
+                    </h3>
                     <p id="prompt-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Add review comment/feedback for Line</p>
                 </div>
             </div>
@@ -658,7 +668,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 <input type="text" id="prompt-input" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800 dark:text-slate-100 font-sans" placeholder="Type your comment or question here..." />
             </div>
             
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center select-none">
                 <button id="prompt-btn-delete" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors">
                     Delete Comment
                 </button>
@@ -721,6 +731,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
         const workspace = document.getElementById('workspace');
+        const btnSample = document.getElementById('btn-sample');
         const btnClear = document.getElementById('btn-clear');
         const btnTheme = document.getElementById('btn-theme');
         
@@ -745,11 +756,11 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         const toastMessage = document.getElementById('toast-message');
 
         const promptModal = document.getElementById('prompt-modal');
+        const promptCard = document.getElementById('prompt-card');
+        const promptDragHandle = document.getElementById('prompt-drag-handle');
         const promptSubtitle = document.getElementById('prompt-subtitle');
         const promptInput = document.getElementById('prompt-input');
         const promptBtnDelete = document.getElementById('prompt-btn-delete');
-
-        const changelogModal = document.getElementById('changelog-modal');
 
         const selectedLineLabel = document.getElementById('selected-line-label');
         const toolbarBtnComment = document.getElementById('toolbar-btn-comment');
@@ -858,6 +869,13 @@ Use nested bullet outlines for organizing files:
         // ניהול בועות חיווי מותאמות עם השהיה של שנייה (JS 1-Second Delayed Tooltip System)
         let tooltipTimeout = null;
 
+        // ניהול גרירת חלון ההערות (Draggable State)
+        let isDraggingModal = false;
+        let modalStartLeft = 0;
+        let modalStartTop = 0;
+        let modalStartMouseX = 0;
+        let modalStartMouseY = 0;
+
         // טיפול במחרוזות ומניעת שגיאות אבטחה ב-HTML
         function escapeHtml(str) {
             if (!str) return '';
@@ -946,6 +964,7 @@ Use nested bullet outlines for organizing files:
             renderMarkdown();
             updateLineNumbersUI();
             updateSelectedLineUI();
+            setupDraggableModal();
             console.log("[NovaMD Debug] Initialization finished successfully. Workspace mode: " + currentMode);
         }
 
@@ -963,7 +982,6 @@ Use nested bullet outlines for organizing files:
                     globalTooltip.innerText = text;
                     globalTooltip.classList.remove('hidden');
                     
-                    // חישוב מיקום מוחלט לבועת החיווי מעל או מתחת לאלמנט
                     const rect = target.getBoundingClientRect();
                     let top = rect.bottom + 8;
                     let left = rect.left + (rect.width / 2);
@@ -972,7 +990,6 @@ Use nested bullet outlines for organizing files:
                     globalTooltip.style.left = `${left}px`;
                     globalTooltip.style.transform = 'translateX(-50%)';
                     
-                    // בדיקת חריגה מגבולות המסך מימין ומשמאל
                     const tooltipWidth = globalTooltip.offsetWidth;
                     if (left + (tooltipWidth / 2) > window.innerWidth) {
                         globalTooltip.style.left = `${window.innerWidth - (tooltipWidth / 2) - 16}px`;
@@ -980,13 +997,12 @@ Use nested bullet outlines for organizing files:
                     if (left - (tooltipWidth / 2) < 0) {
                         globalTooltip.style.left = `${(tooltipWidth / 2) + 16}px`;
                     }
-                    // בדיקת חריגה מלמטה
                     const tooltipHeight = globalTooltip.offsetHeight;
                     if (top + tooltipHeight > window.innerHeight) {
                         globalTooltip.style.top = `${rect.top - tooltipHeight - 8}px`;
                     }
                     console.log("[NovaMD Debug] Rendered delayed custom tooltip: '" + text + "'");
-                }, 1000); // השהייה מובנית של שנייה אחת בדיוק
+                }, 1000); 
             });
 
             document.addEventListener('mouseout', (e) => {
@@ -997,6 +1013,80 @@ Use nested bullet outlines for organizing files:
                 globalTooltip.classList.add('hidden');
             });
         }
+
+        // הגדרת מערכת גרירה חופשית עבור תיבת ההערות (Draggable Modal Card)
+        function setupDraggableModal() {
+            promptDragHandle.addEventListener('mousedown', startModalDrag);
+            promptDragHandle.addEventListener('touchstart', startModalDrag, { passive: true });
+        }
+
+        function startModalDrag(e) {
+            if (e.type === 'mousedown' && e.button !== 0) return;
+            
+            isDraggingModal = true;
+            console.log("[NovaMD Debug] User began dragging the comment dialog card.");
+            
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            
+            modalStartMouseX = clientX;
+            modalStartMouseY = clientY;
+            
+            const rect = promptCard.getBoundingClientRect();
+            modalStartLeft = rect.left;
+            modalStartTop = rect.top;
+            
+            document.addEventListener('mousemove', handleModalDrag);
+            document.addEventListener('touchmove', handleModalDrag, { passive: false });
+            document.addEventListener('mouseup', stopModalDrag);
+            document.addEventListener('touchend', stopModalDrag);
+        }
+
+        function handleModalDrag(e) {
+            if (!isDraggingModal) return;
+            if (e.cancelable) e.preventDefault();
+            
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            
+            const deltaX = clientX - modalStartMouseX;
+            const deltaY = clientY - modalStartMouseY;
+            
+            let newLeft = modalStartLeft + deltaX;
+            let newTop = modalStartTop + deltaY;
+            
+            // הגבלת הגרירה בתוך גבולות חלון הדפדפן
+            const rect = promptCard.getBoundingClientRect();
+            const maxLeft = window.innerWidth - rect.width;
+            const maxTop = window.innerHeight - rect.height;
+            
+            if (newLeft < 0) newLeft = 0;
+            if (newLeft > maxLeft) newLeft = maxLeft;
+            if (newTop < 0) newTop = 0;
+            if (newTop > maxTop) newTop = maxTop;
+            
+            promptCard.style.left = `${newLeft}px`;
+            promptCard.style.top = `${newTop}px`;
+        }
+
+        function stopModalDrag() {
+            if (!isDraggingModal) return;
+            isDraggingModal = false;
+            console.log("[NovaMD Debug] User stopped dragging the comment dialog card.");
+            
+            document.removeEventListener('mousemove', handleModalDrag);
+            document.removeEventListener('touchmove', handleModalDrag);
+            document.removeEventListener('mouseup', stopModalDrag);
+            document.removeEventListener('touchend', stopModalDrag);
+        }
+
+        // סגירת מודאל ההערות על ידי לחיצה ברקע השקוף
+        promptModal.addEventListener('click', (e) => {
+            if (e.target === promptModal) {
+                console.log("[NovaMD Debug] Transparent backdrop clicked, closing comment modal.");
+                closePromptModal();
+            }
+        });
 
         // פונקציית הרינדור המרכזית - שורה אחר שורה עם הסרת תווים מיוחדים (\r) לפתרון שגיאות Mermaid
         function renderMarkdown() {
@@ -1390,11 +1480,20 @@ Use nested bullet outlines for organizing files:
                 promptBtnDelete.classList.add('hidden');
             }
 
+            // קביעת מיקום ממורכז התחלתי לחלון המרחף על גבי המסך בכל פתיחה
+            const cardWidth = Math.min(448, window.innerWidth - 32);
+            const cardHeight = 280; 
+            const initialLeft = (window.innerWidth - cardWidth) / 2;
+            const initialTop = (window.innerHeight - cardHeight) / 2;
+
+            promptCard.style.left = `${initialLeft}px`;
+            promptCard.style.top = `${initialTop}px`;
+
             promptModal.classList.remove('hidden');
             setTimeout(() => {
                 promptModal.classList.remove('opacity-0');
-                promptModal.querySelector('div').classList.remove('scale-95');
-                promptModal.querySelector('div').classList.add('scale-100');
+                promptCard.classList.remove('scale-95');
+                promptCard.classList.add('scale-100');
                 promptInput.focus();
                 promptInput.select();
             }, 15);
@@ -1403,8 +1502,8 @@ Use nested bullet outlines for organizing files:
         function closePromptModal() {
             console.log("[NovaMD Debug] Closing comment input modal.");
             promptModal.classList.add('opacity-0');
-            promptModal.querySelector('div').classList.remove('scale-100');
-            promptModal.querySelector('div').classList.add('scale-95');
+            promptCard.classList.remove('scale-100');
+            promptCard.classList.add('scale-95');
             setTimeout(() => {
                 promptModal.classList.add('hidden');
             }, 180);
