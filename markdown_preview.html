@@ -34,6 +34,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
     <!-- Mermaid.js for Diagrams & Flowcharts -->
+    <script src="https://cdn.tailwindcss.com/"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     
     <!-- Custom Scrollbars & Markdown rendering styles -->
@@ -306,25 +307,41 @@
         </div>
     </header>
 
-    <!-- UNIFIED MASTER TOOLBAR (Consolidated, Always Visible, Single-Line Flow) -->
+    <!-- UNIFIED MASTER TOOLBAR (Consolidated, Always Visible, Single-Line Flow with Elegant Tooltips) -->
     <div class="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-nowrap items-center gap-3 shrink-0 shadow-sm z-10 overflow-x-auto toolbar-scroll select-none">
         
         <!-- Section 1: View Modes Selector -->
         <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
             <!-- Editor Only -->
-            <button id="toggle-editor" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                <span>Editor Only</span>
-            </button>
+            <div class="relative group">
+                <button id="toggle-editor" class="flex items-center justify-center p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Editor Only</span>
+            </div>
             
             <!-- Split View -->
-            <button id="toggle-split" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm whitespace-nowrap">
-                <span>Split View</span>
-            </button>
+            <div class="relative group">
+                <button id="toggle-split" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition-all shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Split View</span>
+            </div>
             
             <!-- Preview Only -->
-            <button id="toggle-preview" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                <span>Preview Only</span>
-            </button>
+            <div class="relative group">
+                <button id="toggle-preview" class="flex items-center justify-center p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Preview Only</span>
+            </div>
         </div>
 
         <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
@@ -332,40 +349,50 @@
         <!-- Section 1.5: Navigation Controls (Start & TOC) -->
         <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0 gap-1">
             <!-- Start button -->
-            <button onclick="scrollToStart()" class="px-2.5 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1 whitespace-nowrap" title="Scroll back to start of document">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
-                </svg>
-                <span>Start</span>
-            </button>
+            <div class="relative group">
+                <button onclick="scrollToStart()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Scroll to Start</span>
+            </div>
 
             <!-- Table of Contents button -->
-            <button onclick="toggleTOCModal()" class="px-2.5 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1 whitespace-nowrap" title="Open Table of Contents Menu">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
-                </svg>
-                <span>TOC</span>
-            </button>
+            <div class="relative group">
+                <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Table of Contents (TOC)</span>
+            </div>
         </div>
 
         <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
 
         <!-- Section 2: Display Settings (Line Numbers, Text Size, Blank Space) -->
-        <div class="flex items-center gap-3 bg-slate-100/70 dark:bg-slate-900/60 p-1 px-3 py-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
+        <div class="flex items-center gap-3 bg-slate-100/70 dark:bg-slate-900/60 p-1 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
             
-            <!-- Line Numbers Switch Toggle (Default Hidden) -->
-            <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 transition-colors flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" title="Toggle Line Numbers Display">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <span>Line Numbers</span>
-            </button>
+            <!-- Line Numbers Switch Toggle -->
+            <div class="relative group">
+                <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="flex items-center justify-center p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Toggle Line Numbers</span>
+            </div>
 
             <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
 
             <!-- Text Size Selector (Extended up to 40px) -->
             <div class="flex items-center gap-1.5 shrink-0">
-                <label for="select-text-size" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Size:</label>
+                <span class="text-slate-400 dark:text-slate-500 hover:scale-105 transition-transform" title="Text Font Size">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h18M3 6h18M3 18h18" />
+                    </svg>
+                </span>
                 <select id="select-text-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500">
                     <option value="12px">12px</option>
                     <option value="14px">14px</option>
@@ -385,7 +412,11 @@
 
             <!-- Empty Line Spacing Dropdown Selector -->
             <div class="flex items-center gap-1.5 shrink-0">
-                <label for="select-empty-size" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Gaps:</label>
+                <span class="text-slate-400 dark:text-slate-500" title="Empty Line Vertical Spacing">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                    </svg>
+                </span>
                 <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500">
                     <option value="4px">4px</option>
                     <option value="8px">8px</option>
@@ -406,33 +437,40 @@
             </span>
 
             <!-- Comment Selected Line button -->
-            <button id="toolbar-btn-comment" onclick="commentSelectedLine()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition-colors whitespace-nowrap" title="Write feedback comment for selected line">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <span>Comment</span>
-            </button>
+            <div class="relative group">
+                <button id="toolbar-btn-comment" onclick="commentSelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-sm" title="Write feedback comment for selected line">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Add/Edit Comment</span>
+            </div>
 
             <!-- Copy Selected Line button -->
-            <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 flex items-center gap-1.5 transition-colors whitespace-nowrap" title="Copy raw selected line content">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
-                <span>Copy Line</span>
-            </button>
+            <div class="relative group">
+                <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-all shadow-sm" title="Copy raw selected line content">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                </button>
+                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Copy Line Content</span>
+            </div>
         </div>
 
         <!-- Section 4: Theme switcher -->
-        <button id="btn-theme" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors shadow-sm text-slate-600 dark:text-slate-300 ml-auto shrink-0" title="Toggle Theme">
-            <!-- Sun Icon -->
-            <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 4.343l-.707-.707M12 7a5 5 0 110 10 5 5 0 010-10z" />
-            </svg>
-            <!-- Moon Icon -->
-            <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-        </button>
+        <div class="relative group ml-auto">
+            <button id="btn-theme" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors shadow-sm text-slate-600 dark:text-slate-300" title="Toggle Theme">
+                <!-- Sun Icon -->
+                <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 4.343l-.707-.707M12 7a5 5 0 110 10 5 5 0 010-10z" />
+                </svg>
+                <!-- Moon Icon -->
+                <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+            <span class="absolute bottom-full right-0 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Light / Dark Theme</span>
+        </div>
     </div>
 
     <!-- HEADER CONTEXT BAR (Displays parent H1 and H2 headers relevant to top visible line in preview) -->
@@ -866,7 +904,7 @@ Use nested bullet outlines for organizing files:
                     }
                 }
 
-                // NEW: Mermaid Code Block Detector (Grouping multi-line diagrams as a single interactive line item)
+                // Mermaid Code Block Detector
                 if (!inCodeBlock && line.trim().startsWith('```mermaid')) {
                     let mermaidCodeLines = [];
                     let j = i + 1;
@@ -891,6 +929,7 @@ Use nested bullet outlines for organizing files:
                         ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-500'
                         : 'border-transparent';
 
+                    // Save escaped raw source inside a hidden element so we read decoded text content safely in JS
                     html += `
                         <div class="group relative flex items-start py-3 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
                              data-line="${lineNumber}" data-line-span="${blockLineCount}">
@@ -903,9 +942,8 @@ Use nested bullet outlines for organizing files:
                             </div>
                             <!-- Mermaid element block container -->
                             <div class="flex-1 min-w-0">
-                                <div class="mermaid text-center overflow-x-auto select-none" dir="ltr">
-                                    ${escapeHtml(mermaidCode)}
-                                </div>
+                                <pre class="hidden mermaid-src">${escapeHtml(mermaidCode)}</pre>
+                                <div class="mermaid text-center overflow-x-auto select-none" dir="ltr" id="mermaid-render-${lineNumber}"></div>
                             </div>
                         </div>
                     `;
@@ -1106,7 +1144,7 @@ Use nested bullet outlines for organizing files:
                 <div class="p-6 border-t border-slate-100 dark:border-slate-800/40 flex justify-center mt-6 bg-slate-50/50 dark:bg-slate-950/20 rounded-b-xl">
                     <button id="btn-copy-comments-bottom" onclick="copyAllComments()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md flex items-center gap-2 transition-all hover:scale-105 shadow-indigo-100 dark:shadow-none">
                         <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                         </svg>
                         Copy All Comments (Bottom)
                     </button>
@@ -1116,10 +1154,21 @@ Use nested bullet outlines for organizing files:
             preview.innerHTML = html;
             updateStats();
             
+            // Re-decode raw source texts safely into the active render containers to avoid HTML Entity issues (like ->> turning to -&gt;&gt;)
+            const mermaidSrcs = preview.querySelectorAll('.mermaid-src');
+            mermaidSrcs.forEach(src => {
+                const renderDiv = src.nextElementSibling;
+                if (renderDiv) {
+                    renderDiv.textContent = src.textContent;
+                }
+            });
+
             // Re-compile/Render newly generated Mermaid blocks dynamically
             if (window.mermaid) {
                 try {
-                    mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                    mermaid.run({
+                        nodes: preview.querySelectorAll('.mermaid')
+                    });
                 } catch (e) {
                     console.error("Mermaid parsing error", e);
                 }
@@ -1449,32 +1498,32 @@ Use nested bullet outlines for organizing files:
             const inactiveClass = ["text-slate-600", "dark:text-slate-400", "hover:text-slate-900", "dark:hover:text-white"];
 
             [toggleEditor, toggleSplit, togglePreview].forEach(btn => {
-                activeClass.forEach(c => btn.classList.remove(c));
-                inactiveClass.forEach(c => btn.classList.add(c));
+                if (btn) {
+                    activeClass.forEach(c => btn.classList.remove(c));
+                    inactiveClass.forEach(c => btn.classList.add(c));
+                }
             });
 
+            // Handle parent container of buttons highlights properly
+            const highlightTarget = (mode === 'editor') ? toggleEditor : (mode === 'preview' ? togglePreview : toggleSplit);
+            if (highlightTarget) {
+                highlightTarget.classList.add(...activeClass);
+                highlightTarget.classList.remove(...inactiveClass);
+            }
+
             if (mode === 'editor') {
-                toggleEditor.classList.add(...activeClass);
-                toggleEditor.classList.remove(...inactiveClass);
-                
                 editorContainer.classList.remove('hidden');
                 editorContainer.style.width = '100%';
                 previewContainer.classList.add('hidden');
                 workspaceDivider.classList.add('hidden');
             } 
             else if (mode === 'preview') {
-                togglePreview.classList.add(...activeClass);
-                togglePreview.classList.remove(...inactiveClass);
-                
                 previewContainer.classList.remove('hidden');
                 previewContainer.style.width = '100%';
                 editorContainer.classList.add('hidden');
                 workspaceDivider.classList.add('hidden');
             } 
             else { // Split view (default desktop)
-                toggleSplit.classList.add(...activeClass);
-                toggleSplit.classList.remove(...inactiveClass);
-                
                 editorContainer.classList.remove('hidden');
                 editorContainer.style.width = `${splitPercentage}%`;
                 previewContainer.classList.remove('hidden');
