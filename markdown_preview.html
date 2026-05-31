@@ -2,9 +2,11 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
-* Commit: feat/draggable-non-blur-comment-modal
-  - Removed screen blur and darkened backdrop overlay from the comment modal to keep background text perfectly visible.
-  - Added dynamic mouse and touch event-driven dragging to the comment dialog modal, anchored to its header.
+* Commit: fix/remove-btn-sample-reference-error
+  - Resolved TypeError (null reference) by removing obsolete btnSample event listeners and DOM declarations following its replacement with btn-load-file.
+* Commit: feat/clear-comments-and-esc-close
+  - Added a "Clear Comments" action button with a custom non-blocking confirmation/acknowledgment modal to both the main header and the view comments dialog.
+  - Allowed the Escape (ESC) key to instantly dismiss the view comments modal as well as all other active modal views.
 * Commit: feat/top-toolbar-comments-and-delayed-tooltips
   - Added a "View Comments" popup modal button to the top header toolbar to inspect reviews.
   - Moved the "Copy All Comments" clipboard button directly to the top header toolbar under "Export Comments".
@@ -348,6 +350,14 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 Export Comments
             </button>
 
+            <!-- כפתור ניקוי ומחיקה של כל ההערות שנאספו (Clear Comments) -->
+            <button id="btn-clear-comments" onclick="clearAllCommentsWithConfirm()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors flex items-center gap-1.5 shadow-sm" data-tooltip="Clear and permanently delete all review comments currently saved">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Clear Comments
+            </button>
+
             <!-- כפתור טעינת קובץ Markdown מהמחשב -->
             <button id="btn-load-file" onclick="triggerFileInput()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Load Markdown or text file from your computer">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -362,7 +372,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Clear
+                Clear All
             </button>
         </div>
     </header>
@@ -407,7 +417,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </button>
 
             <!-- Table of Contents button -->
-            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC)">
+            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
@@ -459,7 +469,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                     </svg>
                 </span>
-                <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500" data-tooltip="Adjust Empty Space Height">
+                <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200/85 dark:border-slate-800/85 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500" data-tooltip="Adjust Empty Space Height">
                     <option value="4px">4px</option>
                     <option value="8px">8px</option>
                     <option value="16px" selected>16px</option>
@@ -631,12 +641,18 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </div>
             
             <div class="pt-4 border-t border-slate-100 dark:border-slate-850 flex justify-between items-center shrink-0">
-                <button id="modal-comments-copy-btn" onclick="copyAllCommentsFromModal()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 112-2h2a2 2 0 012 2" />
-                    </svg>
-                    <span>Copy to Clipboard</span>
-                </button>
+                <div class="flex gap-2">
+                    <button id="modal-comments-copy-btn" onclick="copyAllCommentsFromModal()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 112-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span>Copy to Clipboard</span>
+                    </button>
+                    <!-- כפתור ניקוי תגובות מתוך מודאל ההערות הפעילות -->
+                    <button id="modal-comments-clear-btn" onclick="clearAllCommentsWithConfirm(); toggleCommentsModal();" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-55 hover:text-red-700 rounded-xl transition-all" title="Clear and permanently delete all review comments currently saved">
+                        Clear Comments
+                    </button>
+                </div>
                 <button onclick="toggleCommentsModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all">Close</button>
             </div>
         </div>
@@ -676,6 +692,28 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                     <button onclick="closePromptModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Cancel</button>
                     <button onclick="savePromptModal()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition-colors">OK</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודאל אישור מותאם אישית (Custom Modal for All comments clearing confirmation) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/10 dark:bg-black/30 z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200">
+            <div class="flex items-start gap-3.5 mb-4">
+                <div class="bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 p-2.5 rounded-xl shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Clear All Comments</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">Are you absolutely sure you want to permanently delete all review comments? This action is destructive and cannot be undone.</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-2 shrink-0">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors rounded-xl bg-slate-50 dark:bg-slate-800">Cancel</button>
+                <button onclick="confirmClearAllComments()" class="px-4 py-2 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-sm transition-colors">Clear All</button>
             </div>
         </div>
     </div>
@@ -731,7 +769,6 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
         const workspace = document.getElementById('workspace');
-        const btnSample = document.getElementById('btn-sample');
         const btnClear = document.getElementById('btn-clear');
         const btnTheme = document.getElementById('btn-theme');
         
@@ -761,6 +798,8 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         const promptSubtitle = document.getElementById('prompt-subtitle');
         const promptInput = document.getElementById('prompt-input');
         const promptBtnDelete = document.getElementById('prompt-btn-delete');
+
+        const confirmModal = document.getElementById('confirm-modal');
 
         const selectedLineLabel = document.getElementById('selected-line-label');
         const toolbarBtnComment = document.getElementById('toolbar-btn-comment');
@@ -965,6 +1004,7 @@ Use nested bullet outlines for organizing files:
             updateLineNumbersUI();
             updateSelectedLineUI();
             setupDraggableModal();
+            setupGlobalKeyListeners();
             console.log("[NovaMD Debug] Initialization finished successfully. Workspace mode: " + currentMode);
         }
 
@@ -1055,7 +1095,6 @@ Use nested bullet outlines for organizing files:
             let newLeft = modalStartLeft + deltaX;
             let newTop = modalStartTop + deltaY;
             
-            // הגבלת הגרירה בתוך גבולות חלון הדפדפן
             const rect = promptCard.getBoundingClientRect();
             const maxLeft = window.innerWidth - rect.width;
             const maxTop = window.innerHeight - rect.height;
@@ -1078,6 +1117,28 @@ Use nested bullet outlines for organizing files:
             document.removeEventListener('touchmove', handleModalDrag);
             document.removeEventListener('mouseup', stopModalDrag);
             document.removeEventListener('touchend', stopModalDrag);
+        }
+
+        // הגדרת מאזין מקלדת גלובלי לסגירת מודאלים בלחיצה על ESC
+        function setupGlobalKeyListeners() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    console.log("[NovaMD Debug] Escape (ESC) key pressed. Closing open modals.");
+                    
+                    if (viewCommentsModal && !viewCommentsModal.classList.contains('hidden')) {
+                        toggleCommentsModal();
+                    }
+                    if (promptModal && !promptModal.classList.contains('hidden')) {
+                        closePromptModal();
+                    }
+                    if (tocModal && !tocModal.classList.contains('hidden')) {
+                        closeTOCModal();
+                    }
+                    if (confirmModal && !confirmModal.classList.contains('hidden')) {
+                        closeConfirmModal();
+                    }
+                }
+            });
         }
 
         // סגירת מודאל ההערות על ידי לחיצה ברקע השקוף
@@ -1456,6 +1517,7 @@ Use nested bullet outlines for organizing files:
             triggerAddComment(selectedLineNumber);
         }
 
+        // העתקת תוכן השורה המבוקשת ללוח הגזירים
         function copySelectedLine() {
             console.log("[NovaMD Debug] Copy content action triggered on selected line: #" + selectedLineNumber);
             copyLineContent(selectedLineNumber);
@@ -1535,6 +1597,36 @@ Use nested bullet outlines for organizing files:
             localStorage.setItem('novamd-comments', JSON.stringify(comments));
             renderMarkdown();
             showToast("Comment removed.");
+        }
+
+        // פתיחת חלון האישור המותאם למחיקת כל ההערות במסמך (Acknowledge Confirm Modal)
+        function clearAllCommentsWithConfirm() {
+            console.log("[NovaMD Debug] Triggering Clear Comments custom confirm dialog.");
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                confirmModal.classList.remove('opacity-0');
+                confirmModal.querySelector('div').classList.remove('scale-95');
+                confirmModal.querySelector('div').classList.add('scale-100');
+            }, 15);
+        }
+
+        function closeConfirmModal() {
+            console.log("[NovaMD Debug] Closing Clear Comments custom confirm dialog.");
+            confirmModal.classList.add('opacity-0');
+            confirmModal.querySelector('div').classList.remove('scale-100');
+            confirmModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                confirmModal.classList.add('hidden');
+            }, 180);
+        }
+
+        function confirmClearAllComments() {
+            console.log("[NovaMD Debug] Confirmed: Clearing all review comments.");
+            comments = {};
+            localStorage.removeItem('novamd-comments');
+            renderMarkdown();
+            closeConfirmModal();
+            showToast("All review comments cleared.");
         }
 
         // העתקת תוכן השורה המבוקשת ללוח הגזירים
@@ -1675,6 +1767,7 @@ Use nested bullet outlines for organizing files:
             }
         }
 
+        // סגירת מודאל Changelog
         function closeChangelogModal() {
             console.log("[NovaMD Debug] Closing Changelog modal.");
             changelogModal.classList.add('opacity-0');
