@@ -2,6 +2,8 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
+* Commit: fix/escapeHtml-reference-error
+  - Resolved ReferenceError by defining the missing 'escapeHtml' helper function in the script block.
 * Commit: fix/isTableLine-reference-error
   - Resolved ReferenceError by defining the missing 'isTableLine' helper function in the script block.
 * Commit: fix/mermaid-semicolon-syntax-and-default-sample-reference
@@ -515,7 +517,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             <!-- העתקת התוכן הגולמי של השורה שנבחרה -->
             <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-all shadow-sm shrink-0" data-tooltip="Copy Selected Raw Line Content">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                 </svg>
             </button>
 
@@ -604,7 +606,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200/85 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
+                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
                         </div>
                     </div>
                     <!-- Sidebar TOC List Elements -->
@@ -766,6 +768,51 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             <div class="flex justify-end gap-2 shrink-0">
                 <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors rounded-xl bg-slate-50 dark:bg-slate-800">Cancel</button>
                 <button onclick="confirmClearAllComments()" class="px-4 py-2 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-sm transition-colors">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Table of Contents (TOC) Modal Simulator -->
+    <div id="toc-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200 flex flex-col max-h-[75vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-850 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Table of Contents</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jump directly to document sections (H1, H2)</p>
+                    </div>
+                </div>
+                <button onclick="closeTOCModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Search input inside TOC modal -->
+            <div class="pt-3 pb-1 shrink-0">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input type="text" id="toc-search" oninput="filterTOC(this.value)" class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
+                </div>
+            </div>
+
+            <!-- Scrollable Headings container -->
+            <div id="toc-list" class="flex-1 overflow-y-auto py-4 space-y-1.5 select-none pr-1">
+                <!-- Loaded Dynamically -->
+            </div>
+            
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-850 flex justify-end shrink-0">
+                <button onclick="closeTOCModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors">Close</button>
             </div>
         </div>
     </div>
@@ -935,7 +982,18 @@ Use nested bullet outlines for organizing files:
         let isResizingSidebar = false;
         let sidebarWidth = 256; 
 
-        // NEW: defined the missing 'isTableLine' helper function globally to resolve execution crashes
+        // NEW: defined the missing 'escapeHtml' helper function globally to resolve execution crashes
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // defined the missing 'isTableLine' helper function globally to resolve execution crashes
         function isTableLine(line) {
             if (!line) return false;
             const trimmed = line.trim();
@@ -1551,12 +1609,6 @@ Use nested bullet outlines for organizing files:
             triggerAddComment(selectedLineNumber);
         }
 
-        // העתקת תוכן השורה המבוקשת ללוח הגזירים
-        function copySelectedLine() {
-            console.log("[NovaMD Debug] Copy content action triggered on selected line: #" + selectedLineNumber);
-            copyLineContent(selectedLineNumber);
-        }
-
         // הפעלת פאנל הוספת ההערה
         function triggerAddComment(lineNum) {
             activeInputLineNum = lineNum;
@@ -1740,6 +1792,7 @@ Use nested bullet outlines for organizing files:
             }
         }
 
+        // סגירת מודאל Changelog
         function closeChangelogModal() {
             console.log("[NovaMD Debug] Closing Changelog modal.");
             changelogModal.classList.add('opacity-0');
