@@ -34,18 +34,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
     <!-- Mermaid.js for Diagrams & Flowcharts -->
-    <script src="https://cdn.tailwindcss.com/"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     
     <!-- Custom Scrollbars & Markdown rendering styles -->
     <style>
-        /* CSS Variables for Dynamic Text & Empty Line Scaling */
+        /* משתני CSS עבור גודל טקסט דינמי ומרווח שורות ריקות */
         :root {
             --global-text-size: 15px;
             --empty-line-height: 16px;
         }
 
-        /* Custom scrollbars */
+        /* עיצוב גלילה מותאם אישית */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -68,7 +67,7 @@
             background: #94a3b8;
         }
 
-        /* Toolbar custom thin scrollbar for smaller layouts */
+        /* עיצוב גלילה דק עבור סרגל הכלים במכשירים ניידים */
         .toolbar-scroll::-webkit-scrollbar {
             height: 5px;
         }
@@ -80,7 +79,7 @@
             background: transparent;
         }
 
-        /* Apply dynamic sizing */
+        /* החלת הגדרות הגודל הדינמיות */
         #editor {
             font-size: var(--global-text-size) !important;
         }
@@ -88,7 +87,7 @@
             font-size: var(--global-text-size) !important;
         }
 
-        /* Prevent selection artifacts and iframe pointer lag when resizing */
+        /* מניעת בעיות סימון וגרירה במהלך שינוי גודל פאנלים */
         .resizing-active * {
             user-select: none !important;
             -webkit-user-select: none !important;
@@ -98,13 +97,13 @@
             pointer-events: none !important;
         }
 
-        /* Dynamic Spacing spacer */
+        /* מרווח שורות דינמי */
         .empty-line-spacer {
             height: var(--empty-line-height) !important;
             transition: height 0.15s ease-out;
         }
 
-        /* Hide Line Numbers CSS class trigger */
+        /* מחלקת CSS להצגת/הסתרת מספרי שורות */
         .line-number-span {
             display: none !important;
         }
@@ -112,12 +111,12 @@
             display: inline-block !important;
         }
 
-        /* FIX: Robust RTL text alignment setup. Forces right-alignment for Hebrew/Arabic and left for English */
+        /* יישור טקסט דו-כיווני חכם (RTL לעברית/ערבית ו-LTR לאנגלית) */
         .markdown-body * {
             text-align: start !important;
         }
 
-        /* Mermaid Graph styling overrides */
+        /* עיצוב דיאגרמות Mermaid */
         .mermaid {
             background-color: rgba(248, 250, 252, 0.6) !important;
             border-radius: 12px;
@@ -131,7 +130,7 @@
             border-color: rgba(51, 65, 85, 0.6);
         }
 
-        /* Custom Markdown Rendering Styling */
+        /* עימוד אלמנטים בתוך ה-Markdown */
         .markdown-body h1 {
             font-size: calc(var(--global-text-size) * 1.85);
             font-weight: 800;
@@ -273,7 +272,7 @@
 </head>
 <body class="h-full bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
 
-    <!-- Header Section -->
+    <!-- חלק עליון של הדף - כותרת ופעולות כלליות -->
     <header class="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shrink-0 shadow-sm z-10">
         <div class="flex items-center space-x-3">
             <div class="bg-indigo-600 text-white p-2 rounded-lg shadow-md shadow-indigo-200 dark:shadow-none">
@@ -287,9 +286,8 @@
             </div>
         </div>
 
-        <!-- Utility Templates Area -->
+        <!-- כפתורי טעינת תבנית וניקוי -->
         <div class="flex items-center gap-2">
-            <!-- Sample Loader -->
             <button id="btn-sample" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -297,7 +295,6 @@
                 Load Template
             </button>
 
-            <!-- Reset Canvas -->
             <button id="btn-clear" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex items-center gap-1.5 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -307,32 +304,32 @@
         </div>
     </header>
 
-    <!-- UNIFIED MASTER TOOLBAR (Consolidated, Always Visible, Single-Line Flow with Elegant Tooltips) -->
+    <!-- סרגל כלים ראשי מאוחד המבוסס על אייקונים ו-Tooltips -->
     <div class="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-nowrap items-center gap-3 shrink-0 shadow-sm z-10 overflow-x-auto toolbar-scroll select-none">
         
-        <!-- Section 1: View Modes Selector -->
+        <!-- סקשן 1: בחירת מצב תצוגה -->
         <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
-            <!-- Editor Only -->
+            <!-- עורך בלבד -->
             <div class="relative group">
                 <button id="toggle-editor" class="flex items-center justify-center p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Editor Only</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Editor Only</span>
             </div>
             
-            <!-- Split View -->
+            <!-- תצוגה חצויה -->
             <div class="relative group">
                 <button id="toggle-split" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition-all shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Split View</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Split View</span>
             </div>
             
-            <!-- Preview Only -->
+            <!-- תצוגה מקדימה בלבד -->
             <div class="relative group">
                 <button id="toggle-preview" class="flex items-center justify-center p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -340,53 +337,53 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Preview Only</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Preview Only</span>
             </div>
         </div>
 
         <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
 
-        <!-- Section 1.5: Navigation Controls (Start & TOC) -->
+        <!-- סקשן 1.5: כפתורי ניווט מהירים (למעלה ותוכן עניינים) -->
         <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0 gap-1">
-            <!-- Start button -->
+            <!-- מעבר להתחלה -->
             <div class="relative group">
                 <button onclick="scrollToStart()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Scroll to Start</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Scroll to Start</span>
             </div>
 
-            <!-- Table of Contents button -->
+            <!-- תוכן עניינים -->
             <div class="relative group">
                 <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Table of Contents (TOC)</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Table of Contents (TOC)</span>
             </div>
         </div>
 
         <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
 
-        <!-- Section 2: Display Settings (Line Numbers, Text Size, Blank Space) -->
+        <!-- סקשן 2: הגדרות תצוגה ומרווחים -->
         <div class="flex items-center gap-3 bg-slate-100/70 dark:bg-slate-900/60 p-1 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
             
-            <!-- Line Numbers Switch Toggle -->
+            <!-- מתג הפעלת/הסתרת מספרי שורות -->
             <div class="relative group">
                 <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="flex items-center justify-center p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Toggle Line Numbers</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Toggle Line Numbers</span>
             </div>
 
             <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
 
-            <!-- Text Size Selector (Extended up to 40px) -->
+            <!-- בחירת גודל פונט (תמיכה עד 40 פיקסלים) -->
             <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-slate-400 dark:text-slate-500 hover:scale-105 transition-transform" title="Text Font Size">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -410,14 +407,14 @@
 
             <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
 
-            <!-- Empty Line Spacing Dropdown Selector -->
+            <!-- בחירת מרווח שורות ריקות -->
             <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-slate-400 dark:text-slate-500" title="Empty Line Vertical Spacing">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                     </svg>
                 </span>
-                <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500">
+                <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500">
                     <option value="4px">4px</option>
                     <option value="8px">8px</option>
                     <option value="16px" selected>16px</option>
@@ -430,50 +427,48 @@
 
         <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
 
-        <!-- Section 3: Active Line Review Controls (Include Comment & Copy) -->
+        <!-- סקשן 3: בקרת פעולות על שורה שנבחרה (הערה והעתקה מהירה) -->
         <div class="flex items-center gap-2 bg-indigo-50/50 dark:bg-indigo-950/20 p-1 px-3 py-1 rounded-xl border border-indigo-100/60 dark:border-indigo-900/40 shrink-0">
             <span id="selected-line-label" class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
                 Line <span class="text-indigo-600 dark:text-indigo-400 font-bold font-mono">#1</span>
             </span>
 
-            <!-- Comment Selected Line button -->
+            <!-- הוספת הערה לשורה שנבחרה -->
             <div class="relative group">
                 <button id="toolbar-btn-comment" onclick="commentSelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-sm" title="Write feedback comment for selected line">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Add/Edit Comment</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Add/Edit Comment</span>
             </div>
 
-            <!-- Copy Selected Line button -->
+            <!-- העתקת התוכן הגולמי של השורה שנבחרה -->
             <div class="relative group">
                 <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-all shadow-sm" title="Copy raw selected line content">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                     </svg>
                 </button>
-                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Copy Line Content</span>
+                <span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Copy Line Content</span>
             </div>
         </div>
 
         <!-- Section 4: Theme switcher -->
         <div class="relative group ml-auto">
             <button id="btn-theme" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors shadow-sm text-slate-600 dark:text-slate-300" title="Toggle Theme">
-                <!-- Sun Icon -->
                 <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 4.343l-.707-.707M12 7a5 5 0 110 10 5 5 0 010-10z" />
                 </svg>
-                <!-- Moon Icon -->
                 <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
             </button>
-            <span class="absolute bottom-full right-0 mb-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Light / Dark Theme</span>
+            <span class="absolute top-full right-0 mt-2 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap shadow-md">Light / Dark Theme</span>
         </div>
     </div>
 
-    <!-- HEADER CONTEXT BAR (Displays parent H1 and H2 headers relevant to top visible line in preview) -->
+    <!-- סרגל כותרת חכם למיקום נוכחי במסמך -->
     <div id="breadcrumb-bar" class="bg-slate-100/50 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800/80 px-6 py-2 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0 select-none overflow-x-auto whitespace-nowrap scrollbar-none">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -484,12 +479,11 @@
         </span>
     </div>
 
-    <!-- Workspace Container (Flex Area) -->
+    <!-- פאנל העבודה המרכזי -->
     <main id="workspace" class="flex-1 flex flex-col md:flex-row overflow-hidden relative select-none">
         
-        <!-- Editor View (Left/Full Panel) -->
+        <!-- עורך קוד המקור (פאנל שמאלי) -->
         <div id="editor-container" class="flex flex-col h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden" style="width: 50%;">
-            <!-- Label Indicator -->
             <div class="px-5 py-2 bg-slate-50 dark:bg-slate-950/70 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between shrink-0">
                 <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -500,13 +494,11 @@
                 <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Auto-saving locally</span>
             </div>
 
-            <!-- Text Area with Custom Styling -->
             <textarea id="editor" class="flex-1 w-full p-6 outline-none bg-transparent font-mono text-slate-800 dark:text-slate-200 leading-relaxed resize-none overflow-y-auto select-text" placeholder="Type or paste your Markdown here..." dir="auto"></textarea>
         </div>
 
-        <!-- DRAGGABLE: Workspace Separation Bar (User movable splitter handle) -->
+        <!-- מפריד פאנלים הניתן לגרירה ושינוי גודל (Splitter) -->
         <div id="workspace-divider" class="hidden md:flex flex-col items-center justify-center w-2 h-full bg-slate-100 dark:bg-slate-900 border-x border-slate-200 dark:border-slate-800 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-950/40 transition-colors shrink-0 select-none">
-            <!-- Sleek grab handles visual dots -->
             <div class="flex flex-col gap-1.5 select-none pointer-events-none">
                 <div class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 transition-colors"></div>
                 <div class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 transition-colors"></div>
@@ -514,9 +506,8 @@
             </div>
         </div>
 
-        <!-- Preview View (Right/Full Panel) -->
+        <!-- תצוגה מקדימה אינטראקטיבית (פאנל ימני) -->
         <div id="preview-container" class="flex-1 flex flex-col h-full bg-white dark:bg-slate-950 overflow-hidden">
-            <!-- Label Indicator -->
             <div class="px-5 py-2.5 bg-slate-50 dark:bg-slate-950/70 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between shrink-0">
                 <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -528,7 +519,7 @@
                 <span class="text-xs text-slate-400 dark:text-slate-500 font-medium select-none">Click any line below to select it</span>
             </div>
 
-            <!-- Top Comments Copy Export Action bar -->
+            <!-- בקר תגובות עליון מהיר -->
             <div class="px-5 py-2.5 bg-indigo-50/60 dark:bg-slate-900 border-b border-slate-200/60 dark:border-slate-800/60 flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-2">
                     <span class="flex h-2 w-2 relative">
@@ -545,17 +536,16 @@
                 </button>
             </div>
 
-            <!-- Parsed/Rendered HTML Content Area with commenting wrappers -->
+            <!-- אזור התצוגה המקדימה -->
             <div id="preview" class="flex-1 overflow-y-auto bg-white dark:bg-slate-950 pb-8 select-text">
-                <!-- Interactive lines render here dynamically -->
+                <!-- הזרקה דינמית של השורות -->
             </div>
         </div>
 
     </main>
 
-    <!-- Footer Status Bar -->
+    <!-- שורת סטטיסטיקה תחתונה -->
     <footer class="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0 shadow-inner">
-        <!-- Metadata Stats -->
         <div class="flex items-center gap-4 flex-wrap">
             <span class="flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -583,7 +573,7 @@
         </div>
     </footer>
 
-    <!-- Custom Floating Dialog Toast -->
+    <!-- הודעות חיווי קופצות (Toasts) -->
     <div id="float-toast" class="fixed bottom-12 right-6 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-xl shadow-lg font-semibold text-sm transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none flex items-center gap-2 z-50 border border-slate-700 dark:border-slate-100">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400 dark:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -591,40 +581,7 @@
         <span id="toast-message">Copied to Clipboard!</span>
     </div>
 
-    <!-- Custom Table of Contents (TOC) Modal Simulator -->
-    <div id="toc-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200 flex flex-col max-h-[75vh]">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-850 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Table of Contents</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jump directly to document sections (H1, H2)</p>
-                    </div>
-                </div>
-                <button onclick="closeTOCModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Scrollable Headings container -->
-            <div id="toc-list" class="flex-1 overflow-y-auto py-4 space-y-1.5 select-none pr-1">
-                <!-- Loaded Dynamically -->
-            </div>
-            
-            <div class="pt-4 border-t border-slate-100 dark:border-slate-850 flex justify-end shrink-0">
-                <button onclick="closeTOCModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Browser Alert/Prompt Modal Simulator (Safe for sandboxed iframes) -->
+    <!-- סימולטור פופאפ קלט ייעודי (להוספת הערות בתוך ה review) -->
     <div id="prompt-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
         <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200">
             <div class="flex items-start gap-3.5 mb-4">
@@ -655,9 +612,9 @@
         </div>
     </div>
 
-    <!-- Application Logic / Scripts -->
+    <!-- לוגיקת האפליקציה וסקריפטים -->
     <script>
-        // DOM Elements
+        // אלמנטים מה-DOM
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
         const workspace = document.getElementById('workspace');
@@ -698,13 +655,13 @@
         const tocList = document.getElementById('toc-list');
         const breadcrumbContent = document.getElementById('breadcrumb-content');
 
-        // Config marked.js
+        // קונפיגורציית marked.js
         marked.setOptions({
             breaks: true,
             gfm: true
         });
 
-        // Default Markdown Template
+        // תבנית ברירת המחדל להדגמה
         const defaultSample = `# 🚀 Welcome to NovaMD
 
 NovaMD is a highly intuitive, elegant, and **real-time Markdown editor** built to make writing for the web beautiful and fast. 
@@ -772,23 +729,23 @@ Use nested bullet outlines for organizing files:
 ---
 *Created with love for content creators, authors, and engineers.*`;
 
-        // State variables
+        // משתני מצב כלליים
         let currentMode = 'split'; // 'editor', 'split', 'preview'
         let theme = 'light';
         let syncScrollingActive = true;
         let isScrolling = false;
         
-        // Interactive Resizing Splitting Variables
+        // הגדרות חלוקת הפאנלים
         let isResizing = false;
-        let splitPercentage = 50; // Initial Split screen ratio
+        let splitPercentage = 50; 
 
-        // Interactive Review Comments State
-        let comments = {}; // key: line number (1-based), value: comment string
+        // ניהול הערות ומעקב אחר שורות
+        let comments = {}; 
         let activeInputLineNum = null;
-        let selectedLineNumber = 1; // Default selected line to 1
-        let showLineNumbers = false; // Default line numbers is hide
+        let selectedLineNumber = 1; 
+        let showLineNumbers = false; 
 
-        // Helper to escape HTML securely
+        // טיפול במחרוזות ומניעת שגיאות אבטחה ב-HTML
         function escapeHtml(str) {
             if (!str) return '';
             return str
@@ -799,16 +756,15 @@ Use nested bullet outlines for organizing files:
                 .replace(/'/g, '&#039;');
         }
 
-        // Helper to check if a line belongs to a markdown table block
+        // בדיקה האם השורה היא חלק מטבלה
         function isTableLine(line) {
             if (!line) return false;
             const trimmed = line.trim();
             return trimmed.startsWith('|') || (trimmed.includes('|') && trimmed.endsWith('|'));
         }
 
-        // Load Initial State
+        // אתחול האפליקציה בטעינה הראשונית
         function initializeApp() {
-            // Theme check
             if (localStorage.getItem('theme') === 'dark' || 
                 (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 enableDarkMode();
@@ -816,7 +772,6 @@ Use nested bullet outlines for organizing files:
                 disableDarkMode();
             }
 
-            // Initialize Mermaid.js
             if (window.mermaid) {
                 mermaid.initialize({
                     startOnLoad: false,
@@ -825,7 +780,6 @@ Use nested bullet outlines for organizing files:
                 });
             }
 
-            // Load saved content or sample content
             const savedContent = localStorage.getItem('novamd-content');
             if (savedContent !== null) {
                 editor.value = savedContent;
@@ -833,7 +787,6 @@ Use nested bullet outlines for organizing files:
                 editor.value = defaultSample;
             }
 
-            // Load saved review comments
             try {
                 const savedComments = localStorage.getItem('novamd-comments');
                 if (savedComments) {
@@ -843,7 +796,6 @@ Use nested bullet outlines for organizing files:
                 console.error("Could not parse saved comments", e);
             }
 
-            // Load saved configurations (Size & Spacing Parameters)
             const savedTextSize = localStorage.getItem('novamd-text-size');
             if (savedTextSize) {
                 document.documentElement.style.setProperty('--global-text-size', savedTextSize);
@@ -861,7 +813,6 @@ Use nested bullet outlines for organizing files:
                 splitPercentage = parseFloat(savedSplitPercentage);
             }
 
-            // Load line numbers toggle state
             const savedLineNums = localStorage.getItem('novamd-show-linenums');
             if (savedLineNums === 'true') {
                 showLineNumbers = true;
@@ -869,7 +820,6 @@ Use nested bullet outlines for organizing files:
                 showLineNumbers = false;
             }
 
-            // Sync View on startup based on width
             if (window.innerWidth < 768) {
                 setView('editor');
             } else {
@@ -881,10 +831,11 @@ Use nested bullet outlines for organizing files:
             updateSelectedLineUI();
         }
 
-        // Render Markdown into line-by-line interactive blocks, detecting tables, Mermaid blocks, and code blocks dynamically
+        // פונקציית הרינדור המרכזית - שורה אחר שורה עם הסרת תווים מיוחדים (\r) לפתרון שגיאות Mermaid
         function renderMarkdown() {
             const rawText = editor.value;
-            const lines = rawText.split('\n');
+            // שימוש בביטוי רגולרי לביטול תווי \r ללא פשרות
+            const lines = rawText.split(/\r?\n/);
             let html = '';
             let inCodeBlock = false;
             let codeLanguage = '';
@@ -893,7 +844,6 @@ Use nested bullet outlines for organizing files:
                 let line = lines[i];
                 const lineNumber = i + 1;
 
-                // Detect code block boundaries
                 const isCodeFence = line.trim().startsWith('```');
                 if (isCodeFence) {
                     if (!inCodeBlock) {
@@ -904,7 +854,7 @@ Use nested bullet outlines for organizing files:
                     }
                 }
 
-                // Mermaid Code Block Detector
+                // זיהוי ואיחוד בלוק Mermaid לשורה אחת
                 if (!inCodeBlock && line.trim().startsWith('```mermaid')) {
                     let mermaidCodeLines = [];
                     let j = i + 1;
@@ -929,31 +879,27 @@ Use nested bullet outlines for organizing files:
                         ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-500'
                         : 'border-transparent';
 
-                    // Save escaped raw source inside a hidden element so we read decoded text content safely in JS
+                    // שימוש ב data-code מקודד כדי למנוע שיבושי תווים
                     html += `
                         <div class="group relative flex items-start py-3 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
                              data-line="${lineNumber}" data-line-span="${blockLineCount}">
-                            <!-- Line Metric column -->
                             <div class="w-14 flex items-center shrink-0 select-none mr-2 gap-1.5 justify-start">
                                 <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${lineNumber}</span>
                                 <div class="w-4 h-4 flex items-center justify-center shrink-0">
                                     ${dotIndicator}
                                 </div>
                             </div>
-                            <!-- Mermaid element block container -->
                             <div class="flex-1 min-w-0">
-                                <pre class="hidden mermaid-src">${escapeHtml(mermaidCode)}</pre>
-                                <div class="mermaid text-center overflow-x-auto select-none" dir="ltr" id="mermaid-render-${lineNumber}"></div>
+                                <div class="mermaid text-center overflow-x-auto select-none" dir="ltr" id="mermaid-render-${lineNumber}" data-code="${encodeURIComponent(mermaidCode)}"></div>
                             </div>
                         </div>
                     `;
 
-                    // Fast-forward i index past the block
                     i = j < lines.length ? j : lines.length;
                     continue;
                 }
 
-                // TABLE DETECTOR (Only works outside code blocks)
+                // זיהוי ועיבוד טבלאות
                 let isTable = false;
                 if (!inCodeBlock && i + 1 < lines.length) {
                     const nextLine = lines[i+1].trim();
@@ -964,7 +910,6 @@ Use nested bullet outlines for organizing files:
                 }
 
                 if (isTable) {
-                    // Group consecutive table lines
                     let tableLines = [];
                     let j = i;
                     while (j < lines.length && (isTableLine(lines[j]) || (j === i + 1 && /^\|[\|:\-\s]+$/.test(lines[j].trim())))) {
@@ -972,7 +917,6 @@ Use nested bullet outlines for organizing files:
                         j++;
                     }
 
-                    // Compile GFM table as a single styled block
                     const tableHtmlRaw = marked.parse(tableLines.join('\n'));
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = tableHtmlRaw;
@@ -981,7 +925,6 @@ Use nested bullet outlines for organizing files:
                     if (table) {
                         table.className = "min-w-full border-collapse my-4";
 
-                        // 1. Process Header Row
                         const theadTr = table.querySelector('thead tr');
                         if (theadTr) {
                             const headerLineNum = i + 1;
@@ -1001,7 +944,6 @@ Use nested bullet outlines for organizing files:
                             theadTr.setAttribute('data-line', headerLineNum);
                             theadTr.className = `group cursor-pointer hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-all duration-150 ${highlightClass}`;
 
-                            // Prepend line indicator column
                             const metricTh = document.createElement('th');
                             metricTh.className = "w-14 select-none mr-2 py-2 px-3 bg-slate-100 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800";
                             metricTh.innerHTML = `
@@ -1015,7 +957,6 @@ Use nested bullet outlines for organizing files:
                             theadTr.insertBefore(metricTh, theadTr.firstChild);
                         }
 
-                        // 2. Process Body Rows
                         const tbodyRows = table.querySelectorAll('tbody tr');
                         tbodyRows.forEach((row, rowIndex) => {
                             const currentLineNum = i + 3 + rowIndex;
@@ -1036,7 +977,6 @@ Use nested bullet outlines for organizing files:
                             row.setAttribute('data-line', currentLineNum);
                             row.className = `group cursor-pointer hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-all duration-150 border-b border-slate-100 dark:border-slate-800/50 ${highlightClass}`;
 
-                            // Prepend line indicator column
                             const metricTd = document.createElement('td');
                             metricTd.className = "w-14 select-none mr-2 py-2 px-3 border-r border-slate-150 dark:border-slate-800/50";
                             metricTd.innerHTML = `
@@ -1050,7 +990,6 @@ Use nested bullet outlines for organizing files:
                             row.insertBefore(metricTd, row.firstChild);
                         });
 
-                        // Standard Table cell overrides and RTL auto detection
                         table.querySelectorAll('thead th:not(:first-child)').forEach(th => {
                             th.className = "px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800";
                             th.setAttribute('dir', 'auto');
@@ -1074,7 +1013,7 @@ Use nested bullet outlines for organizing files:
                     continue;
                 }
 
-                // Compile standard content line block
+                // עיבוד אלמנטים רגילים שאינם קוד או טבלה
                 let contentHtml = '';
                 if (isCodeFence) {
                     contentHtml = `<code class="font-mono text-slate-400 dark:text-slate-500 text-xs block whitespace-pre">${escapeHtml(line)}</code>`;
@@ -1103,7 +1042,6 @@ Use nested bullet outlines for organizing files:
                     }
                 }
 
-                // Comment Dot Indication (Always visible when a comment exists)
                 let dotIndicator = '';
                 if (comments[lineNumber]) {
                     const commentVal = comments[lineNumber];
@@ -1113,23 +1051,19 @@ Use nested bullet outlines for organizing files:
                     `;
                 }
 
-                // Verify active selection highlighting classes
                 const highlightClasses = (lineNumber === selectedLineNumber)
                     ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-500'
                     : 'border-transparent';
 
-                // Build line block container with dir="auto" for RTL alignment support
                 html += `
                     <div class="group relative flex items-start py-2 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
                          data-line="${lineNumber}">
-                        <!-- Line Metric column (Line Number & Comment Indicator) -->
                         <div class="w-14 flex items-center shrink-0 select-none mr-2 gap-1.5 justify-start">
                             <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${lineNumber}</span>
                             <div class="w-4 h-4 flex items-center justify-center shrink-0">
                                 ${dotIndicator}
                             </div>
                         </div>
-                        <!-- Compiled Markdown Line wrapper with dir="auto" -->
                         <div class="flex-1 min-w-0">
                             <div class="markdown-body text-slate-800 dark:text-slate-200" dir="auto">
                                 ${contentHtml}
@@ -1139,7 +1073,6 @@ Use nested bullet outlines for organizing files:
                 `;
             }
 
-            // Bottom copy-to-clipboard comments bar
             html += `
                 <div class="p-6 border-t border-slate-100 dark:border-slate-800/40 flex justify-center mt-6 bg-slate-50/50 dark:bg-slate-950/20 rounded-b-xl">
                     <button id="btn-copy-comments-bottom" onclick="copyAllComments()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md flex items-center gap-2 transition-all hover:scale-105 shadow-indigo-100 dark:shadow-none">
@@ -1154,17 +1087,13 @@ Use nested bullet outlines for organizing files:
             preview.innerHTML = html;
             updateStats();
             
-            // Re-decode raw source texts safely into the active render containers to avoid HTML Entity issues (like ->> turning to -&gt;&gt;)
-            const mermaidSrcs = preview.querySelectorAll('.mermaid-src');
-            mermaidSrcs.forEach(src => {
-                const renderDiv = src.nextElementSibling;
-                if (renderDiv) {
-                    renderDiv.textContent = src.textContent;
-                }
-            });
-
-            // Re-compile/Render newly generated Mermaid blocks dynamically
+            // שחזור ורינדור קוד ה-Mermaid מתוך ה data-code המאובטח
             if (window.mermaid) {
+                const mermaidDivs = preview.querySelectorAll('.mermaid');
+                mermaidDivs.forEach(div => {
+                    const rawCode = decodeURIComponent(div.getAttribute('data-code'));
+                    div.textContent = rawCode;
+                });
                 try {
                     mermaid.run({
                         nodes: preview.querySelectorAll('.mermaid')
@@ -1174,11 +1103,10 @@ Use nested bullet outlines for organizing files:
                 }
             }
             
-            // Trigger Context Breadcrumb Update
             setTimeout(updateActiveHeadingContext, 50);
         }
 
-        // Toggle Line Numbers layout visibility
+        // שינוי תצוגת מספרי השורות בשורה/הסתרה
         function toggleLineNumbers() {
             showLineNumbers = !showLineNumbers;
             localStorage.setItem('novamd-show-linenums', showLineNumbers);
@@ -1200,11 +1128,10 @@ Use nested bullet outlines for organizing files:
             }
         }
 
-        // Select line item on preview click
+        // סימון ובחירת שורה במסך התצוגה המקדימה
         function selectLine(lineNumber) {
             selectedLineNumber = lineNumber;
             
-            // Fast class updates directly on the DOM
             document.querySelectorAll('[data-line]').forEach(el => {
                 const currentNum = parseInt(el.getAttribute('data-line'));
                 if (currentNum === selectedLineNumber) {
@@ -1223,17 +1150,15 @@ Use nested bullet outlines for organizing files:
             selectedLineLabel.innerHTML = `Line <span class="text-indigo-600 dark:text-indigo-400 font-bold font-mono">#${selectedLineNumber}</span>`;
         }
 
-        // Selected line toolbar operations
         function commentSelectedLine() {
             triggerAddComment(selectedLineNumber);
         }
 
-        // Selected line toolbar copy raw content
         function copySelectedLine() {
             copyLineContent(selectedLineNumber);
         }
 
-        // Trigger Inline Comment dialog simulator
+        // הפעלת פאנל הוספת ההערה
         function triggerAddComment(lineNum) {
             activeInputLineNum = lineNum;
             const existingComment = comments[lineNum] || '';
@@ -1294,12 +1219,11 @@ Use nested bullet outlines for organizing files:
             showToast("Comment removed.");
         }
 
-        // Copy precise line content
+        // העתקת תוכן השורה המבוקשת ללוח הגזירים
         function copyLineContent(lineNum) {
             const rawText = editor.value;
-            const lines = rawText.split('\n');
+            const lines = rawText.split(/\r?\n/);
             
-            // Check if selected line is a grouped Mermaid block
             const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
             if (targetEl && targetEl.hasAttribute('data-line-span')) {
                 const span = parseInt(targetEl.getAttribute('data-line-span'));
@@ -1312,7 +1236,7 @@ Use nested bullet outlines for organizing files:
             executeCopy(targetLine, `Copied line ${lineNum} to clipboard!`);
         }
 
-        // Scroll back to start/top of the page instantly
+        // מעבר מהיר לתחילת המסמך
         function scrollToStart() {
             editor.scrollTop = 0;
             preview.scrollTop = 0;
@@ -1320,7 +1244,7 @@ Use nested bullet outlines for organizing files:
             showToast("Jumped to Start of document!");
         }
 
-        // TOC Modal Handling Logic
+        // ניהול מודאל תוכן עניינים (TOC)
         function toggleTOCModal() {
             if (tocModal.classList.contains('hidden')) {
                 generateTOC();
@@ -1344,10 +1268,10 @@ Use nested bullet outlines for organizing files:
             }, 180);
         }
 
-        // Create TOC indices dynamically with dir="auto"
+        // ייצור תוכן עניינים בצורה דינמית
         function generateTOC() {
             const text = editor.value;
-            const lines = text.split('\n');
+            const lines = text.split(/\r?\n/);
             let html = '';
             let headingCount = 0;
 
@@ -1387,18 +1311,16 @@ Use nested bullet outlines for organizing files:
             tocList.innerHTML = html;
         }
 
-        // Scroll elements to exact requested headings instantly (without smooth scrolling delay)
+        // דילוג מהיר ומיידי למיקום שנבחר ללא גלילה מעכבת (Instant scroll)
         function jumpToLine(lineNum) {
             selectLine(lineNum);
             
-            // Scroll Preview Viewport instantly
             const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
             if (targetEl) {
                 targetEl.scrollIntoView({ behavior: 'instant', block: 'start' });
             }
             
-            // Sync Editor Viewport instantly
-            const lines = editor.value.split('\n');
+            const lines = editor.value.split(/\r?\n/);
             const textHeight = editor.scrollHeight;
             const totalLines = lines.length;
             const percentage = (lineNum - 1) / totalLines;
@@ -1408,7 +1330,7 @@ Use nested bullet outlines for organizing files:
             showToast(`Jumped to Heading #${lineNum}`);
         }
 
-        // Trace scrolling in preview to identify the currently active parent sections (Context breadcrumbs)
+        // עדכון כותרת המדור הנוכחי בסרגל המיקום העליון
         function updateActiveHeadingContext() {
             const lineElements = preview.querySelectorAll('[data-line]');
             let currentH1 = '';
@@ -1448,11 +1370,11 @@ Use nested bullet outlines for organizing files:
             }
         }
 
-        // Build comment list using requested format template
+        // בניית מבנה ייצוא ההערות ללוח
         function generateCommentsExportText() {
             let exportBlocks = [];
             const sortedLineNumbers = Object.keys(comments).map(Number).sort((a, b) => a - b);
-            const markdownLines = editor.value.split('\n');
+            const markdownLines = editor.value.split(/\r?\n/);
             let commentIndex = 1;
 
             for (let lineNum of sortedLineNumbers) {
@@ -1467,7 +1389,7 @@ Use nested bullet outlines for organizing files:
             return exportBlocks.length > 0 ? exportBlocks.join('\n\n') + '\n' : '';
         }
 
-        // Copy All Comments handler
+        // העתקת כלל ההערות של ה review ללוח
         function copyAllComments() {
             const commentsText = generateCommentsExportText();
             if (commentsText.trim() === '') {
@@ -1477,7 +1399,7 @@ Use nested bullet outlines for organizing files:
             executeCopy(commentsText, "Copied comments successfully!");
         }
 
-        // Calculation of Words, Chars, Read Time
+        // חישוב נתונים כלליים (מילים, תווים, זמן קריאה)
         function updateStats() {
             const text = editor.value.trim();
             const charCount = text.length;
@@ -1490,7 +1412,7 @@ Use nested bullet outlines for organizing files:
             statRead.innerText = `${readMinutes} min`;
         }
 
-        // Set Screen View layouts
+        // מעבר תצוגות (פאנל עורך, חצוי, פריוויו בלבד)
         function setView(mode) {
             currentMode = mode;
             
@@ -1504,7 +1426,6 @@ Use nested bullet outlines for organizing files:
                 }
             });
 
-            // Handle parent container of buttons highlights properly
             const highlightTarget = (mode === 'editor') ? toggleEditor : (mode === 'preview' ? togglePreview : toggleSplit);
             if (highlightTarget) {
                 highlightTarget.classList.add(...activeClass);
@@ -1523,7 +1444,7 @@ Use nested bullet outlines for organizing files:
                 editorContainer.classList.add('hidden');
                 workspaceDivider.classList.add('hidden');
             } 
-            else { // Split view (default desktop)
+            else { 
                 editorContainer.classList.remove('hidden');
                 editorContainer.style.width = `${splitPercentage}%`;
                 previewContainer.classList.remove('hidden');
@@ -1532,7 +1453,7 @@ Use nested bullet outlines for organizing files:
             }
         }
 
-        // Synced Scrolling mechanism
+        // סנכרון גלילה
         function handleScroll(source, target) {
             if (!syncScrollingActive) return;
             if (isScrolling) {
@@ -1545,7 +1466,7 @@ Use nested bullet outlines for organizing files:
             target.scrollTop = percentage * (target.scrollHeight - target.clientHeight);
         }
 
-        // --- Workspace Draggable Splitting Panel Handler ---
+        // פקדי גרירה של חלוקת המסך
         workspaceDivider.addEventListener('mousedown', startWorkspaceResize);
         workspaceDivider.addEventListener('touchstart', startWorkspaceResize, { passive: true });
 
@@ -1583,7 +1504,6 @@ Use nested bullet outlines for organizing files:
             localStorage.setItem('novamd-split-percentage', percentage);
         }
 
-        // Mouseup split stop
         function stopWorkspaceResize() {
             if (!isResizing) return;
             isResizing = false;
@@ -1597,7 +1517,7 @@ Use nested bullet outlines for organizing files:
             document.removeEventListener('touchend', stopWorkspaceResize);
         }
 
-        // UI Toast Utility
+        // חיווי הודעה קופצת
         function showToast(message) {
             toastMessage.innerText = message;
             floatToast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
@@ -1609,7 +1529,7 @@ Use nested bullet outlines for organizing files:
             }, 2500);
         }
 
-        // Toggle Dark/Light Theme
+        // מצב כהה
         function enableDarkMode() {
             document.documentElement.classList.add('dark');
             iconSun.classList.remove('hidden');
@@ -1622,7 +1542,7 @@ Use nested bullet outlines for organizing files:
             }
         }
 
-        // Turn Light Mode on
+        // מצב בהיר
         function disableDarkMode() {
             document.documentElement.classList.remove('dark');
             iconSun.classList.add('hidden');
@@ -1635,7 +1555,7 @@ Use nested bullet outlines for organizing files:
             }
         }
 
-        // Copy Text via execCommand
+        // ביצוע העתקה ללוח
         function executeCopy(textToCopy, successMsg) {
             const textarea = document.createElement('textarea');
             textarea.value = textToCopy;
@@ -1657,20 +1577,18 @@ Use nested bullet outlines for organizing files:
             document.body.removeChild(textarea);
         }
 
-        // EVENT LISTENERS
+        // מאזיני אירועים
 
-        // Realtime typing input listener
         editor.addEventListener('input', (e) => {
             renderMarkdown();
             localStorage.setItem('novamd-content', e.target.value);
-            // Select first line if currently active line becomes out of range
-            const linesCount = e.target.value.split('\n').length;
+            const linesCount = e.target.value.split(/\r?\n/).length;
             if (selectedLineNumber > linesCount) {
                 selectLine(1);
             }
         });
 
-        // HIGH PERFORMANCE EVENT DELEGATION: Clicking anywhere on a line selects it instantly
+        // בחירת שורה מהירה בלחיצה על האלמנט בתצוגה המקדימה
         preview.addEventListener('click', (e) => {
             const lineContainer = e.target.closest('[data-line]');
             if (lineContainer) {
@@ -1681,7 +1599,6 @@ Use nested bullet outlines for organizing files:
             }
         });
 
-        // Sync Scrolling listeners
         editor.addEventListener('scroll', () => {
             handleScroll(editor, preview);
         });
@@ -1691,12 +1608,10 @@ Use nested bullet outlines for organizing files:
             updateActiveHeadingContext();
         });
 
-        // View State click handlers
         toggleEditor.addEventListener('click', () => setView('editor'));
         toggleSplit.addEventListener('click', () => setView('split'));
         togglePreview.addEventListener('click', () => setView('preview'));
 
-        // Dynamic Configuration dropdown event change listeners
         selectTextSize.addEventListener('change', (e) => {
             document.documentElement.style.setProperty('--global-text-size', e.target.value);
             localStorage.setItem('novamd-text-size', e.target.value);
@@ -1707,7 +1622,6 @@ Use nested bullet outlines for organizing files:
             localStorage.setItem('novamd-empty-size', e.target.value);
         });
 
-        // Load Preset Template
         btnSample.addEventListener('click', () => {
             editor.value = defaultSample;
             renderMarkdown();
@@ -1716,7 +1630,6 @@ Use nested bullet outlines for organizing files:
             showToast("Template loaded successfully!");
         });
 
-        // Clear All Workspace
         btnClear.addEventListener('click', () => {
             editor.value = '';
             comments = {};
@@ -1728,7 +1641,6 @@ Use nested bullet outlines for organizing files:
             editor.focus();
         });
 
-        // Theme Toggle Listener
         btnTheme.addEventListener('click', () => {
             if (theme === 'light') {
                 enableDarkMode();
@@ -1737,7 +1649,6 @@ Use nested bullet outlines for organizing files:
             }
         });
 
-        // Listeners for prompt modal inputs
         promptInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 savePromptModal();
@@ -1746,14 +1657,12 @@ Use nested bullet outlines for organizing files:
             }
         });
 
-        // Handle Responsive window resizing
         window.addEventListener('resize', () => {
             if (window.innerWidth < 768 && currentMode === 'split') {
                 setView('editor');
             }
         });
 
-        // Initialize App on load
         window.onload = function() {
             initializeApp();
         }
