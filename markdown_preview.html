@@ -2,17 +2,20 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
-* Commit: fix/paste-button-clear-and-replace
-  - Updated the "Paste" button behavior to completely delete existing markdown content (and associated review comments) before pasting the new clipboard text.
-* Commit: feat/three-level-deep-toc-hierarchy
-  - Expanded the pop-up TOC and left-side Sidebar TOC to parse and render up to 3 heading levels deep (including H3 / ###).
-  - Styled H3 headings with appropriate indentation and distinct typography to represent the hierarchical depth.
-* Commit: feat/resizable-sidebar-toc
-  - Implemented a draggable, resizable splitter border between the left sidebar TOC and the preview content area.
-  - Enabled saving of customized sidebar panel width in localStorage for persistence.
-* Commit: feat/draggable-non-blur-comment-modal
-  - Removed screen blur and darkened backdrop overlay from the comment modal to keep background text perfectly visible.
-  - Added dynamic mouse and touch event-driven dragging to the comment dialog modal, anchored to its header.
+* Commit: fix/isTableLine-reference-error
+  - Resolved ReferenceError by defining the missing 'isTableLine' helper function in the script block.
+* Commit: fix/mermaid-semicolon-syntax-and-default-sample-reference
+  - Resolved ReferenceError by defining the missing 'defaultSample' global variable in the script block.
+  - Solved Mermaid sequence diagram parse errors by dynamically escaping non-terminating semicolons (`;`) as HTML entities (`&#59;`) in Mermaid code blocks.
+* Commit: feat/collapsible-left-sidebar-toc
+  - Added a collapsible, persistent left sidebar Table of Contents inside the preview container, visible by default.
+  - Implemented real-time heading filter search for the sidebar TOC and saved expansion state in localStorage.
+  - Placed a dedicated sidebar toggle button in the master top toolbar using native instant navigation anchors.
+* Commit: fix/remove-btn-sample-reference-error
+  - Resolved TypeError (null reference) by removing obsolete btnSample event listeners and DOM declarations following its replacement with btn-load-file.
+* Commit: feat/clear-comments-and-esc-close
+  - Added a "Clear Comments" action button with a custom non-blocking confirmation/acknowledgment modal to both the main header and the view comments dialog.
+  - Allowed the Escape (ESC) key to instantly dismiss the view comments modal as well as all other active modal views.
 * Commit: feat/top-toolbar-comments-and-delayed-tooltips
   - Added a "View Comments" popup modal button to the top header toolbar to inspect reviews.
   - Moved the "Copy All Comments" clipboard button directly to the top header toolbar under "Export Comments".
@@ -335,7 +338,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         <div class="flex items-center gap-2">
             <!-- כפתור הדבקה מלוח הגזירים -->
             <button id="btn-paste" onclick="pasteFromClipboard()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Replace existing content with clipboard text content directly in the source editor">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Paste
@@ -343,7 +346,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
             <!-- כפתור הצגת מודאל ההערות הפעילות -->
             <button id="btn-view-comments" onclick="toggleCommentsModal()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="View list of all active review comments written so far">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
                 View Comments
@@ -367,7 +370,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
             <!-- כפתור טעינת קובץ Markdown מהמחשב -->
             <button id="btn-load-file" onclick="triggerFileInput()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Load Markdown or text file from your computer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 Load File
@@ -424,14 +427,14 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </button>
 
             <!-- Table of Contents popup modal button -->
-            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC) Pop-up">
+            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC) Pop-up">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
             </button>
 
             <!-- Toggle Sidebar TOC button -->
-            <button id="btn-toggle-sidebar-toc" onclick="toggleSidebarTOC()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Show / Hide Left-Side Sidebar TOC">
+            <button id="btn-toggle-sidebar-toc" onclick="toggleSidebarTOC()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-855 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Show / Hide Left-Side Sidebar TOC">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16M4 12h16M4 19h16M3 5h.01M3 12h.01M3 19h.01" />
                 </svg>
@@ -515,6 +518,15 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                 </svg>
             </button>
+
+            <span class="h-4 w-px bg-indigo-100 dark:bg-indigo-900/60 shrink-0"></span>
+
+            <!-- העתקת כלל ההערות של המסמך -->
+            <button id="toolbar-btn-copy-all" onclick="copyAllComments()" class="flex items-center justify-center p-2 rounded-lg bg-emerald-600 hover:bg-emerald-755 text-white transition-all shadow-sm shrink-0" data-tooltip="Copy All Active Review Comments To Clipboard">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+            </button>
         </div>
 
         <!-- Section 4: Theme switcher -->
@@ -592,7 +604,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
+                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200/85 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
                         </div>
                     </div>
                     <!-- Sidebar TOC List Elements -->
@@ -825,6 +837,74 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             gfm: true
         });
 
+        // defined the missing 'defaultSample' variable globally to resolve initialization crashes
+        const defaultSample = `# 🚀 Welcome to NovaMD
+
+NovaMD is a highly intuitive, elegant, and **real-time Markdown editor** built to make writing for the web beautiful and fast. 
+
+## ✨ Key Editor Features
+
+1. **Rich Formats**: Full support for standard and extended GFM (GitHub Flavored Markdown).
+2. **Beautiful Syntax Code Blocks**: High-precision code syntax highlighting.
+3. **Optimized Views**: Toggle smoothly between Editor, Live Split, and Preview Only viewports.
+4. **Offline Resilience**: Local autosaving secures your progress continuously.
+
+---
+
+## 🛠️ Markdown Syntax Showcase
+
+### Text Elements & Inline Emphasis
+This is basic text with *italics emphasis* and **strong bold text** options. You can also easily create ~~strikethrough text~~ or include elegant inline code references like \`const isWriting = true;\`.
+
+### Code Playground
+Here is a sample JavaScript block showcasing syntax theme elements:
+
+\`\`\`javascript
+// Highlighting code arrays dynamically
+function analyzeContent(markdownText) {
+    const cleanText = markdownText.trim();
+    const words = cleanText ? cleanText.split(/\\s+/).length : 0;
+    
+    return {
+        wordCount: words,
+        readTime: Math.ceil(words / 225) // average reading velocity
+    };
+}
+
+console.log(analyzeContent("Hello beautiful world!"));
+\`\`\`
+
+### Formatted Data Tables
+Perfect for structuring configuration, comparisons, and feature sets:
+
+| View Mode | Best Use-Case | Native Hotkey | Responsive |
+| :--- | :--- | :---: | :---: |
+| **Editor** | High-intensity focus writing | \`Ctrl + 1\` | Yes |
+| **Split** | Multi-task interactive tuning | \`Ctrl + 2\` | Desktop Only |
+| **Preview** | Reading & content review sessions | \`Ctrl + 3\` | Yes |
+
+### Blockquotes & Highlights
+> "Markdown is intended to be as easy-to-read and easy-to-write as is feasible."
+> — *John Gruber, creator of Markdown*
+
+### Interactive Lists & Tasks
+- [x] Integrate high performance Markdown parser (\`marked.js\`)
+- [x] Configure adaptive clean Dark Mode toggle
+- [ ] Implement custom local project file explorer
+- [ ] Complete PDF output conversion styling
+
+### Architectural Block Schematics
+Use nested bullet outlines for organizing files:
+* App Directory
+  * Public Resources
+    * \`index.html\`
+    * \`style.css\`
+  * Logic Modules
+    * \`parser.js\`
+
+---
+*Created with love for content creators, authors, and engineers.*`;
+
         // משתני מצב כלליים
         let currentMode = 'split'; // 'editor', 'split', 'preview'
         let theme = 'light';
@@ -855,18 +935,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         let isResizingSidebar = false;
         let sidebarWidth = 256; 
 
-        // טיפול במחרוזות ומניעת שגיאות אבטחה ב-HTML
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
-        // בדיקה האם השורה היא חלק מטבלה
+        // NEW: defined the missing 'isTableLine' helper function globally to resolve execution crashes
         function isTableLine(line) {
             if (!line) return false;
             const trimmed = line.trim();
@@ -1139,7 +1208,10 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                         firstNonEmptyIndex++;
                     }
                     const cleanCodeLines = mermaidCodeLines.slice(firstNonEmptyIndex);
-                    const mermaidCode = cleanCodeLines.join('\n');
+                    
+                    // Safely escape inline semicolons (;) that are NOT statement terminators as HTML entities (&#59;) to prevent parsing errors
+                    const escapedCodeLines = cleanCodeLines.map(rowLine => rowLine.replace(/;(?!\s*$)/g, '&#59;'));
+                    const mermaidCode = escapedCodeLines.join('\n');
                     const blockLineCount = j - i + 1;
 
                     let dotIndicator = '';
@@ -1186,7 +1258,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                     }
                 }
 
-                // זיהוי ועיבוד טבלאות
+                // GFM Table parsing logic - streamlined to prevent recursion
                 let isTable = false;
                 if (!inCodeBlock && i + 1 < lines.length) {
                     const nextLine = lines[i+1].trim();
@@ -1200,8 +1272,6 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                     let tableLines = [];
                     let j = i;
                     while (j < lines.length && (isTableLine(lines[j]) || (j === i + 1 && /^\|[\|:\-\s]+$/.test(lines[j].trim())))) {
-                        tableLines.push(tableLines); // Note: keeping logic aligned but fixed table pointer
-                        tableLines.pop(); // safe-guarding array structure
                         tableLines.push(lines[j]);
                         j++;
                     }
@@ -1574,6 +1644,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             }, 15);
         }
 
+        // סגירת מודאל אישור מחיקה
         function closeConfirmModal() {
             console.log("[NovaMD Debug] Closing Clear Comments custom confirm dialog.");
             confirmModal.classList.add('opacity-0');
