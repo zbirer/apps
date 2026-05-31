@@ -2,15 +2,15 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
-* Commit: feat/collapsible-left-sidebar-toc
-  - Added a collapsible, persistent left sidebar Table of Contents inside the preview container, visible by default.
-  - Implemented real-time heading filter search for the sidebar TOC and saved expansion state in localStorage.
-  - Placed a dedicated sidebar toggle button in the master top toolbar using native instant navigation anchors.
-* Commit: fix/remove-btn-sample-reference-error
-  - Resolved TypeError (null reference) by removing obsolete btnSample event listeners and DOM declarations following its replacement with btn-load-file.
-* Commit: feat/clear-comments-and-esc-close
-  - Added a "Clear Comments" action button with a custom non-blocking confirmation/acknowledgment modal to both the main header and the view comments dialog.
-  - Allowed the Escape (ESC) key to instantly dismiss the view comments modal as well as all other active modal views.
+* Commit: feat/three-level-deep-toc-hierarchy
+  - Expanded the pop-up TOC and left-side Sidebar TOC to parse and render up to 3 heading levels deep (including H3 / ###).
+  - Styled H3 headings with appropriate indentation and distinct typography to represent the hierarchical depth.
+* Commit: feat/resizable-sidebar-toc
+  - Implemented a draggable, resizable splitter border between the left sidebar TOC and the preview content area.
+  - Enabled saving of customized sidebar panel width in localStorage for persistence.
+* Commit: feat/draggable-non-blur-comment-modal
+  - Removed screen blur and darkened backdrop overlay from the comment modal to keep background text perfectly visible.
+  - Added dynamic mouse and touch event-driven dragging to the comment dialog modal, anchored to its header.
 * Commit: feat/top-toolbar-comments-and-delayed-tooltips
   - Added a "View Comments" popup modal button to the top header toolbar to inspect reviews.
   - Moved the "Copy All Comments" clipboard button directly to the top header toolbar under "Export Comments".
@@ -132,7 +132,8 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             -webkit-user-select: none !important;
         }
         .resizing-active textarea, 
-        .resizing-active #preview {
+        .resizing-active #preview,
+        .resizing-active #sidebar-toc {
             pointer-events: none !important;
         }
 
@@ -332,7 +333,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         <div class="flex items-center gap-2">
             <!-- כפתור הדבקה מלוח הגזירים -->
             <button id="btn-paste" onclick="pasteFromClipboard()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Paste text content from system clipboard directly into the source editor">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Paste
@@ -340,7 +341,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
             <!-- כפתור הצגת מודאל ההערות הפעילות -->
             <button id="btn-view-comments" onclick="toggleCommentsModal()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="View list of all active review comments written so far">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
                 View Comments
@@ -364,7 +365,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
             <!-- כפתור טעינת קובץ Markdown מהמחשב -->
             <button id="btn-load-file" onclick="triggerFileInput()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Load Markdown or text file from your computer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 Load File
@@ -411,7 +412,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
         <span class="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0"></span>
 
-        <!-- Section 1.5: Navigation Controls (Start, TOC Popup, and NEW Sidebar TOC Toggle) -->
+        <!-- Section 1.5: Navigation Controls (Start, TOC Popup, and Toggle Sidebar TOC) -->
         <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0 gap-1">
             <!-- Start button -->
             <button onclick="scrollToStart()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Scroll To Start (Top of Document)">
@@ -427,7 +428,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 </svg>
             </button>
 
-            <!-- Toggle Sidebar TOC button (NEW) -->
+            <!-- Toggle Sidebar TOC button -->
             <button id="btn-toggle-sidebar-toc" onclick="toggleSidebarTOC()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Show / Hide Left-Side Sidebar TOC">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16M4 12h16M4 19h16M3 5h.01M3 12h.01M3 19h.01" />
@@ -509,16 +510,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             <!-- העתקת התוכן הגולמי של השורה שנבחרה -->
             <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-all shadow-sm shrink-0" data-tooltip="Copy Selected Raw Line Content">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
-            </button>
-
-            <span class="h-4 w-px bg-indigo-100 dark:bg-indigo-900/60 shrink-0"></span>
-
-            <!-- העתקת כלל ההערות של המסמך -->
-            <button id="toolbar-btn-copy-all" onclick="copyAllComments()" class="flex items-center justify-center p-2 rounded-lg bg-emerald-600 hover:bg-emerald-755 text-white transition-all shadow-sm shrink-0" data-tooltip="Copy All Active Review Comments To Clipboard">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                 </svg>
             </button>
         </div>
@@ -588,8 +580,8 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             <!-- אזור התצוגה הראשי: תוכן עניינים צדי בצד שמאל ותצוגה מקדימה בצד ימין -->
             <div class="flex-1 flex overflow-hidden">
                 
-                <!-- NEW: Collapsible Sidebar TOC (Visible by default) -->
-                <div id="sidebar-toc" class="w-64 border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 flex flex-col shrink-0 transition-all duration-200">
+                <!-- Collapsible Sidebar TOC (Visible by default) -->
+                <div id="sidebar-toc" class="border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 flex flex-col shrink-0 transition-all duration-200">
                     <!-- Sidebar TOC Search Bar -->
                     <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100/30 dark:bg-slate-950/40">
                         <div class="relative">
@@ -598,7 +590,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
+                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
                         </div>
                     </div>
                     <!-- Sidebar TOC List Elements -->
@@ -606,6 +598,9 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                         <!-- Loaded dynamically -->
                     </div>
                 </div>
+
+                <!-- Draggable Sidebar Divider Splitter -->
+                <div id="sidebar-divider" class="w-1 bg-slate-200 dark:bg-slate-800 hover:bg-indigo-500 dark:hover:bg-indigo-400 cursor-col-resize shrink-0 transition-colors duration-150" title="Click and drag to resize Table of Contents panel"></div>
 
                 <!-- Parsed/Rendered HTML Content Area -->
                 <div id="preview" class="flex-1 overflow-y-auto bg-white dark:bg-slate-950 pb-8 select-text">
@@ -858,11 +853,14 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         const modalCommentsList = document.getElementById('modal-comments-list');
         const globalTooltip = document.getElementById('global-tooltip');
 
-        // NEW: Sidebar TOC components
+        // Sidebar TOC components
         const sidebarTOC = document.getElementById('sidebar-toc');
         const sidebarTOCList = document.getElementById('sidebar-toc-list');
         const sidebarTOCSearch = document.getElementById('sidebar-toc-search');
         const btnToggleSidebarTOC = document.getElementById('btn-toggle-sidebar-toc');
+        
+        // Sidebar Resizing Divider element
+        const sidebarDivider = document.getElementById('sidebar-divider');
 
         // קונפיגורציית marked.js
         marked.setOptions({
@@ -964,6 +962,10 @@ Use nested bullet outlines for organizing files:
         let modalStartMouseX = 0;
         let modalStartMouseY = 0;
 
+        // Sidebar Resizing panel variables
+        let isResizingSidebar = false;
+        let sidebarWidth = 256; 
+
         // טיפול במחרוזות ומניעת שגיאות אבטחה ב-HTML
         function escapeHtml(str) {
             if (!str) return '';
@@ -1042,13 +1044,24 @@ Use nested bullet outlines for organizing files:
                 showLineNumbers = false;
             }
 
-            // NEW: Initialize collapsible Sidebar TOC configuration state (Default: Visible)
+            // Load saved Sidebar TOC panel width or default to 256px
+            const savedSidebarWidth = localStorage.getItem('novamd-sidebar-width');
+            if (savedSidebarWidth) {
+                sidebarWidth = parseInt(savedSidebarWidth);
+            } else {
+                sidebarWidth = 256;
+            }
+            sidebarTOC.style.width = `${sidebarWidth}px`;
+
+            // Initialize collapsible Sidebar TOC configuration state (Default: Visible)
             const savedSidebarTOC = localStorage.getItem('novamd-show-sidebar-toc');
             if (savedSidebarTOC === 'false') {
                 sidebarTOC.classList.add('hidden');
+                if (sidebarDivider) sidebarDivider.classList.add('hidden');
                 btnToggleSidebarTOC.classList.remove('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
             } else {
                 sidebarTOC.classList.remove('hidden');
+                if (sidebarDivider) sidebarDivider.classList.remove('hidden');
                 btnToggleSidebarTOC.classList.add('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
             }
 
@@ -1064,6 +1077,7 @@ Use nested bullet outlines for organizing files:
             updateSelectedLineUI();
             setupDraggableModal();
             setupGlobalKeyListeners();
+            setupSidebarResizer();
             console.log("[NovaMD Debug] Initialization finished successfully. Workspace mode: " + currentMode);
         }
 
@@ -1113,7 +1127,7 @@ Use nested bullet outlines for organizing files:
             });
         }
 
-        // הגדרת מערכת גרירה חופשית עבור תיבת ההערות (Draggable Modal Card)
+        // הגדרת מערכת גרירה חופשית עבור תיבת ההערות (Draggable Comment Modal Card)
         function setupDraggableModal() {
             promptDragHandle.addEventListener('mousedown', startModalDrag);
             promptDragHandle.addEventListener('touchstart', startModalDrag, { passive: true });
@@ -1521,7 +1535,7 @@ Use nested bullet outlines for organizing files:
                 });
             }
             
-            // NEW: Regenerate Sidebar Table of Contents to keep active navigation aligned
+            // Regenerate Sidebar Table of Contents to keep active navigation aligned
             generateSidebarTOC();
             setTimeout(updateActiveHeadingContext, 50);
         }
@@ -1578,6 +1592,7 @@ Use nested bullet outlines for organizing files:
             triggerAddComment(selectedLineNumber);
         }
 
+        // העתקת תוכן השורה המבוקשת ללוח הגזירים
         function copySelectedLine() {
             console.log("[NovaMD Debug] Copy content action triggered on selected line: #" + selectedLineNumber);
             copyLineContent(selectedLineNumber);
@@ -1827,7 +1842,6 @@ Use nested bullet outlines for organizing files:
             }
         }
 
-        // סגירת מודאל Changelog
         function closeChangelogModal() {
             console.log("[NovaMD Debug] Closing Changelog modal.");
             changelogModal.classList.add('opacity-0');
@@ -1895,8 +1909,17 @@ Use nested bullet outlines for organizing files:
                     const headingText = trimmed.slice(3).trim();
                     html += `
                         <div onclick="jumpToLine(${lineNum})" data-toc-heading="${escapeHtml(headingText)}" class="py-2 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors pl-8">
-                            <span class="text-xs font-mono text-slate-400 dark:text-slate-500 shrink-0">#${lineNum}</span>
+                            <span class="text-xs font-mono text-slate-450 dark:text-slate-500 shrink-0 font-bold font-mono">#${lineNum}</span>
                             <span class="text-sm font-semibold text-slate-600 dark:text-slate-300 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
+                        </div>
+                    `;
+                } else if (trimmed.startsWith('### ')) {
+                    headingCount++;
+                    const headingText = trimmed.slice(4).trim();
+                    html += `
+                        <div onclick="jumpToLine(${lineNum})" data-toc-heading="${escapeHtml(headingText)}" class="py-1.5 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors pl-12">
+                            <span class="text-xs font-mono text-slate-400 dark:text-slate-500 shrink-0 font-medium font-mono">#${lineNum}</span>
+                            <span class="text-xs font-normal text-slate-500 dark:text-slate-400 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
                         </div>
                     `;
                 }
@@ -1905,7 +1928,7 @@ Use nested bullet outlines for organizing files:
             if (headingCount === 0) {
                 html = `
                     <div class="py-8 text-center text-slate-400 dark:text-slate-600">
-                        <p class="text-sm font-medium">No H1 (#) or H2 (##) headings found in this document.</p>
+                        <p class="text-sm font-medium">No H1 (#), H2 (##) or H3 (###) headings found in this document.</p>
                     </div>
                 `;
             }
@@ -1944,24 +1967,26 @@ Use nested bullet outlines for organizing files:
             }
         }
 
-        // NEW: Toggle Left-Side Sidebar TOC pane
+        // Toggle Left-Side Sidebar TOC pane
         function toggleSidebarTOC() {
             const sidebar = document.getElementById('sidebar-toc');
             const toggleBtn = document.getElementById('btn-toggle-sidebar-toc');
             if (sidebar.classList.contains('hidden')) {
                 console.log("[NovaMD Debug] Showing Sidebar TOC");
                 sidebar.classList.remove('hidden');
+                if (sidebarDivider) sidebarDivider.classList.remove('hidden');
                 toggleBtn.classList.add('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
                 localStorage.setItem('novamd-show-sidebar-toc', 'true');
             } else {
                 console.log("[NovaMD Debug] Hiding Sidebar TOC");
                 sidebar.classList.add('hidden');
+                if (sidebarDivider) sidebarDivider.classList.add('hidden');
                 toggleBtn.classList.remove('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
                 localStorage.setItem('novamd-show-sidebar-toc', 'false');
             }
         }
 
-        // NEW: Render Sidebar TOC elements dynamically inside the pane
+        // Render Sidebar TOC elements dynamically inside the pane
         function generateSidebarTOC() {
             const text = editor.value;
             const lines = text.split(/\r?\n/);
@@ -1989,6 +2014,14 @@ Use nested bullet outlines for organizing files:
                             ${escapeHtml(headingText)}
                         </div>
                     `;
+                } else if (trimmed.startsWith('### ')) {
+                    headingCount++;
+                    const headingText = trimmed.slice(4).trim();
+                    html += `
+                        <div onclick="jumpToLine(${lineNum})" data-sidebar-heading="${escapeHtml(headingText)}" class="py-1 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-850 cursor-pointer transition-colors pl-10 border-l border-slate-100 dark:border-slate-900 text-slate-400 dark:text-slate-500 text-xs truncate" dir="auto">
+                            ${escapeHtml(headingText)}
+                        </div>
+                    `;
                 }
             }
 
@@ -2002,7 +2035,7 @@ Use nested bullet outlines for organizing files:
             sidebarTOCList.innerHTML = html;
         }
 
-        // NEW: Filter Sidebar TOC elements dynamically based on user query
+        // Filter Sidebar TOC elements dynamically based on user query
         function filterSidebarTOC(query) {
             console.log("[NovaMD Debug] Filtering Sidebar TOC headings with query: '" + query + "'");
             const normalizedQuery = query.toLowerCase().trim();
@@ -2031,6 +2064,58 @@ Use nested bullet outlines for organizing files:
             } else if (emptyState) {
                 emptyState.remove();
             }
+        }
+
+        // Set up draggable resizer splitter for left-sidebar TOC panel
+        function setupSidebarResizer() {
+            sidebarDivider.addEventListener('mousedown', startSidebarResize);
+            sidebarDivider.addEventListener('touchstart', startSidebarResize, { passive: true });
+        }
+
+        function startSidebarResize(e) {
+            isResizingSidebar = true;
+            console.log("[NovaMD Debug] User began dragging the sidebar TOC divider.");
+            document.body.classList.add('resizing-active');
+            sidebarDivider.classList.add('bg-indigo-300', 'dark:bg-indigo-900');
+
+            document.addEventListener('mousemove', handleSidebarResize);
+            document.addEventListener('touchmove', handleSidebarResize, { passive: false });
+            document.addEventListener('mouseup', stopSidebarResize);
+            document.addEventListener('touchend', stopSidebarResize);
+        }
+
+        function handleSidebarResize(e) {
+            if (!isResizingSidebar) return;
+            if (e.cancelable) e.preventDefault();
+
+            let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const sidebarRect = sidebarTOC.getBoundingClientRect();
+            
+            // Calculate new width relative to the left edge of the sidebar TOC container
+            let newWidth = clientX - sidebarRect.left;
+
+            // Enforce constraints (min: 140px, max: 450px or 45% of parent workspace size)
+            const maxAllowedWidth = Math.min(450, workspace.getBoundingClientRect().width * 0.45);
+            if (newWidth < 140) newWidth = 140;
+            if (newWidth > maxAllowedWidth) newWidth = maxAllowedWidth;
+
+            sidebarWidth = newWidth;
+            sidebarTOC.style.width = `${newWidth}px`;
+            localStorage.setItem('novamd-sidebar-width', newWidth);
+        }
+
+        function stopSidebarResize() {
+            if (!isResizingSidebar) return;
+            isResizingSidebar = false;
+            console.log("[NovaMD Debug] User stopped dragging the sidebar TOC divider. Final width: " + sidebarWidth + "px");
+
+            document.body.classList.remove('resizing-active');
+            sidebarDivider.classList.remove('bg-indigo-300', 'dark:bg-indigo-950/60');
+
+            document.removeEventListener('mousemove', handleSidebarResize);
+            document.removeEventListener('touchmove', handleSidebarResize);
+            document.removeEventListener('mouseup', stopSidebarResize);
+            document.removeEventListener('touchend', stopSidebarResize);
         }
 
         // דילוג מהיר ומיידי למיקום שנבחר ללא גלילה מעכבת (Instant scroll)
