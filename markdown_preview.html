@@ -2,6 +2,8 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
+* Commit: fix/paste-button-clear-and-replace
+  - Updated the "Paste" button behavior to completely delete existing markdown content (and associated review comments) before pasting the new clipboard text.
 * Commit: feat/three-level-deep-toc-hierarchy
   - Expanded the pop-up TOC and left-side Sidebar TOC to parse and render up to 3 heading levels deep (including H3 / ###).
   - Styled H3 headings with appropriate indentation and distinct typography to represent the hierarchical depth.
@@ -332,8 +334,8 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         <!-- כפתורי טעינת קובץ, הדבקה וניקוי -->
         <div class="flex items-center gap-2">
             <!-- כפתור הדבקה מלוח הגזירים -->
-            <button id="btn-paste" onclick="pasteFromClipboard()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Paste text content from system clipboard directly into the source editor">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <button id="btn-paste" onclick="pasteFromClipboard()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Replace existing content with clipboard text content directly in the source editor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Paste
@@ -341,7 +343,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
             <!-- כפתור הצגת מודאל ההערות הפעילות -->
             <button id="btn-view-comments" onclick="toggleCommentsModal()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="View list of all active review comments written so far">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
                 View Comments
@@ -365,7 +367,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
             <!-- כפתור טעינת קובץ Markdown מהמחשב -->
             <button id="btn-load-file" onclick="triggerFileInput()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Load Markdown or text file from your computer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 Load File
@@ -422,14 +424,14 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </button>
 
             <!-- Table of Contents popup modal button -->
-            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC) Pop-up">
+            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC) Pop-up">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
             </button>
 
             <!-- Toggle Sidebar TOC button -->
-            <button id="btn-toggle-sidebar-toc" onclick="toggleSidebarTOC()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Show / Hide Left-Side Sidebar TOC">
+            <button id="btn-toggle-sidebar-toc" onclick="toggleSidebarTOC()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Show / Hide Left-Side Sidebar TOC">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16M4 12h16M4 19h16M3 5h.01M3 12h.01M3 19h.01" />
                 </svg>
@@ -756,51 +758,6 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         </div>
     </div>
 
-    <!-- Custom Table of Contents (TOC) Modal Simulator -->
-    <div id="toc-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200 flex flex-col max-h-[75vh]">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-850 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Table of Contents</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jump directly to document sections (H1, H2)</p>
-                    </div>
-                </div>
-                <button onclick="closeTOCModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Search input inside TOC modal -->
-            <div class="pt-3 pb-1 shrink-0">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </span>
-                    <input type="text" id="toc-search" oninput="filterTOC(this.value)" class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
-                </div>
-            </div>
-
-            <!-- Scrollable Headings container -->
-            <div id="toc-list" class="flex-1 overflow-y-auto py-4 space-y-1.5 select-none pr-1">
-                <!-- Loaded Dynamically -->
-            </div>
-            
-            <div class="pt-4 border-t border-slate-100 dark:border-slate-850 flex justify-end shrink-0">
-                <button onclick="closeTOCModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors">Close</button>
-            </div>
-        </div>
-    </div>
-
     <!-- לוגיקת האפליקציה וסקריפטים -->
     <script>
         // אלמנטים מה-DOM
@@ -867,74 +824,6 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             breaks: true,
             gfm: true
         });
-
-        // תבנית ברירת המחדל להדגמה (כאשר אין מידע שמור)
-        const defaultSample = `# 🚀 Welcome to NovaMD
-
-NovaMD is a highly intuitive, elegant, and **real-time Markdown editor** built to make writing for the web beautiful and fast. 
-
-## ✨ Key Editor Features
-
-1. **Rich Formats**: Full support for standard and extended GFM (GitHub Flavored Markdown).
-2. **Beautiful Syntax Code Blocks**: High-precision code syntax highlighting.
-3. **Optimized Views**: Toggle smoothly between Editor, Live Split, and Preview Only viewports.
-4. **Offline Resilience**: Local autosaving secures your progress continuously.
-
----
-
-## 🛠️ Markdown Syntax Showcase
-
-### Text Elements & Inline Emphasis
-This is basic text with *italics emphasis* and **strong bold text** options. You can also easily create ~~strikethrough text~~ or include elegant inline code references like \`const isWriting = true;\`.
-
-### Code Playground
-Here is a sample JavaScript block showcasing syntax theme elements:
-
-\`\`\`javascript
-// Highlighting code arrays dynamically
-function analyzeContent(markdownText) {
-    const cleanText = markdownText.trim();
-    const words = cleanText ? cleanText.split(/\\s+/).length : 0;
-    
-    return {
-        wordCount: words,
-        readTime: Math.ceil(words / 225) // average reading velocity
-    };
-}
-
-console.log(analyzeContent("Hello beautiful world!"));
-\`\`\`
-
-### Formatted Data Tables
-Perfect for structuring configuration, comparisons, and feature sets:
-
-| View Mode | Best Use-Case | Native Hotkey | Responsive |
-| :--- | :--- | :---: | :---: |
-| **Editor** | High-intensity focus writing | \`Ctrl + 1\` | Yes |
-| **Split** | Multi-task interactive tuning | \`Ctrl + 2\` | Desktop Only |
-| **Preview** | Reading & content review sessions | \`Ctrl + 3\` | Yes |
-
-### Blockquotes & Highlights
-> "Markdown is intended to be as easy-to-read and easy-to-write as is feasible."
-> — *John Gruber, creator of Markdown*
-
-### Interactive Lists & Tasks
-- [x] Integrate high performance Markdown parser (\`marked.js\`)
-- [x] Configure adaptive clean Dark Mode toggle
-- [ ] Implement custom local project file explorer
-- [ ] Complete PDF output conversion styling
-
-### Architectural Block Schematics
-Use nested bullet outlines for organizing files:
-* App Directory
-  * Public Resources
-    * \`index.html\`
-    * \`style.css\`
-  * Logic Modules
-    * \`parser.js\`
-
----
-*Created with love for content creators, authors, and engineers.*`;
 
         // משתני מצב כלליים
         let currentMode = 'split'; // 'editor', 'split', 'preview'
@@ -1724,21 +1613,28 @@ Use nested bullet outlines for organizing files:
             executeCopy(targetLine, `Copied line ${lineNum} to clipboard!`);
         }
 
-        // הדבקת טקסט מלוח הגזירים אל תוך העורך
+        // הדבקת טקסט מלוח הגזירים אל תוך העורך - מנקה קודם את הקיים לחלוטין (וחוסך הערות יתומות)
         async function pasteFromClipboard() {
-            console.log("[NovaMD Debug] Paste action triggered from system clipboard.");
+            console.log("[NovaMD Debug] Paste and replace action triggered from system clipboard.");
             try {
                 if (!navigator.clipboard || !navigator.clipboard.readText) {
                     throw new Error("Clipboard reading is blocked or not supported by browser sandbox security.");
                 }
                 const text = await navigator.clipboard.readText();
                 if (text && text.trim() !== '') {
+                    // מחיקת כל תוכן ה-Markdown וההערות הישנות
+                    editor.value = '';
+                    comments = {};
+                    localStorage.removeItem('novamd-comments');
+                    console.log("[NovaMD Debug] Cleared old editor text and active review comments for replacement.");
+                    
+                    // הדבקה והחלה של הטקסט החדש
                     editor.value = text;
                     renderMarkdown();
                     localStorage.setItem('novamd-content', text);
                     selectLine(1);
-                    showToast("Pasted content into editor successfully!");
-                    console.log("[NovaMD Debug] Successfully pasted " + text.length + " characters from clipboard.");
+                    showToast("Workspace replaced with clipboard content!");
+                    console.log("[NovaMD Debug] Successfully replaced with " + text.length + " characters from clipboard.");
                 } else {
                     showToast("Clipboard is empty.");
                     console.warn("[NovaMD Debug] Clipboard text read was empty.");
@@ -1747,75 +1643,6 @@ Use nested bullet outlines for organizing files:
                 console.error("[NovaMD Debug] Clipboard paste failed:", err);
                 showToast("Sandbox blocked clipboard access. Use Ctrl+V inside editor instead.");
             }
-        }
-
-        // מודאל תגובות פעילות (View Comments Modal)
-        function toggleCommentsModal() {
-            if (viewCommentsModal.classList.contains('hidden')) {
-                console.log("[NovaMD Debug] Opening Active Comments view modal.");
-                modalCommentsList.innerHTML = generateCommentsModalHTML();
-                viewCommentsModal.classList.remove('hidden');
-                setTimeout(() => {
-                    viewCommentsModal.classList.remove('opacity-0');
-                    viewCommentsModal.querySelector('div').classList.remove('scale-95');
-                    viewCommentsModal.querySelector('div').classList.add('scale-100');
-                }, 15);
-            } else {
-                console.log("[NovaMD Debug] Closing Active Comments view modal.");
-                viewCommentsModal.classList.add('opacity-0');
-                viewCommentsModal.querySelector('div').classList.remove('scale-100');
-                viewCommentsModal.querySelector('div').classList.add('scale-95');
-                setTimeout(() => {
-                    viewCommentsModal.classList.add('hidden');
-                }, 180);
-            }
-        }
-
-        // פונקציית ייצור קוד HTML דינמי להצגת ההערות בחלון המודאל
-        function generateCommentsModalHTML() {
-            const sortedLineNumbers = Object.keys(comments).map(Number).sort((a, b) => a - b);
-            const markdownLines = editor.value.split(/\r?\n/);
-            let html = '';
-            let validCommentsCount = 0;
-
-            for (let lineNum of sortedLineNumbers) {
-                const commentText = comments[lineNum];
-                if (commentText && commentText.trim() !== '') {
-                    validCommentsCount++;
-                    const originalLine = markdownLines[lineNum - 1] || '';
-                    html += `
-                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-150 dark:border-slate-800 flex flex-col gap-1.5 select-text">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Issue #${validCommentsCount} — Line ${lineNum}</span>
-                                <button onclick="jumpToLine(${lineNum}); toggleCommentsModal();" class="text-[10px] text-slate-400 hover:text-indigo-500 font-bold transition-all">Jump to Line</button>
-                            </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400 border-l-2 border-slate-300 dark:border-slate-700 pl-2 py-0.5 italic">
-                                Original: ${escapeHtml(originalLine) || '<span class="text-slate-300 dark:text-slate-600">Empty Line</span>'}
-                            </div>
-                            <div class="text-xs font-medium text-slate-800 dark:text-slate-200 pl-2">
-                                Request: ${escapeHtml(commentText)}
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-
-            if (validCommentsCount === 0) {
-                html = `
-                    <div class="py-12 text-center text-slate-400 dark:text-slate-600">
-                        <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <p class="text-sm font-medium">No feedback comments logged yet.</p>
-                    </div>
-                `;
-            }
-            return html;
-        }
-
-        // העתקה מהירה מתוך מודאל ההערות
-        function copyAllCommentsFromModal() {
-            copyAllComments();
         }
 
         // מעבר מהיר לתחילת המסמך
