@@ -33,6 +33,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
+    <!-- Mermaid.js for Diagrams & Flowcharts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    
     <!-- Custom Scrollbars & Markdown rendering styles -->
     <style>
         /* CSS Variables for Dynamic Text & Empty Line Scaling */
@@ -106,6 +109,25 @@
         }
         .show-line-numbers .line-number-span {
             display: inline-block !important;
+        }
+
+        /* FIX: Robust RTL text alignment setup. Forces right-alignment for Hebrew/Arabic and left for English */
+        .markdown-body * {
+            text-align: start !important;
+        }
+
+        /* Mermaid Graph styling overrides */
+        .mermaid {
+            background-color: rgba(248, 250, 252, 0.6) !important;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 0.5rem 0;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.2s ease;
+        }
+        .dark .mermaid {
+            background-color: rgba(15, 23, 42, 0.4) !important;
+            border-color: rgba(51, 65, 85, 0.6);
         }
 
         /* Custom Markdown Rendering Styling */
@@ -380,7 +402,7 @@
         <!-- Section 3: Active Line Review Controls (Include Comment & Copy) -->
         <div class="flex items-center gap-2 bg-indigo-50/50 dark:bg-indigo-950/20 p-1 px-3 py-1 rounded-xl border border-indigo-100/60 dark:border-indigo-900/40 shrink-0">
             <span id="selected-line-label" class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                Line <span class="text-indigo-600 dark:text-indigo-400 font-bold">#1</span>
+                Line <span class="text-indigo-600 dark:text-indigo-400 font-bold font-mono">#1</span>
             </span>
 
             <!-- Comment Selected Line button -->
@@ -479,7 +501,7 @@
                 </div>
                 <button id="btn-copy-comments-top" onclick="copyAllComments()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-all hover:scale-102">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                     </svg>
                     Copy All Comments (Top)
                 </button>
@@ -756,6 +778,15 @@ Use nested bullet outlines for organizing files:
                 disableDarkMode();
             }
 
+            // Initialize Mermaid.js
+            if (window.mermaid) {
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: theme === 'dark' ? 'dark' : 'default',
+                    securityLevel: 'loose'
+                });
+            }
+
             // Load saved content or sample content
             const savedContent = localStorage.getItem('novamd-content');
             if (savedContent !== null) {
@@ -812,7 +843,7 @@ Use nested bullet outlines for organizing files:
             updateSelectedLineUI();
         }
 
-        // Render Markdown into line-by-line interactive blocks, detecting tables and code blocks dynamically
+        // Render Markdown into line-by-line interactive blocks, detecting tables, Mermaid blocks, and code blocks dynamically
         function renderMarkdown() {
             const rawText = editor.value;
             const lines = rawText.split('\n');
@@ -821,7 +852,7 @@ Use nested bullet outlines for organizing files:
             let codeLanguage = '';
 
             for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
+                let line = lines[i];
                 const lineNumber = i + 1;
 
                 // Detect code block boundaries
@@ -835,11 +866,59 @@ Use nested bullet outlines for organizing files:
                     }
                 }
 
+                // NEW: Mermaid Code Block Detector (Grouping multi-line diagrams as a single interactive line item)
+                if (!inCodeBlock && line.trim().startsWith('```mermaid')) {
+                    let mermaidCodeLines = [];
+                    let j = i + 1;
+                    while (j < lines.length && !lines[j].trim().startsWith('```')) {
+                        mermaidCodeLines.push(lines[j]);
+                        j++;
+                    }
+                    
+                    const mermaidCode = mermaidCodeLines.join('\n');
+                    const blockLineCount = j - i + 1;
+
+                    let dotIndicator = '';
+                    if (comments[lineNumber]) {
+                        const commentVal = comments[lineNumber];
+                        dotIndicator = `
+                            <span class="w-3 h-3 rounded-full bg-indigo-500 dark:bg-indigo-400 border border-white dark:border-slate-950 shadow animate-pulse shrink-0 inline-block" 
+                                  title="Comment: ${escapeHtml(commentVal)}"></span>
+                        `;
+                    }
+
+                    const highlightClasses = (lineNumber === selectedLineNumber)
+                        ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-500'
+                        : 'border-transparent';
+
+                    html += `
+                        <div class="group relative flex items-start py-3 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
+                             data-line="${lineNumber}" data-line-span="${blockLineCount}">
+                            <!-- Line Metric column -->
+                            <div class="w-14 flex items-center shrink-0 select-none mr-2 gap-1.5 justify-start">
+                                <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${lineNumber}</span>
+                                <div class="w-4 h-4 flex items-center justify-center shrink-0">
+                                    ${dotIndicator}
+                                </div>
+                            </div>
+                            <!-- Mermaid element block container -->
+                            <div class="flex-1 min-w-0">
+                                <div class="mermaid text-center overflow-x-auto select-none" dir="ltr">
+                                    ${escapeHtml(mermaidCode)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Fast-forward i index past the block
+                    i = j < lines.length ? j : lines.length;
+                    continue;
+                }
+
                 // TABLE DETECTOR (Only works outside code blocks)
                 let isTable = false;
                 if (!inCodeBlock && i + 1 < lines.length) {
                     const nextLine = lines[i+1].trim();
-                    // GFM delimiter line format validation (must contain pipes and dashes/colons/spaces only)
                     const isDelimiter = nextLine.startsWith('|') && /^\|[\|:\-\s]+$/.test(nextLine);
                     if (isTableLine(line) && isDelimiter) {
                         isTable = true;
@@ -881,7 +960,6 @@ Use nested bullet outlines for organizing files:
                                 ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-l-4 border-indigo-500'
                                 : 'border-l-4 border-transparent';
 
-                            theadTr.setAttribute('onclick', `selectLine(${headerLineNum}); event.stopPropagation();`);
                             theadTr.setAttribute('data-line', headerLineNum);
                             theadTr.className = `group cursor-pointer hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-all duration-150 ${highlightClass}`;
 
@@ -902,7 +980,6 @@ Use nested bullet outlines for organizing files:
                         // 2. Process Body Rows
                         const tbodyRows = table.querySelectorAll('tbody tr');
                         tbodyRows.forEach((row, rowIndex) => {
-                            // GFM body row starts after the delimiter (line index i + 2)
                             const currentLineNum = i + 3 + rowIndex;
 
                             let dotIndicator = '';
@@ -918,7 +995,6 @@ Use nested bullet outlines for organizing files:
                                 ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-l-4 border-indigo-500'
                                 : 'border-l-4 border-transparent';
 
-                            row.setAttribute('onclick', `selectLine(${currentLineNum}); event.stopPropagation();`);
                             row.setAttribute('data-line', currentLineNum);
                             row.className = `group cursor-pointer hover:bg-slate-100/30 dark:hover:bg-slate-900/10 transition-all duration-150 border-b border-slate-100 dark:border-slate-800/50 ${highlightClass}`;
 
@@ -956,7 +1032,6 @@ Use nested bullet outlines for organizing files:
                         html += `<div class="p-4 text-red-500">Table compile error</div>`;
                     }
 
-                    // Fast-forward outer loop index past parsed table rows
                     i = j - 1;
                     continue;
                 }
@@ -1007,8 +1082,7 @@ Use nested bullet outlines for organizing files:
 
                 // Build line block container with dir="auto" for RTL alignment support
                 html += `
-                    <div onclick="selectLine(${lineNumber})" 
-                         class="group relative flex items-start py-2 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
+                    <div class="group relative flex items-start py-2 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
                          data-line="${lineNumber}">
                         <!-- Line Metric column (Line Number & Comment Indicator) -->
                         <div class="w-14 flex items-center shrink-0 select-none mr-2 gap-1.5 justify-start">
@@ -1041,6 +1115,15 @@ Use nested bullet outlines for organizing files:
 
             preview.innerHTML = html;
             updateStats();
+            
+            // Re-compile/Render newly generated Mermaid blocks dynamically
+            if (window.mermaid) {
+                try {
+                    mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                } catch (e) {
+                    console.error("Mermaid parsing error", e);
+                }
+            }
             
             // Trigger Context Breadcrumb Update
             setTimeout(updateActiveHeadingContext, 50);
@@ -1096,6 +1179,7 @@ Use nested bullet outlines for organizing files:
             triggerAddComment(selectedLineNumber);
         }
 
+        // Selected line toolbar copy raw content
         function copySelectedLine() {
             copyLineContent(selectedLineNumber);
         }
@@ -1161,16 +1245,25 @@ Use nested bullet outlines for organizing files:
             showToast("Comment removed.");
         }
 
-        // Copy precise hover line content
+        // Copy precise line content
         function copyLineContent(lineNum) {
             const rawText = editor.value;
             const lines = rawText.split('\n');
-            const targetLine = lines[lineNum - 1] || '';
             
+            // Check if selected line is a grouped Mermaid block
+            const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
+            if (targetEl && targetEl.hasAttribute('data-line-span')) {
+                const span = parseInt(targetEl.getAttribute('data-line-span'));
+                const mermaidLines = lines.slice(lineNum - 1, lineNum - 1 + span);
+                executeCopy(mermaidLines.join('\n'), `Copied entire Mermaid block starting at line ${lineNum}!`);
+                return;
+            }
+
+            const targetLine = lines[lineNum - 1] || '';
             executeCopy(targetLine, `Copied line ${lineNum} to clipboard!`);
         }
 
-        // Scroll back to start/top of the page
+        // Scroll back to start/top of the page instantly
         function scrollToStart() {
             editor.scrollTop = 0;
             preview.scrollTop = 0;
@@ -1245,17 +1338,17 @@ Use nested bullet outlines for organizing files:
             tocList.innerHTML = html;
         }
 
-        // Scroll elements to exact requested headings
+        // Scroll elements to exact requested headings instantly (without smooth scrolling delay)
         function jumpToLine(lineNum) {
             selectLine(lineNum);
             
-            // Scroll Preview Viewport
+            // Scroll Preview Viewport instantly
             const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
             if (targetEl) {
-                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                targetEl.scrollIntoView({ behavior: 'instant', block: 'start' });
             }
             
-            // Sync Editor Viewport approximation
+            // Sync Editor Viewport instantly
             const lines = editor.value.split('\n');
             const textHeight = editor.scrollHeight;
             const totalLines = lines.length;
@@ -1275,18 +1368,17 @@ Use nested bullet outlines for organizing files:
             
             for (let el of lineElements) {
                 const rect = el.getBoundingClientRect();
-                // Check if element is above or close to the visible top threshold
                 if (rect.top - containerTop <= 110) { 
                     const h1 = el.querySelector('h1');
                     const h2 = el.querySelector('h2');
                     if (h1) {
                         currentH1 = h1.innerText;
-                        currentH2 = ''; // Reset child subheadings
+                        currentH2 = ''; 
                     } else if (h2) {
                         currentH2 = h2.innerText;
                     }
                 } else {
-                    break; // Stop parsing as we went below viewport top
+                    break; 
                 }
             }
             
@@ -1475,6 +1567,10 @@ Use nested bullet outlines for organizing files:
             iconMoon.classList.add('hidden');
             theme = 'dark';
             localStorage.setItem('theme', 'dark');
+            if (window.mermaid) {
+                mermaid.initialize({ theme: 'dark' });
+                renderMarkdown();
+            }
         }
 
         // Turn Light Mode on
@@ -1484,6 +1580,10 @@ Use nested bullet outlines for organizing files:
             iconMoon.classList.remove('hidden');
             theme = 'light';
             localStorage.setItem('theme', 'light');
+            if (window.mermaid) {
+                mermaid.initialize({ theme: 'default' });
+                renderMarkdown();
+            }
         }
 
         // Copy Text via execCommand
@@ -1518,6 +1618,17 @@ Use nested bullet outlines for organizing files:
             const linesCount = e.target.value.split('\n').length;
             if (selectedLineNumber > linesCount) {
                 selectLine(1);
+            }
+        });
+
+        // HIGH PERFORMANCE EVENT DELEGATION: Clicking anywhere on a line selects it instantly
+        preview.addEventListener('click', (e) => {
+            const lineContainer = e.target.closest('[data-line]');
+            if (lineContainer) {
+                const lineNum = parseInt(lineContainer.getAttribute('data-line'));
+                if (lineNum) {
+                    selectLine(lineNum);
+                }
             }
         });
 
