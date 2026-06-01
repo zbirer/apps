@@ -2,44 +2,27 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
-* Commit: fix/restore-theme-functions-and-add-initialization-logs
-  - Restored missing 'enableDarkMode' and 'disableDarkMode' global function declarations.
-  - Added rich debugging logs inside the theme switching pipeline and initializeApp() to easily troubleshoot loading and DOM mounting sequences.
-* Commit: fix/paste-button-clear-and-replace
-  - Updated the "Paste" button behavior to completely delete existing markdown content (and associated review comments) before pasting the new clipboard text.
-* Commit: feat/three-level-deep-toc-hierarchy
-  - Expanded the pop-up TOC and left-side Sidebar TOC to parse and render up to 3 heading levels deep (including H3 / ###).
-  - Styled H3 headings with appropriate indentation and distinct typography to represent the hierarchical depth.
-* Commit: feat/resizable-sidebar-toc
-  - Implemented a draggable, resizable splitter border between the left sidebar TOC and the preview content area.
-  - Enabled saving of customized sidebar panel width in localStorage for persistence.
-* Commit: feat/draggable-non-blur-comment-modal
-  - Removed screen blur and darkened backdrop overlay from the comment modal to keep background text perfectly visible.
-  - Added dynamic mouse and touch event-driven dragging to the comment dialog modal, anchored to its header.
-* Commit: feat/top-toolbar-comments-and-delayed-tooltips
-  - Added a "View Comments" popup modal button to the top header toolbar to inspect reviews.
-  - Moved the "Copy All Comments" clipboard button directly to the top header toolbar under "Export Comments".
-  - Strictly excluded highlighted lines without active comments from the exported comment format output.
-  - Engineered a global custom tooltip system appended to document.body with a precise 1-second hover delay.
-* Commit: feat/load-markdown-from-file
-  - Replaced "Load Template" button with "Load File" button in the header.
-  - Implemented asynchronous file reading using FileReader API supporting .md, .markdown, and .txt files.
-* Commit: feat/paste-from-clipboard-button
-  - Added a "Paste" button next to "Load Template" in the header to import clipboard text directly into the source editor.
-  - Handled Clipboard API asynchronous text reading with safe permission catch fallbacks for sandboxed iframe environments.
-* Commit: fix/clipping-tooltips-and-comment-changelog
-  - Replaced absolute Tailwind tooltips with native browser title attributes to solve overflow-x-auto clipping.
-  - Moved the changelog modal and header UI buttons to a clean HTML comment block at the top of the file.
-* Commit: fix/mermaid-deferred-render-invisible-container
-  - Deferred Mermaid parsing in hidden containers to prevent SVG calculation crashes.
-* Commit: fix/mermaid-syntax-handling-and-toc-search
-  - Added whitespace filtering for Mermaid blocks and real-time TOC search.
-* Commit: feat/toolbar-overhaul-and-logs
-  - Consolidated toolbar, added robust console debugging logs, and cleaned review panels.
-* Commit: fix/mermaid-syntax-carriage-returns
-  - Stripped Windows carriage return characters (\r) to resolve UnknownDiagramError.
-* Commit: feat/hebrew-rtl-and-grouped-mermaid
-  - Added bi-directional RTL support for Hebrew and grouped block selectors.
+* Commit: fix/restore-setView-function-and-svg-typo
+  - Restored the missing global 'setView' function to resolve the initialization crash.
+  - Corrected unclosed SVG tag on the Editor Only button in the view modes selector.
+  - Refactored table parser lines collector array to avoid recursive array push references.
+* Commit: fix/restore-updateActiveHeadingContext-reference-error
+  - Restored the missing global 'updateActiveHeadingContext' function to resolve the initialization crash.
+  - Upgraded the breadcrumb context bar to support H3 (###) level depth detection.
+* Commit: fix/theme-functions-reference-error
+  - Restored the missing global declarations of 'enableDarkMode' and 'disableDarkMode' to resolve the initialization crash.
+  - Simplified the GFM table parser array builder to eliminate circular reference push anomalies.
+* Commit: fix/escapeHtml-reference-error
+  - Resolved ReferenceError by defining the missing 'escapeHtml' helper function in the script block.
+* Commit: fix/isTableLine-reference-error
+  - Resolved ReferenceError by defining the missing 'isTableLine' helper function in the script block.
+* Commit: fix/mermaid-semicolon-syntax-and-default-sample-reference
+  - Resolved ReferenceError by defining the missing 'defaultSample' global variable in the script block.
+  - Solved Mermaid sequence diagram parse errors by dynamically escaping non-terminating semicolons (`;`) as HTML entities (`&#59;`) in Mermaid code blocks.
+* Commit: feat/collapsible-left-sidebar-toc
+  - Added a collapsible, persistent left sidebar Table of Contents inside the preview container, visible by default.
+  - Implemented real-time heading filter search for the sidebar TOC and saved expansion state in localStorage.
+  - Placed a dedicated sidebar toggle button in the master top toolbar using native instant navigation anchors.
 ========================================================================
 -->
 <!DOCTYPE html>
@@ -370,14 +353,14 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
             <!-- כפתור טעינת קובץ Markdown מהמחשב -->
             <button id="btn-load-file" onclick="triggerFileInput()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Load Markdown or text file from your computer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 Load File
             </button>
             <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden" onchange="handleFileSelect(event)" />
 
-            <!-- כפתור טעינה מחדש של קובץ המקור (NEW) -->
+            <!-- כפתור טעינה מחדש של קובץ המקור -->
             <button id="btn-reload-file" onclick="reloadLastFile()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Revert all modifications and reload the last imported file from disk">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
@@ -410,7 +393,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             <!-- Split View -->
             <button id="toggle-split" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition-all shadow-sm shrink-0" data-tooltip="Split Screen View">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
                 </svg>
             </button>
             
@@ -435,7 +418,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </button>
 
             <!-- Table of Contents popup modal button -->
-            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC) Pop-up">
+            <button onclick="toggleTOCModal()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm shrink-0" data-tooltip="Open Table of Contents (TOC) Pop-up">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
@@ -455,13 +438,13 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         <div class="flex items-center gap-3 bg-slate-100/70 dark:bg-slate-900/60 p-1 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
             
             <!-- Line Numbers Switch Toggle -->
-            <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="flex items-center justify-center p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all shrink-0" data-tooltip="Show / Hide Line Numbers">
+            <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="flex items-center justify-center p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-850 transition-all shrink-0" data-tooltip="Show / Hide Line Numbers">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16" />
                 </svg>
             </button>
 
-            <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
+            <span class="h-4 w-px bg-slate-200 dark:bg-slate-850"></span>
 
             <!-- Text Size Selector -->
             <div class="flex items-center gap-1.5 shrink-0">
@@ -485,7 +468,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 </select>
             </div>
 
-            <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
+            <span class="h-4 w-px bg-slate-200 dark:bg-slate-855"></span>
 
             <!-- Empty Line Spacing Dropdown Selector -->
             <div class="flex items-center gap-1.5 shrink-0">
@@ -612,7 +595,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
+                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
                         </div>
                     </div>
                     <!-- Sidebar TOC List Elements -->
@@ -723,7 +706,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         <div id="prompt-card" class="fixed bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200/85 dark:border-slate-800/85 p-6 transform scale-95 transition-all duration-200 pointer-events-auto">
             
             <!-- אזור הכותרת וגרירת החלון -->
-            <div id="prompt-drag-handle" class="flex items-start gap-3.5 mb-4 cursor-grab select-none active:cursor-grabbing border-b border-slate-100 dark:border-slate-850 pb-3" title="Click and drag to move this window">
+            <div id="prompt-drag-handle" class="flex items-start gap-3.5 mb-4 cursor-grab select-none active:cursor-grabbing border-b border-slate-150 pb-3" title="Click and drag to move this window">
                 <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -1008,6 +991,147 @@ Use nested bullet outlines for organizing files:
             if (!line) return false;
             const trimmed = line.trim();
             return trimmed.startsWith('|') || (trimmed.includes('|') && trimmed.endsWith('|'));
+        }
+
+        // פונקציית חישוב מילים, תווים וזמן קריאה (updateStats)
+        function updateStats() {
+            const text = editor.value.trim();
+            const charCount = text.length;
+            const wordCount = text === "" ? 0 : text.split(/\s+/).filter(Boolean).length;
+            
+            statChars.innerText = charCount.toLocaleString();
+            statWords.innerText = wordCount.toLocaleString();
+            
+            const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
+            statRead.innerText = `${readMinutes} min`;
+        }
+
+        // NEW: Restored missing 'updateActiveHeadingContext' function with H3 support
+        function updateActiveHeadingContext() {
+            const lineElements = preview.querySelectorAll('[data-line]');
+            let currentH1 = '';
+            let currentH2 = '';
+            let currentH3 = '';
+            const containerTop = preview.getBoundingClientRect().top;
+            
+            for (let el of lineElements) {
+                const rect = el.getBoundingClientRect();
+                if (rect.top - containerTop <= 110) { 
+                    const h1 = el.querySelector('h1');
+                    const h2 = el.querySelector('h2');
+                    const h3 = el.querySelector('h3');
+                    if (h1) {
+                        currentH1 = h1.innerText;
+                        currentH2 = ''; 
+                        currentH3 = '';
+                    } else if (h2) {
+                        currentH2 = h2.innerText;
+                        currentH3 = '';
+                    } else if (h3) {
+                        currentH3 = h3.innerText;
+                    }
+                } else {
+                    break; 
+                }
+            }
+            
+            if (!currentH1 && !currentH2 && !currentH3) {
+                breadcrumbContent.innerHTML = `<span class="text-slate-400 dark:text-slate-500 italic">Document Start</span>`;
+            } else {
+                let breadcrumbHTML = '';
+                if (currentH1) {
+                    breadcrumbHTML += `<span class="text-indigo-600 dark:text-indigo-400 font-bold">${escapeHtml(currentH1)}</span>`;
+                }
+                if (currentH2) {
+                    breadcrumbHTML += `
+                        <span class="text-slate-300 dark:text-slate-700 font-bold">/</span>
+                        <span class="text-slate-700 dark:text-slate-250 font-semibold">${escapeHtml(currentH2)}</span>
+                    `;
+                }
+                if (currentH3) {
+                    breadcrumbHTML += `
+                        <span class="text-slate-300 dark:text-slate-700 font-bold">/</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">${escapeHtml(currentH3)}</span>
+                    `;
+                }
+                breadcrumbContent.innerHTML = breadcrumbHTML;
+            }
+        }
+
+        // NEW: Restored the missing setView function
+        function setView(mode) {
+            currentMode = mode;
+            console.log("[NovaMD Debug] Setting workspace view mode to: " + mode);
+            
+            const activeClass = ["bg-white", "dark:bg-slate-800", "text-indigo-600", "dark:text-indigo-400", "shadow-sm"];
+            const inactiveClass = ["text-slate-600", "dark:text-slate-400", "hover:text-slate-900", "dark:hover:text-white"];
+
+            [toggleEditor, toggleSplit, togglePreview].forEach(btn => {
+                if (btn) {
+                    activeClass.forEach(c => btn.classList.remove(c));
+                    inactiveClass.forEach(c => btn.classList.add(c));
+                }
+            });
+
+            const highlightTarget = (mode === 'editor') ? toggleEditor : (mode === 'preview' ? togglePreview : toggleSplit);
+            if (highlightTarget) {
+                highlightTarget.classList.add(...activeClass);
+                highlightTarget.classList.remove(...inactiveClass);
+            }
+
+            if (mode === 'editor') {
+                editorContainer.classList.remove('hidden');
+                editorContainer.style.width = '100%';
+                previewContainer.classList.add('hidden');
+                workspaceDivider.classList.add('hidden');
+            } 
+            else if (mode === 'preview') {
+                previewContainer.classList.remove('hidden');
+                previewContainer.style.width = '100%';
+                editorContainer.classList.add('hidden');
+                workspaceDivider.classList.add('hidden');
+                renderMarkdown(); // רינדור מחדש כדי להשלים דיאגרמות שהושהו
+            } 
+            else { 
+                editorContainer.classList.remove('hidden');
+                editorContainer.style.width = `${splitPercentage}%`;
+                previewContainer.classList.remove('hidden');
+                previewContainer.style.width = ''; 
+                workspaceDivider.classList.remove('hidden');
+                renderMarkdown(); // רינדור מחדש כדי להשלים דיאגרמות שהושהו
+            }
+        }
+
+        // מצב כהה (enableDarkMode)
+        function enableDarkMode() {
+            console.log("[NovaMD Debug] Enabling dark theme mode.");
+            document.documentElement.classList.add('dark');
+            if (iconSun && iconMoon) {
+                iconSun.classList.remove('hidden');
+                iconMoon.classList.add('hidden');
+            }
+            theme = 'dark';
+            localStorage.setItem('theme', 'dark');
+            if (window.mermaid) {
+                mermaid.initialize({ theme: 'dark' });
+                renderMarkdown();
+            }
+        }
+
+        // מצב בהיר (disableDarkMode)
+        function disableDarkMode() {
+            console.log("[NovaMD Debug] Disabling dark theme mode.");
+            document.documentElement.classList.remove('dark');
+            if (iconSun && iconMoon) {
+                iconSun.classList.add('hidden');
+                iconMoon.classList.remove('hidden');
+            }
+            theme = 'light';
+            localStorage.setItem('theme', 'light');
+            if (window.mermaid) {
+                mermaid.initialize({ theme: 'default' });
+                renderMarkdown();
+            }
         }
 
         // אתחול האפליקציה בטעינה הראשונית
@@ -1665,119 +1789,6 @@ Use nested bullet outlines for organizing files:
         }
 
         // העתקת תוכן השורה המבוקשת ללוח הגזירים (תומך בהעתקה מלאה של בלוקי קוד מאוגדים)
-        function copySelectedLine() {
-            console.log("[NovaMD Debug] Copy content action triggered on selected line: #" + selectedLineNumber);
-            copyLineContent(selectedLineNumber);
-        }
-
-        // הפעלת פאנל הוספת ההערה
-        function triggerAddComment(lineNum) {
-            activeInputLineNum = lineNum;
-            const existingComment = comments[lineNum] || '';
-            console.log("[NovaMD Debug] Displaying comment input modal for line #" + lineNum);
-            
-            promptSubtitle.innerText = `Add review comment / feedback for Line ${lineNum}`;
-            promptInput.value = existingComment;
-
-            if (existingComment.trim() !== '') {
-                promptBtnDelete.classList.remove('hidden');
-                promptBtnDelete.onclick = () => {
-                    triggerDeleteComment(lineNum);
-                    closePromptModal();
-                };
-            } else {
-                promptBtnDelete.classList.add('hidden');
-            }
-
-            // קביעת מיקום ממורכז התחלתי לחלון המרחף על גבי המסך בכל פתיחה
-            const cardWidth = Math.min(448, window.innerWidth - 32);
-            const cardHeight = 280; 
-            const initialLeft = (window.innerWidth - cardWidth) / 2;
-            const initialTop = (window.innerHeight - cardHeight) / 2;
-
-            promptCard.style.left = `${initialLeft}px`;
-            promptCard.style.top = `${initialTop}px`;
-
-            promptModal.classList.remove('hidden');
-            setTimeout(() => {
-                promptModal.classList.remove('opacity-0');
-                promptCard.classList.remove('scale-95');
-                promptCard.classList.add('scale-100');
-                promptInput.focus();
-                promptInput.select();
-            }, 15);
-        }
-
-        function closePromptModal() {
-            console.log("[NovaMD Debug] Closing comment input modal.");
-            promptModal.classList.add('opacity-0');
-            promptCard.classList.remove('scale-100');
-            promptCard.classList.add('scale-95');
-            setTimeout(() => {
-                promptModal.classList.add('hidden');
-            }, 180);
-            activeInputLineNum = null;
-        }
-
-        function savePromptModal() {
-            if (activeInputLineNum === null) return;
-            const value = promptInput.value;
-
-            if (value.trim() === '') {
-                delete comments[activeInputLineNum];
-                console.log("[NovaMD Debug] Cleared comment for line #" + activeInputLineNum);
-            } else {
-                comments[activeInputLineNum] = value;
-                console.log("[NovaMD Debug] Saved comment for line #" + activeInputLineNum + ": " + value);
-            }
-
-            localStorage.setItem('novamd-comments', JSON.stringify(comments));
-            renderMarkdown();
-            closePromptModal();
-            showToast("Comment saved!");
-        }
-
-        // מחיקת הערה
-        function triggerDeleteComment(lineNum) {
-            delete comments[lineNum];
-            console.log("[NovaMD Debug] Removed comment for line #" + lineNum);
-            localStorage.setItem('novamd-comments', JSON.stringify(comments));
-            renderMarkdown();
-            showToast("Comment removed.");
-        }
-
-        // פתיחת חלון האישור המותאם למחיקת כל ההערות במסמך (Acknowledge Confirm Modal)
-        function clearAllCommentsWithConfirm() {
-            console.log("[NovaMD Debug] Triggering Clear Comments custom confirm dialog.");
-            confirmModal.classList.remove('hidden');
-            setTimeout(() => {
-                confirmModal.classList.remove('opacity-0');
-                confirmModal.querySelector('div').classList.remove('scale-95');
-                confirmModal.querySelector('div').classList.add('scale-100');
-            }, 15);
-        }
-
-        // סגירת מודאל אישור מחיקה
-        function closeConfirmModal() {
-            console.log("[NovaMD Debug] Closing Clear Comments custom confirm dialog.");
-            confirmModal.classList.add('opacity-0');
-            confirmModal.querySelector('div').classList.remove('scale-100');
-            confirmModal.querySelector('div').classList.add('scale-95');
-            setTimeout(() => {
-                confirmModal.classList.add('hidden');
-            }, 180);
-        }
-
-        function confirmClearAllComments() {
-            console.log("[NovaMD Debug] Confirmed: Clearing all review comments.");
-            comments = {};
-            localStorage.removeItem('novamd-comments');
-            renderMarkdown();
-            closeConfirmModal();
-            showToast("All review comments cleared.");
-        }
-
-        // העתקת תוכן השורה המבוקשת ללוח הגזירים (תומך בהעתקה מלאה של בלוקי קוד מאוגדים)
         function copyLineContent(lineNum) {
             const rawText = editor.value;
             const lines = rawText.split(/\r?\n/);
@@ -1920,7 +1931,7 @@ Use nested bullet outlines for organizing files:
                     headingCount++;
                     const headingText = trimmed.slice(3).trim();
                     html += `
-                        <div onclick="jumpToLine(${lineNum})" data-toc-heading="${escapeHtml(headingText)}" class="py-2 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors pl-8">
+                        <div onclick="jumpToLine(${lineNum})" data-toc-heading="${escapeHtml(headingText)}" class="py-2 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 cursor-pointer flex items-center gap-2.5 transition-colors pl-8">
                             <span class="text-xs font-mono text-slate-450 dark:text-slate-500 shrink-0 font-bold font-mono">#${lineNum}</span>
                             <span class="text-sm font-semibold text-slate-600 dark:text-slate-300 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
                         </div>
@@ -2144,38 +2155,6 @@ Use nested bullet outlines for organizing files:
             } else {
                 showToast("No previously loaded file found to reload.");
                 console.warn("[NovaMD Debug] Reload triggered but no cached file exists.");
-            }
-        }
-
-        // מצב כהה
-        function enableDarkMode() {
-            console.log("[NovaMD Debug] Handled enableDarkMode()");
-            document.documentElement.classList.add('dark');
-            if (iconSun && iconMoon) {
-                iconSun.classList.remove('hidden');
-                iconMoon.classList.add('hidden');
-            }
-            theme = 'dark';
-            localStorage.setItem('theme', 'dark');
-            if (window.mermaid) {
-                mermaid.initialize({ theme: 'dark' });
-                renderMarkdown();
-            }
-        }
-
-        // מצב בהיר
-        function disableDarkMode() {
-            console.log("[NovaMD Debug] Handled disableDarkMode()");
-            document.documentElement.classList.remove('dark');
-            if (iconSun && iconMoon) {
-                iconSun.classList.add('hidden');
-                iconMoon.classList.remove('hidden');
-            }
-            theme = 'light';
-            localStorage.setItem('theme', 'light');
-            if (window.mermaid) {
-                mermaid.initialize({ theme: 'default' });
-                renderMarkdown();
             }
         }
 
