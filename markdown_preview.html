@@ -2,6 +2,10 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
+* Commit: feat/reload-last-loaded-file
+  - Added a "Reload File" button to the header toolbar, positioned adjacent to the "Load File" option.
+  - Implemented session persistence for the File reference, enabling the "Reload File" button only after a file has been imported.
+  - Formed a reusable file-reading abstraction helper 'readFileContent(file)' to support dry reload and raw file loader.
 * Commit: feat/unified-code-blocks-one-line-rendering
   - Grouped all Markdown code blocks (e.g. javascript, typescript, python) to render as single, unified, selectable containers with inline comment capability.
   - Linked standard code block copy actions to copy the entire fenced block dynamically based on lines span data.
@@ -383,6 +387,14 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </button>
             <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden" onchange="handleFileSelect(event)" />
 
+            <!-- כפתור רענון קובץ אחרון שנבחר -->
+            <button id="btn-reload-file" onclick="reloadLastFile()" disabled class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent" data-tooltip="Reload the last loaded file from disk">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3m-3 3l-3-3" />
+                </svg>
+                Reload File
+            </button>
+
             <!-- כפתור ניקוי -->
             <button id="btn-clear" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex items-center gap-1.5 shadow-sm" data-tooltip="Clear Editor and All Active Review Comments">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -743,7 +755,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </div>
             
             <div class="flex justify-between items-center select-none">
-                <button id="prompt-btn-delete" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors">
+                <button id="prompt-btn-delete" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-55 dark:hover:bg-red-950/20 rounded-lg transition-colors">
                     Delete Comment
                 </button>
                 <div class="flex gap-2">
@@ -815,7 +827,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 <!-- Loaded Dynamically -->
             </div>
             
-            <div class="pt-4 border-t border-slate-100 dark:border-slate-850 flex justify-end shrink-0">
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-855 flex justify-end shrink-0">
                 <button onclick="closeTOCModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors">Close</button>
             </div>
         </div>
@@ -868,6 +880,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         const breadcrumbContent = document.getElementById('breadcrumb-content');
         
         const fileInput = document.getElementById('file-input');
+        const btnReloadFile = document.getElementById('btn-reload-file');
 
         const viewCommentsModal = document.getElementById('view-comments-modal');
         const modalCommentsList = document.getElementById('modal-comments-list');
@@ -961,6 +974,9 @@ Use nested bullet outlines for organizing files:
         let activeInputLineNum = null;
         let selectedLineNumber = 1; 
         let showLineNumbers = false; 
+
+        // שמירת קובץ אחרון שנטען
+        let lastLoadedFile = null;
 
         // ניהול בועות חיווי מותאמות עם השהיה של שנייה (JS 1-Second Delayed Tooltip System)
         let tooltipTimeout = null;
@@ -1924,7 +1940,7 @@ Use nested bullet outlines for organizing files:
                     headingCount++;
                     const headingText = trimmed.slice(2).trim();
                     html += `
-                        <div onclick="jumpToLine(${lineNum})" data-sidebar-heading="${escapeHtml(headingText)}" class="py-1.5 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-850 cursor-pointer transition-colors border-l-2 border-indigo-500 font-bold text-slate-800 dark:text-slate-200 truncate" dir="auto">
+                        <div onclick="jumpToLine(${lineNum})" data-sidebar-heading="${escapeHtml(headingText)}" class="py-1.5 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-855 cursor-pointer transition-colors border-l-2 border-indigo-500 font-bold text-slate-800 dark:text-slate-200 truncate" dir="auto">
                             ${escapeHtml(headingText)}
                         </div>
                     `;
@@ -1932,7 +1948,7 @@ Use nested bullet outlines for organizing files:
                     headingCount++;
                     const headingText = trimmed.slice(3).trim();
                     html += `
-                        <div onclick="jumpToLine(${lineNum})" data-sidebar-heading="${escapeHtml(headingText)}" class="py-1.5 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-850 cursor-pointer transition-colors pl-6 border-l border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 truncate" dir="auto">
+                        <div onclick="jumpToLine(${lineNum})" data-sidebar-heading="${escapeHtml(headingText)}" class="py-1.5 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-855 cursor-pointer transition-colors pl-6 border-l border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 truncate" dir="auto">
                             ${escapeHtml(headingText)}
                         </div>
                     `;
@@ -1940,7 +1956,7 @@ Use nested bullet outlines for organizing files:
                     headingCount++;
                     const headingText = trimmed.slice(4).trim();
                     html += `
-                        <div onclick="jumpToLine(${lineNum})" data-sidebar-heading="${escapeHtml(headingText)}" class="py-1 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-850 cursor-pointer transition-colors pl-10 border-l border-slate-100 dark:border-slate-900 text-slate-400 dark:text-slate-500 text-xs truncate" dir="auto">
+                        <div onclick="jumpToLine(${lineNum})" data-sidebar-heading="${escapeHtml(headingText)}" class="py-1 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-855 cursor-pointer transition-colors pl-10 border-l border-slate-100 dark:border-slate-900 text-slate-400 dark:text-slate-500 text-xs truncate" dir="auto">
                             ${escapeHtml(headingText)}
                         </div>
                     `;
@@ -2032,7 +2048,7 @@ Use nested bullet outlines for organizing files:
             console.log("[NovaMD Debug] User stopped dragging the sidebar TOC divider. Final width: " + sidebarWidth + "px");
 
             document.body.classList.remove('resizing-active');
-            sidebarDivider.classList.remove('bg-indigo-300', 'dark:bg-indigo-950/60');
+            sidebarDivider.classList.remove('bg-indigo-300', 'dark:bg-indigo-955');
 
             document.removeEventListener('mousemove', handleSidebarResize);
             document.removeEventListener('touchmove', handleSidebarResize);
@@ -2335,7 +2351,17 @@ Use nested bullet outlines for organizing files:
                 return;
             }
 
-            console.log(`[NovaMD Debug] Selecting file: "${file.name}" (Type: ${file.type}, Size: ${file.size} bytes)`);
+            lastLoadedFile = file;
+            if (btnReloadFile) {
+                btnReloadFile.disabled = false;
+            }
+            
+            readFileContent(file);
+        }
+
+        // קורא תוכן של קובץ Markdown או טקסט ורנדר אותו ישירות למסך
+        function readFileContent(file) {
+            console.log(`[NovaMD Debug] Reading file: "${file.name}" (Type: ${file.type}, Size: ${file.size} bytes)`);
             const reader = new FileReader();
             
             reader.onload = function(e) {
@@ -2362,6 +2388,16 @@ Use nested bullet outlines for organizing files:
             };
 
             reader.readAsText(file);
+        }
+
+        // טעינה חוזרת של הקובץ האחרון שנטען
+        function reloadLastFile() {
+            if (!lastLoadedFile) {
+                console.log("[NovaMD Debug] Reload triggered but no file was previously loaded.");
+                return;
+            }
+            console.log(`[NovaMD Debug] Reloading last file: "${lastLoadedFile.name}"`);
+            readFileContent(lastLoadedFile);
         }
 
         // View Comments Panel Actions
