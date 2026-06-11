@@ -2,6 +2,17 @@
 ================================================================================
 CHANGELOG: RSS Feed Viewer
 ================================================================================
+v1.5.0 - 2026-06-11
+- Changed: Default inner text (content) font size set to 20px on startup.
+
+v1.4.9 - 2026-06-11
+- Changed: Default active category tab set to "מבזקים" (Flash).
+- Added: Content font size options starting at 16px with 4 progressively larger scaling increments (16px, 18px, 20px, 24px, 28px).
+
+v1.4.8 - 2026-06-11
+- Added: Dedicated select dropdown for item inner text font size ("גופן תוכן") separate from general sizes.
+- Improved: Added highly resilient scaling selectors that resize nested content markup and embedded HTML elements inside item summaries.
+
 v1.4.7 - 2026-05-28
 - Changed: Refreshes (manual and automatic) now preserve rendered feed items without clearing the UI.
 - Added: Implemented a smooth rotation animation on the refresh toolbar icon to act as the loading indicator.
@@ -334,7 +345,6 @@ v1.0.0 - 2024-01-10
 
         .card-title {
             margin: 0;
-            font-size: 15px;
             font-weight: 700;
             line-height: 1.25;
             color: var(--text-primary);
@@ -361,9 +371,13 @@ v1.0.0 - 2024-01-10
 
         .card-description {
             margin: 0 0 10px 0;
-            font-size: 13px;
-            line-height: 1.4;
+            line-height: 1.45;
             color: var(--text-primary);
+        }
+
+        /* Secure override for embedded HTML content in the RSS description */
+        .card-description * {
+            line-height: 1.45;
         }
 
         .card-actions {
@@ -524,31 +538,51 @@ v1.0.0 - 2024-01-10
             font-size: 18px;
         }
 
-        /* High Density Typography sizing modifiers */
+        /* Typography sizing modifiers (General / Card Titles) */
         .font-normal .card-title { font-size: 14px; }
-        .font-normal .card-description { font-size: 12px; }
         .font-big .card-title { font-size: 16px; }
-        .font-big .card-description { font-size: 14px; }
         .font-biggest .card-title { font-size: 19px; }
-        .font-biggest .card-description { font-size: 16px; }
+
+        /* Content / Inner Text Typography Sizing Modifiers - Starting from 16px + 4 more options */
+        .inner-font-16 .card-description, 
+        .inner-font-16 .card-description * { font-size: 16px !important; }
+
+        .inner-font-18 .card-description, 
+        .inner-font-18 .card-description * { font-size: 18px !important; }
+
+        .inner-font-20 .card-description, 
+        .inner-font-20 .card-description * { font-size: 20px !important; }
+
+        .inner-font-24 .card-description, 
+        .inner-font-24 .card-description * { font-size: 24px !important; }
+
+        .inner-font-28 .card-description, 
+        .inner-font-28 .card-description * { font-size: 28px !important; }
     </style>
 </head>
-<body class="font-biggest">
+<body class="font-biggest inner-font-20">
     <div class="app-wrapper">
         <header>
             <div class="toolbar">
                 <!-- Categorization custom pill tabs -->
                 <div class="category-tabs" id="category-tabs">
-                    <button class="tab-btn active" data-category="news">חדשות</button>
+                    <button class="tab-btn" data-category="news">חדשות</button>
                     <button class="tab-btn" data-category="tech">טכנולוגיה</button>
-                    <button class="tab-btn" data-category="flash">מבזקים</button>
+                    <button class="tab-btn active" data-category="flash">מבזקים</button>
                 </div>
 
                 <div class="controls-actions-group">
-                    <select id="font-size" title="גודל גופן">
-                        <option value="normal">גופן רגיל</option>
-                        <option value="big">גופן גדול</option>
-                        <option value="biggest" selected>גופן הכי גדול</option>
+                    <select id="font-size" title="גודל כותרת">
+                        <option value="normal">כותרת: 14px</option>
+                        <option value="big">כותרת: 16px</option>
+                        <option value="biggest" selected>כותרת: 19px</option>
+                    </select>
+                    <select id="inner-font-size" title="גודל גופן תוכן">
+                        <option value="16">תוכן: 16px</option>
+                        <option value="18">תוכן: 18px</option>
+                        <option value="20" selected>תוכן: 20px</option>
+                        <option value="24">תוכן: 24px</option>
+                        <option value="28">תוכן: 28px</option>
                     </select>
                     <select id="image-size" title="תצוגת תמונות">
                         <option value="hide" selected>ללא תמונות</option>
@@ -587,10 +621,10 @@ v1.0.0 - 2024-01-10
     <div class="toast-container" id="toast-container"></div>
 
     <script>
-        // Local state management
+        // Local state management - Defaulting category to 'flash'
         let loadedItems = [];
         const readItems = new Set();
-        let selectedCategory = 'news';
+        let selectedCategory = 'flash';
 
         const feedUrls = {
             news: [
@@ -637,6 +671,7 @@ v1.0.0 - 2024-01-10
         const rssContent = document.getElementById('rss-content');
         const toTopBtn = document.getElementById('to-top-btn');
         const fontSizeSelect = document.getElementById('font-size');
+        const innerFontSizeSelect = document.getElementById('inner-font-size');
         const imageSizeSelect = document.getElementById('image-size');
 
         // Theme Toggle Logic with custom vector state toggles
@@ -675,10 +710,16 @@ v1.0.0 - 2024-01-10
             loadRSS(false); // Category switch gets full reload / clean skeletons
         });
 
-        // Font and Image controls
+        // Title Font size change logic
         fontSizeSelect.addEventListener('change', () => {
             document.body.classList.remove('font-normal', 'font-big', 'font-biggest');
             document.body.classList.add(`font-${fontSizeSelect.value}`);
+        });
+
+        // Inner/Content Font size change logic
+        innerFontSizeSelect.addEventListener('change', () => {
+            document.body.classList.remove('inner-font-16', 'inner-font-18', 'inner-font-20', 'inner-font-24', 'inner-font-28');
+            document.body.classList.add(`inner-font-${innerFontSizeSelect.value}`);
         });
 
         imageSizeSelect.addEventListener('change', adjustImageSizes);
