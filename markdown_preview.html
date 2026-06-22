@@ -2,24 +2,20 @@
 ========================================================================
 NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 ========================================================================
-* Commit: fix/reload-file-security-not-readable-error
-  - Resolved NotReadableError by replacing FileReader-based file re-reads with a secure, instant string cache strategy (localStorage & JS memory).
-  - Fixed unclosed SVG tag on the Editor Only toolbar selector button.
-* Commit: fix/restore-renderMarkdown-function
-  - Restored the missing global 'renderMarkdown' function which was accidentally omitted, resolving the initialization ReferenceError.
-* Commit: fix/restore-jumpToLine-reference-error
-  - Restored the missing global 'jumpToLine' function to resolve the navigation click crash.
-  - Closed the malformed SVG tag on the Editor Only button in the view modes selector.
-* Commit: fix/restore-setView-function-and-svg-typo
-  - Restored the missing global 'setView' function to resolve the initialization crash.
-  - Corrected unclosed SVG tag on the Editor Only button in the view modes selector.
-  - Refactored table parser lines collector array to avoid recursive array push references.
-* Commit: fix/restore-updateActiveHeadingContext-reference-error
-  - Restored the missing global 'updateActiveHeadingContext' function to resolve the initialization crash.
-  - Upgraded the breadcrumb context bar to support H3 (###) level depth detection.
-* Commit: fix/theme-functions-reference-error
-  - Restored the missing global declarations of 'enableDarkMode' and 'disableDarkMode' to resolve the initialization crash.
-  - Simplified the GFM table parser array builder to eliminate circular reference push anomalies.
+* Commit: feat/genuine-reload-file-button
+  - Added a "Reload File" header action with an elegant, responsive UI state trigger.
+  - Retained an in-memory File pointer reference inside handleFileSelect to circumvent sandbox filesystem limits.
+  - Dynamically disabled/enabled the "Reload File" button state with contextual custom hover tooltips.
+  - Integrated full FileReader re-read on reload triggers to sync external disk changes instantly.
+* Commit: feat/load-details-in-header-title
+  - Added dynamic updating of the main header title to show the active file name and loading timestamp when a file is opened.
+  - Linked clipboard pastes to update the header dynamically with a custom timestamp.
+  - Integrated localStorage state preservation so the filename and load time persist through browser reloads.
+  - Set workspace resets to clear title headers back to their initial default branding.
+* Commit: feat/unified-code-blocks-one-line-rendering
+  - Grouped all Markdown code blocks (e.g. javascript, typescript, python) to render as single, unified, selectable containers with inline comment capability.
+  - Linked standard code block copy actions to copy the entire fenced block dynamically based on lines span data.
+  - Resolved ReferenceError exceptions by implementing missing active feedback helpers (toggleCommentsModal, copyAllCommentsFromModal).
 * Commit: fix/escapeHtml-reference-error
   - Resolved ReferenceError by defining the missing 'escapeHtml' helper function in the script block.
 * Commit: fix/isTableLine-reference-error
@@ -320,24 +316,24 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 </svg>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-indigo-400 dark:from-indigo-400 dark:to-indigo-200 bg-clip-text text-transparent">NovaMD</h1>
-                <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">Unified Document review workspace</p>
+                <h1 id="app-title" class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-indigo-400 dark:from-indigo-400 dark:to-indigo-200 bg-clip-text text-transparent transition-all duration-200">NovaMD</h1>
+                <p id="app-subtitle" class="text-xs text-slate-400 dark:text-slate-500 font-medium transition-all duration-200">Unified Document review workspace</p>
             </div>
         </div>
 
-        <!-- כפתורי טעינת קובץ, הדבקה, רענון וניקוי -->
+        <!-- כפתורי טעינת קובץ, הדבקה וניקוי -->
         <div class="flex items-center gap-2">
             <!-- כפתור הדבקה מלוח הגזירים -->
             <button id="btn-paste" onclick="pasteFromClipboard()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Replace existing content with clipboard text content directly in the source editor">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 00-2 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Paste
             </button>
 
-            <!-- כפתור הצגת מודאל ההערות הפעילות -->
+            <!-- כפתור הצגת ממודאל ההערות הפעילות -->
             <button id="btn-view-comments" onclick="toggleCommentsModal()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="View list of all active review comments written so far">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
                 View Comments
@@ -368,16 +364,16 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </button>
             <input type="file" id="file-input" accept=".md,.markdown,.txt" class="hidden" onchange="handleFileSelect(event)" />
 
-            <!-- כפתור טעינה מחדש של קובץ המקור -->
-            <button id="btn-reload-file" onclick="reloadLastFile()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300" data-tooltip="Revert all modifications and reload the last imported file from disk">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+            <!-- כפתור טעינה מחדש של קובץ פעיל (Reload File) -->
+            <button id="btn-reload-file" onclick="reloadCurrentFile()" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all flex items-center gap-1.5 shadow-sm text-slate-600 dark:text-slate-300 opacity-50 cursor-not-allowed" data-tooltip="No active file reference in memory. Load a file first to enable reloading.">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-500 animate-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                 </svg>
-                Reload
+                Reload File
             </button>
 
             <!-- כפתור ניקוי -->
-            <button id="btn-clear" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-55 hover:text-red-700 transition-colors flex items-center gap-1.5 shadow-sm" data-tooltip="Clear Editor and All Active Review Comments">
+            <button id="btn-clear" class="px-3.5 py-1.5 rounded-lg text-sm font-medium border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-55 dark:hover:bg-red-950/20 transition-colors flex items-center gap-1.5 shadow-sm" data-tooltip="Clear Editor and All Active Review Comments">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
@@ -387,7 +383,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
     </header>
 
     <!-- UNIFIED MASTER TOOLBAR (Consolidated, Always Visible, Single-Line Flow with Elegant Tooltips) -->
-    <div class="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-nowrap items-center gap-3 shrink-0 shadow-sm z-10 overflow-x-auto toolbar-scroll select-none">
+    <div class="bg-white dark:bg-slate-955 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-nowrap items-center gap-3 shrink-0 shadow-sm z-10 overflow-x-auto toolbar-scroll select-none">
         
         <!-- Section 1: View Modes Selector -->
         <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
@@ -401,7 +397,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             <!-- Split View -->
             <button id="toggle-split" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition-all shadow-sm shrink-0" data-tooltip="Split Screen View">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
                 </svg>
             </button>
             
@@ -446,13 +442,13 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         <div class="flex items-center gap-3 bg-slate-100/70 dark:bg-slate-900/60 p-1 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shrink-0">
             
             <!-- Line Numbers Switch Toggle -->
-            <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="flex items-center justify-center p-1.5 rounded-lg text-slate-600 dark:text-slate-450 hover:bg-slate-200 dark:hover:bg-slate-850 transition-all shrink-0" data-tooltip="Show / Hide Line Numbers">
+            <button id="btn-toggle-linenums" onclick="toggleLineNumbers()" class="flex items-center justify-center p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all shrink-0" data-tooltip="Show / Hide Line Numbers">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16" />
                 </svg>
             </button>
 
-            <span class="h-4 w-px bg-slate-200 dark:bg-slate-850"></span>
+            <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
 
             <!-- Text Size Selector -->
             <div class="flex items-center gap-1.5 shrink-0">
@@ -476,7 +472,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 </select>
             </div>
 
-            <span class="h-4 w-px bg-slate-200 dark:bg-slate-855"></span>
+            <span class="h-4 w-px bg-slate-200 dark:bg-slate-800"></span>
 
             <!-- Empty Line Spacing Dropdown Selector -->
             <div class="flex items-center gap-1.5 shrink-0">
@@ -485,7 +481,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                     </svg>
                 </span>
-                <select id="select-empty-size" class="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500" data-tooltip="Adjust Empty Space Height">
+                <select id="select-empty-size" class="bg-white dark:bg-slate-955 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg px-2 py-0.5 outline-none focus:ring-1 focus:ring-indigo-500" data-tooltip="Adjust Empty Space Height">
                     <option value="4px">4px</option>
                     <option value="8px">8px</option>
                     <option value="16px" selected>16px</option>
@@ -512,7 +508,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </button>
 
             <!-- העתקת התוכן הגולמי של השורה שנבחרה -->
-            <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-all shadow-sm shrink-0" data-tooltip="Copy Selected Raw Line Content">
+            <button id="toolbar-btn-copy" onclick="copySelectedLine()" class="flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 transition-all shadow-sm shrink-0" data-tooltip="Copy Selected Raw Line Content">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 112-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                 </svg>
@@ -554,8 +550,8 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
     <main id="workspace" class="flex-1 flex flex-col md:flex-row overflow-hidden relative select-none">
         
         <!-- עורך קוד המקור (פאנל שמאלי) -->
-        <div id="editor-container" class="flex flex-col h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden" style="width: 50%;">
-            <div class="px-5 py-2 bg-slate-50 dark:bg-slate-950/70 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between shrink-0">
+        <div id="editor-container" class="flex flex-col h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-955 overflow-hidden" style="width: 50%;">
+            <div class="px-5 py-2 bg-slate-50 dark:bg-slate-955/70 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between shrink-0">
                 <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -569,7 +565,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         </div>
 
         <!-- מפריד פאנלים הניתן לגרירה ושינוי גודל (Splitter) -->
-        <div id="workspace-divider" class="hidden md:flex flex-col items-center justify-center w-2 h-full bg-slate-100 dark:bg-slate-900 border-x border-slate-200 dark:border-slate-800 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-950/40 transition-colors shrink-0 select-none">
+        <div id="workspace-divider" class="hidden md:flex flex-col items-center justify-center w-2 h-full bg-slate-100 dark:bg-slate-900 border-x border-slate-200 dark:border-slate-800 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-955/40 transition-colors shrink-0 select-none">
             <div class="flex flex-col gap-1.5 select-none pointer-events-none">
                 <div class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 transition-colors"></div>
                 <div class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 transition-colors"></div>
@@ -579,7 +575,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
 
         <!-- תצוגה מקדימה אינטראקטיבית (פאנל ימני) עם תוכן עניינים צדי מובנה -->
         <div id="preview-container" class="flex-1 flex flex-col h-full bg-white dark:bg-slate-950 overflow-hidden">
-            <div class="px-5 py-2.5 bg-slate-50 dark:bg-slate-950/70 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between shrink-0">
+            <div class="px-5 py-2.5 bg-slate-50 dark:bg-slate-955/70 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between shrink-0">
                 <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -596,14 +592,14 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                 <!-- Collapsible Sidebar TOC (Visible by default) -->
                 <div id="sidebar-toc" class="border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 flex flex-col shrink-0 transition-all duration-200">
                     <!-- Sidebar TOC Search Bar -->
-                    <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100/30 dark:bg-slate-950/40">
+                    <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100/30 dark:bg-slate-955/40">
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
+                            <input type="text" id="sidebar-toc-search" oninput="filterSidebarTOC(this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
                         </div>
                     </div>
                     <!-- Sidebar TOC List Elements -->
@@ -625,7 +621,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
     </main>
 
     <!-- שורת סטטיסטיקה תחתונה -->
-    <footer class="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0 shadow-inner">
+    <footer class="bg-white dark:bg-slate-955 border-t border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0 shadow-inner">
         <div class="flex items-center gap-4 flex-wrap">
             <span class="flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -665,9 +661,9 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
     <div id="global-tooltip" class="fixed hidden bg-slate-950 text-white dark:bg-slate-100 dark:text-slate-950 text-xs font-semibold px-3 py-1.5 rounded-xl shadow-xl pointer-events-none transition-all duration-150 z-[999] max-w-xs border border-slate-800 dark:border-slate-200"></div>
 
     <!-- מודאל רשימת ההערות הפעילות (View Comments Modal) -->
-    <div id="view-comments-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
+    <div id="view-comments-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-955/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
         <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200 flex flex-col max-h-[75vh]">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-850 shrink-0">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-855 shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -700,7 +696,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
                         <span>Copy to Clipboard</span>
                     </button>
                     <!-- כפתור ניקוי תגובות מתוך מודאל ההערות הפעילות -->
-                    <button id="modal-comments-clear-btn" onclick="clearAllCommentsWithConfirm(); toggleCommentsModal();" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-55 hover:text-red-700 rounded-xl transition-all" title="Clear and permanently delete all review comments currently saved">
+                    <button id="modal-comments-clear-btn" onclick="clearAllCommentsWithConfirm(); toggleCommentsModal();" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all" title="Clear and permanently delete all review comments currently saved">
                         Clear Comments
                     </button>
                 </div>
@@ -714,7 +710,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         <div id="prompt-card" class="fixed bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200/85 dark:border-slate-800/85 p-6 transform scale-95 transition-all duration-200 pointer-events-auto">
             
             <!-- אזור הכותרת וגרירת החלון -->
-            <div id="prompt-drag-handle" class="flex items-start gap-3.5 mb-4 cursor-grab select-none active:cursor-grabbing border-b border-slate-150 pb-3" title="Click and drag to move this window">
+            <div id="prompt-drag-handle" class="flex items-start gap-3.5 mb-4 cursor-grab select-none active:cursor-grabbing border-b border-slate-100 dark:border-slate-800/60 pb-3" title="Click and drag to move this window">
                 <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -732,11 +728,11 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             </div>
             
             <div class="mb-5">
-                <input type="text" id="prompt-input" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800 dark:text-slate-100 font-sans" placeholder="Type your comment or question here..." />
+                <input type="text" id="prompt-input" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800 dark:text-slate-100 font-sans" placeholder="Type your comment or question here..." />
             </div>
             
             <div class="flex justify-between items-center select-none">
-                <button id="prompt-btn-delete" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-55 rounded-lg transition-colors">
+                <button id="prompt-btn-delete" class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-955/20 rounded-lg transition-colors">
                     Delete Comment
                 </button>
                 <div class="flex gap-2">
@@ -765,6 +761,51 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             <div class="flex justify-end gap-2 shrink-0">
                 <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors rounded-xl bg-slate-50 dark:bg-slate-800">Cancel</button>
                 <button onclick="confirmClearAllComments()" class="px-4 py-2 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-sm transition-colors">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Table of Contents (TOC) Modal Simulator -->
+    <div id="toc-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-955/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200 flex flex-col max-h-[75vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-855 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Table of Contents</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jump directly to document sections (H1, H2)</p>
+                    </div>
+                </div>
+                <button onclick="closeTOCModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Search input inside TOC modal -->
+            <div class="pt-3 pb-1 shrink-0">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input type="text" id="toc-search" oninput="filterTOC(this.value)" class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-100 font-sans" placeholder="Search headings..." />
+                </div>
+            </div>
+
+            <!-- Scrollable Headings container -->
+            <div id="toc-list" class="flex-1 overflow-y-auto py-4 space-y-1.5 select-none pr-1">
+                <!-- Loaded Dynamically -->
+            </div>
+            
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-850 flex justify-end shrink-0">
+                <button onclick="closeTOCModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors">Close</button>
             </div>
         </div>
     </div>
@@ -836,7 +877,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
             gfm: true
         });
 
-        // הגדרת משתנה ה-defaultSample הגלובלי
+        // defined the missing 'defaultSample' variable globally to resolve initialization crashes
         const defaultSample = `# 🚀 Welcome to NovaMD
 
 NovaMD is a highly intuitive, elegant, and **real-time Markdown editor** built to make writing for the web beautiful and fast. 
@@ -852,25 +893,15 @@ NovaMD is a highly intuitive, elegant, and **real-time Markdown editor** built t
 
 ## 🛠️ Markdown Syntax Showcase
 
-### Text Elements & Inline Emphasis
-This is basic text with *italics emphasis* and **strong bold text** options. You can also easily create ~~strikethrough text~~ or include elegant inline code references like \`const isWriting = true;\`.
+### Code Block Playground (Selected as Single Line Units)
+Here is a typescript syntax workspace block. You can click anywhere inside this code container to comment, edit, or inspect the entire block as a unified element!
 
-### Code Playground
-Here is a sample JavaScript block showcasing syntax theme elements:
+\`\`\`typescript
+// Auth configurations
+const authRequired = !isLinkValid;
+const authType = this.getAuthType(hasPasskey, authRequired);
 
-\`\`\`javascript
-// Highlighting code arrays dynamically
-function analyzeContent(markdownText) {
-    const cleanText = markdownText.trim();
-    const words = cleanText ? cleanText.split(/\\s+/).length : 0;
-    
-    return {
-        wordCount: words,
-        readTime: Math.ceil(words / 225) // average reading velocity
-    };
-}
-
-console.log(analyzeContent("Hello beautiful world!"));
+return { authRequired, authType, portalLongUrl };
 \`\`\`
 
 ### Formatted Data Tables
@@ -934,11 +965,10 @@ Use nested bullet outlines for organizing files:
         let isResizingSidebar = false;
         let sidebarWidth = 256; 
 
-        // משתנים לשמירת נתוני הקובץ האחרון שנטען
-        let lastFileName = '';
-        let lastFileContent = '';
+        // Pointer keeping the loaded File object reference in-memory to trigger secure real-time reloads
+        let lastLoadedFileReference = null;
 
-        // פונקציית עזר לייצוג בטוח של HTML
+        // NEW: defined the missing 'escapeHtml' helper function globally to resolve execution crashes
         function escapeHtml(str) {
             if (!str) return '';
             return str
@@ -949,266 +979,344 @@ Use nested bullet outlines for organizing files:
                 .replace(/'/g, '&#039;');
         }
 
-        // בדיקה האם השורה היא חלק מטבלה GFM
+        // defined the missing 'isTableLine' helper function globally to resolve execution crashes
         function isTableLine(line) {
             if (!line) return false;
             const trimmed = line.trim();
             return trimmed.startsWith('|') || (trimmed.includes('|') && trimmed.endsWith('|'));
         }
 
-        // פונקציית חישוב מילים, תווים וזמן קריאה (updateStats)
-        function updateStats() {
-            const text = editor.value.trim();
-            const charCount = text.length;
-            const wordCount = text === "" ? 0 : text.split(/\s+/).filter(Boolean).length;
-            
-            statChars.innerText = charCount.toLocaleString();
-            statWords.innerText = wordCount.toLocaleString();
-            
-            const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
-            statRead.innerText = `${readMinutes} min`;
-        }
-
-        // Restored missing 'updateActiveHeadingContext' function with H3 support
-        function updateActiveHeadingContext() {
-            const lineElements = preview.querySelectorAll('[data-line]');
-            let currentH1 = '';
-            let currentH2 = '';
-            let currentH3 = '';
-            const containerTop = preview.getBoundingClientRect().top;
-            
-            for (let el of lineElements) {
-                const rect = el.getBoundingClientRect();
-                if (rect.top - containerTop <= 110) { 
-                    const h1 = el.querySelector('h1');
-                    const h2 = el.querySelector('h2');
-                    const h3 = el.querySelector('h3');
-                    if (h1) {
-                        currentH1 = h1.innerText;
-                        currentH2 = ''; 
-                        currentH3 = '';
-                    } else if (h2) {
-                        currentH2 = h2.innerText;
-                        currentH3 = '';
-                    } else if (h3) {
-                        currentH3 = h3.innerText;
-                    }
-                } else {
-                    break; 
-                }
-            }
-            
-            if (!currentH1 && !currentH2 && !currentH3) {
-                breadcrumbContent.innerHTML = `<span class="text-slate-400 dark:text-slate-500 italic">Document Start</span>`;
+        // Helper function to dynamically update header titles and loading times
+        function updateHeaderTitle(filename, loadtime) {
+            const titleEl = document.getElementById('app-title');
+            const subtitleEl = document.getElementById('app-subtitle');
+            if (filename && loadtime) {
+                titleEl.innerText = `NovaMD - ${filename}`;
+                subtitleEl.innerText = `Loaded at ${loadtime}`;
             } else {
-                let breadcrumbHTML = '';
-                if (currentH1) {
-                    breadcrumbHTML += `<span class="text-indigo-600 dark:text-indigo-400 font-bold">${escapeHtml(currentH1)}</span>`;
-                }
-                if (currentH2) {
-                    breadcrumbHTML += `
-                        <span class="text-slate-300 dark:text-slate-700 font-bold">/</span>
-                        <span class="text-slate-700 dark:text-slate-250 font-semibold">${escapeHtml(currentH2)}</span>
-                    `;
-                }
-                if (currentH3) {
-                    breadcrumbHTML += `
-                        <span class="text-slate-300 dark:text-slate-700 font-bold">/</span>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">${escapeHtml(currentH3)}</span>
-                    `;
-                }
-                breadcrumbContent.innerHTML = breadcrumbHTML;
+                titleEl.innerText = 'NovaMD';
+                subtitleEl.innerText = 'Unified Document review workspace';
             }
         }
 
-        // Restored the missing setView function
-        function setView(mode) {
-            currentMode = mode;
-            console.log("[NovaMD Debug] Setting workspace view mode to: " + mode);
-            
-            const activeClass = ["bg-white", "dark:bg-slate-800", "text-indigo-600", "dark:text-indigo-400", "shadow-sm"];
-            const inactiveClass = ["text-slate-600", "dark:text-slate-400", "hover:text-slate-900", "dark:hover:text-white"];
+        // Helper to toggling active classes on the reload file layout element
+        function updateReloadButtonUI() {
+            const btnReload = document.getElementById('btn-reload-file');
+            if (lastLoadedFileReference) {
+                btnReload.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnReload.setAttribute('data-tooltip', `Genuinely reload and refresh workspace content directly from "${lastLoadedFileReference.name}"`);
+            } else {
+                btnReload.classList.add('opacity-50', 'cursor-not-allowed');
+                btnReload.setAttribute('data-tooltip', 'No active file reference in memory. Load a file first to enable reloading.');
+            }
+        }
 
-            [toggleEditor, toggleSplit, togglePreview].forEach(btn => {
-                if (btn) {
-                    activeClass.forEach(c => btn.classList.remove(c));
-                    inactiveClass.forEach(c => btn.classList.add(c));
+        // אתחול האפליקציה בטעינה הראשונית
+        function initializeApp() {
+            console.log("[NovaMD Debug] Initializing review application core...");
+            if (localStorage.getItem('theme') === 'dark' || 
+                (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
+            }
+
+            if (window.mermaid) {
+                console.log("[NovaMD Debug] Initializing Mermaid subsystem...");
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: theme === 'dark' ? 'dark' : 'default',
+                    securityLevel: 'loose'
+                });
+            }
+
+            const savedContent = localStorage.getItem('novamd-content');
+            if (savedContent !== null) {
+                editor.value = savedContent;
+            } else {
+                editor.value = defaultSample;
+            }
+
+            // Restore header title state from localStorage if it exists
+            const savedFilename = localStorage.getItem('novamd-filename');
+            const savedLoadtime = localStorage.getItem('novamd-loadtime');
+            if (savedFilename && savedLoadtime) {
+                updateHeaderTitle(savedFilename, savedLoadtime);
+            } else {
+                updateHeaderTitle(null, null);
+            }
+
+            try {
+                const savedComments = localStorage.getItem('novamd-comments');
+                if (savedComments) {
+                    comments = JSON.parse(savedComments);
+                    console.log("[NovaMD Debug] Loaded " + Object.keys(comments).length + " saved comments from localStorage.");
                 }
+            } catch (e) {
+                console.error("[NovaMD Debug] Could not parse saved comments", e);
+            }
+
+            const savedTextSize = localStorage.getItem('novamd-text-size');
+            if (savedTextSize) {
+                document.documentElement.style.setProperty('--global-text-size', savedTextSize);
+                selectTextSize.value = savedTextSize;
+            }
+            
+            const savedEmptySize = localStorage.getItem('novamd-empty-size');
+            if (savedEmptySize) {
+                document.documentElement.style.setProperty('--empty-line-height', savedEmptySize);
+                selectEmptySize.value = savedEmptySize;
+            }
+
+            const savedSplitPercentage = localStorage.getItem('novamd-split-percentage');
+            if (savedSplitPercentage) {
+                splitPercentage = parseFloat(savedSplitPercentage);
+            }
+
+            const savedLineNums = localStorage.getItem('novamd-show-linenums');
+            if (savedLineNums === 'true') {
+                showLineNumbers = true;
+            } else {
+                showLineNumbers = false;
+            }
+
+            // Load saved Sidebar TOC panel width or default to 256px
+            const savedSidebarWidth = localStorage.getItem('novamd-sidebar-width');
+            if (savedSidebarWidth) {
+                sidebarWidth = parseInt(savedSidebarWidth);
+            } else {
+                sidebarWidth = 256;
+            }
+            sidebarTOC.style.width = `${sidebarWidth}px`;
+
+            // Initialize collapsible Sidebar TOC configuration state (Default: Visible)
+            const savedSidebarTOC = localStorage.getItem('novamd-show-sidebar-toc');
+            if (savedSidebarTOC === 'false') {
+                sidebarTOC.classList.add('hidden');
+                if (sidebarDivider) sidebarDivider.classList.add('hidden');
+                btnToggleSidebarTOC.classList.remove('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
+            } else {
+                sidebarTOC.classList.remove('hidden');
+                if (sidebarDivider) sidebarDivider.classList.remove('hidden');
+                btnToggleSidebarTOC.classList.add('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
+            }
+
+            if (window.innerWidth < 768) {
+                setView('editor');
+            } else {
+                setView('split');
+            }
+
+            setupCustomTooltipSystem();
+            renderMarkdown();
+            updateLineNumbersUI();
+            updateSelectedLineUI();
+            setupDraggableModal();
+            setupGlobalKeyListeners();
+            setupSidebarResizer();
+            updateReloadButtonUI();
+            console.log("[NovaMD Debug] Workspace configuration setup complete.");
+        }
+
+        // הגדרת מערכת בועות חיווי מותאמות אישית עם השהיה של שנייה (1-Second delayed Tooltips)
+        function setupCustomTooltipSystem() {
+            document.addEventListener('mouseover', (e) => {
+                const target = e.target.closest('[data-tooltip]');
+                if (!target) return;
+
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = setTimeout(() => {
+                    const text = target.getAttribute('data-tooltip');
+                    if (!text) return;
+
+                    globalTooltip.innerText = text;
+                    globalTooltip.classList.remove('hidden');
+                    
+                    const rect = target.getBoundingClientRect();
+                    let top = rect.bottom + 8;
+                    let left = rect.left + (rect.width / 2);
+                    
+                    globalTooltip.style.top = `${top}px`;
+                    globalTooltip.style.left = `${left}px`;
+                    globalTooltip.style.transform = 'translateX(-50%)';
+                    
+                    const tooltipWidth = globalTooltip.offsetWidth;
+                    if (left + (tooltipWidth / 2) > window.innerWidth) {
+                        globalTooltip.style.left = `${window.innerWidth - (tooltipWidth / 2) - 16}px`;
+                    }
+                    if (left - (tooltipWidth / 2) < 0) {
+                        globalTooltip.style.left = `${(tooltipWidth / 2) + 16}px`;
+                    }
+                    const tooltipHeight = globalTooltip.offsetHeight;
+                    if (top + tooltipHeight > window.innerHeight) {
+                        globalTooltip.style.top = `${rect.top - tooltipHeight - 8}px`;
+                    }
+                    console.log("[NovaMD Debug] Rendered delayed custom tooltip: '" + text + "'");
+                }, 1000); 
             });
 
-            const highlightTarget = (mode === 'editor') ? toggleEditor : (mode === 'preview' ? togglePreview : toggleSplit);
-            if (highlightTarget) {
-                highlightTarget.classList.add(...activeClass);
-                highlightTarget.classList.remove(...inactiveClass);
-            }
+            document.addEventListener('mouseout', (e) => {
+                const target = e.target.closest('[data-tooltip]');
+                if (!target) return;
 
-            if (mode === 'editor') {
-                editorContainer.classList.remove('hidden');
-                editorContainer.style.width = '100%';
-                previewContainer.classList.add('hidden');
-                workspaceDivider.classList.add('hidden');
-            } 
-            else if (mode === 'preview') {
-                previewContainer.classList.remove('hidden');
-                previewContainer.style.width = '100%';
-                editorContainer.classList.add('hidden');
-                workspaceDivider.classList.add('hidden');
-                renderMarkdown(); // רינדור מחדש כדי להשלים דיאגרמות שהושהו
-            } 
-            else { 
-                editorContainer.classList.remove('hidden');
-                editorContainer.style.width = `${splitPercentage}%`;
-                previewContainer.classList.remove('hidden');
-                previewContainer.style.width = ''; 
-                workspaceDivider.classList.remove('hidden');
-                renderMarkdown(); // רינדור מחדש כדי להשלים דיאגרמות שהושהו
-            }
+                clearTimeout(tooltipTimeout);
+                globalTooltip.classList.add('hidden');
+            });
         }
 
-        // מצב כהה (enableDarkMode)
-        function enableDarkMode() {
-            console.log("[NovaMD Debug] Enabling dark theme mode.");
-            document.documentElement.classList.add('dark');
-            if (iconSun && iconMoon) {
-                iconSun.classList.remove('hidden');
-                iconMoon.classList.add('hidden');
-            }
-            theme = 'dark';
-            localStorage.setItem('theme', 'dark');
-            if (window.mermaid) {
-                mermaid.initialize({ theme: 'dark' });
-                renderMarkdown();
-            }
+        // הגדרת מערכת גרירה חופשית עבור תיבת ההערות (Draggable Comment Modal Card)
+        function setupDraggableModal() {
+            promptDragHandle.addEventListener('mousedown', startModalDrag);
+            promptDragHandle.addEventListener('touchstart', startModalDrag, { passive: true });
         }
 
-        // מצב בהיר (disableDarkMode)
-        function disableDarkMode() {
-            console.log("[NovaMD Debug] Disabling dark theme mode.");
-            document.documentElement.classList.remove('dark');
-            if (iconSun && iconMoon) {
-                iconSun.classList.add('hidden');
-                iconMoon.classList.remove('hidden');
-            }
-            theme = 'light';
-            localStorage.setItem('theme', 'light');
-            if (window.mermaid) {
-                mermaid.initialize({ theme: 'default' });
-                renderMarkdown();
-            }
-        }
-
-        // NEW: Restored jumpToLine function to fix clicking on Sidebar/Modal TOC nodes
-        function jumpToLine(lineNum) {
-            selectLine(lineNum);
-            console.log("[NovaMD Debug] TOC jump triggered to line #" + lineNum);
+        function startModalDrag(e) {
+            if (e.type === 'mousedown' && e.button !== 0) return;
             
-            const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
-            if (targetEl) {
-                targetEl.scrollIntoView({ behavior: 'instant', block: 'start' });
-            }
+            isDraggingModal = true;
+            console.log("[NovaMD Debug] User began dragging the comment dialog card.");
             
-            const lines = editor.value.split(/\r?\n/);
-            const textHeight = editor.scrollHeight;
-            const totalLines = lines.length;
-            const percentage = (lineNum - 1) / totalLines;
-            editor.scrollTop = percentage * textHeight - (editor.clientHeight / 3);
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
             
-            // Close standard modal if opened
-            if (tocModal && !tocModal.classList.contains('hidden')) {
-                closeTOCModal();
-            }
-            showToast(`Jumped to Heading #${lineNum}`);
+            modalStartMouseX = clientX;
+            modalStartMouseY = clientY;
+            
+            const rect = promptCard.getBoundingClientRect();
+            modalStartLeft = rect.left;
+            modalStartTop = rect.top;
+            
+            document.addEventListener('mousemove', handleModalDrag);
+            document.addEventListener('touchmove', handleModalDrag, { passive: false });
+            document.addEventListener('mouseup', stopModalDrag);
+            document.addEventListener('touchend', stopModalDrag);
         }
 
-        // NEW: Restored the renderMarkdown function responsible for parsing raw document lines and generating the interactive preview
+        function handleModalDrag(e) {
+            if (!isDraggingModal) return;
+            if (e.cancelable) e.preventDefault();
+            
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            
+            const deltaX = clientX - modalStartMouseX;
+            const deltaY = clientY - modalStartMouseY;
+            
+            let newLeft = modalStartLeft + deltaX;
+            let newTop = modalStartTop + deltaY;
+            
+            const rect = promptCard.getBoundingClientRect();
+            const maxLeft = window.innerWidth - rect.width;
+            const maxTop = window.innerHeight - rect.height;
+            
+            if (newLeft < 0) newLeft = 0;
+            if (newLeft > maxLeft) newLeft = maxLeft;
+            if (newTop < 0) newTop = 0;
+            if (newTop > maxTop) newTop = maxTop;
+            
+            promptCard.style.left = `${newLeft}px`;
+            promptCard.style.top = `${newTop}px`;
+        }
+
+        function stopModalDrag() {
+            if (!isDraggingModal) return;
+            isDraggingModal = false;
+            console.log("[NovaMD Debug] User stopped dragging the comment dialog card.");
+            
+            document.removeEventListener('mousemove', handleModalDrag);
+            document.removeEventListener('touchmove', handleModalDrag);
+            document.removeEventListener('mouseup', stopModalDrag);
+            document.removeEventListener('touchend', stopModalDrag);
+        }
+
+        // הגדרת מאזין מקלדת גלובלי לסגירת מודאלים בלחיצה על ESC
+        function setupGlobalKeyListeners() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    console.log("[NovaMD Debug] Escape (ESC) key pressed. Closing open modals.");
+                    
+                    if (viewCommentsModal && !viewCommentsModal.classList.contains('hidden')) {
+                        toggleCommentsModal();
+                    }
+                    if (promptModal && !promptModal.classList.contains('hidden')) {
+                        closePromptModal();
+                    }
+                    if (tocModal && !tocModal.classList.contains('hidden')) {
+                        closeTOCModal();
+                    }
+                    if (confirmModal && !confirmModal.classList.contains('hidden')) {
+                        closeConfirmModal();
+                    }
+                }
+            });
+        }
+
+        // סגירת מודאל ההערות על ידי לחיצה ברקע השקוף
+        promptModal.addEventListener('click', (e) => {
+            if (e.target === promptModal) {
+                console.log("[NovaMD Debug] Transparent backdrop clicked, closing comment modal.");
+                closePromptModal();
+            }
+        });
+
+        // פונקציית הרינדור המרכזית - שורה אחר שורה עם הסרת תווים מיוחדים (\r) לפתרון שגיאות Mermaid
         function renderMarkdown() {
             const rawText = editor.value;
             const lines = rawText.split(/\r?\n/);
             console.log("[NovaMD Debug] Starting rendering of " + lines.length + " document lines...");
             let html = '';
-            let inCodeBlock = false;
 
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i];
                 const lineNumber = i + 1;
 
-                // 1. Mermaid Code Block Detector FIRST (Must be checked BEFORE isCodeFence toggles inCodeBlock)
-                if (!inCodeBlock && line.trim().startsWith('```mermaid')) {
-                    let mermaidCodeLines = [];
+                // 1. Unified Code Block Parser (matches any code block starting with ```)
+                if (line.trim().startsWith('```')) {
+                    const firstLineTrimmed = line.trim();
+                    const codeLanguage = firstLineTrimmed.slice(3).split(' ')[0] || '';
+                    
                     let j = i + 1;
                     while (j < lines.length && !lines[j].trim().startsWith('```')) {
-                        mermaidCodeLines.push(lines[j]);
                         j++;
                     }
                     
-                    // פילטר חכם לניקוי שורות ריקות מובילות בתוך הדיאגרמה למניעת UnknownDiagramError
-                    let firstNonEmptyIndex = 0;
-                    while (firstNonEmptyIndex < mermaidCodeLines.length && mermaidCodeLines[firstNonEmptyIndex].trim() === '') {
-                        firstNonEmptyIndex++;
-                    }
-                    const cleanCodeLines = mermaidCodeLines.slice(firstNonEmptyIndex);
-                    
-                    // Safely escape inline semicolons (;) that are NOT statement terminators as HTML entities (&#59;) to prevent parsing errors
-                    const escapedCodeLines = cleanCodeLines.map(rowLine => rowLine.replace(/;(?!\s*$)/g, '&#59;'));
-                    const mermaidCode = escapedCodeLines.join('\n');
-                    const blockLineCount = j - i + 1;
-
-                    let dotIndicator = '';
-                    if (comments[lineNumber]) {
-                        const commentVal = comments[lineNumber];
-                        dotIndicator = `
-                            <span class="w-3 h-3 rounded-full bg-indigo-500 dark:bg-indigo-400 border border-white dark:border-slate-950 shadow animate-pulse shrink-0 inline-block" 
-                                  title="Comment: ${escapeHtml(commentVal)}"></span>
-                        `;
-                    }
-
-                    const highlightClasses = (lineNumber === selectedLineNumber)
-                        ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-500'
-                        : 'border-transparent';
-
-                    // שימוש ב data-code מקודד כדי למנוע שיבושי תווים
-                    html += `
-                        <div class="group relative flex items-start py-3 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
-                             data-line="${lineNumber}" data-line-span="${blockLineCount}">
-                            <div class="w-14 flex items-center shrink-0 select-none mr-2 gap-1.5 justify-start">
-                                <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${lineNumber}</span>
-                                <div class="w-4 h-4 flex items-center justify-center shrink-0">
-                                    ${dotIndicator}
-                                    </div>
-                                    </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="mermaid text-center overflow-x-auto select-none" dir="ltr" id="mermaid-render-${lineNumber}" data-code="${encodeURIComponent(mermaidCode)}"></div>
-                            </div>
-                        </div>
-                    `;
-
-                    i = j < lines.length ? j : lines.length;
-                    continue;
-                }
-
-                // 2. Standard highlight.js Unified Code Block Detector (Prevents splitting typescript blocks)
-                if (!inCodeBlock && line.trim().startsWith('```')) {
-                    const blockLanguage = line.trim().slice(3).split(' ')[0] || 'plaintext';
-                    let codeLines = [];
-                    let j = i + 1;
-                    while (j < lines.length && !lines[j].trim().startsWith('```')) {
-                        codeLines.push(lines[j]);
-                        j++;
-                    }
-
-                    const rawBlockCode = codeLines.join('\n');
                     const blockLineCount = (j < lines.length ? j : lines.length - 1) - i + 1;
+                    const blockLines = lines.slice(i, i + blockLineCount);
+                    let blockHtml = '';
 
-                    // Highlight the entire code block together
-                    let highlighted = '';
-                    try {
-                        if (blockLanguage && hljs.getLanguage(blockLanguage)) {
-                            highlighted = hljs.highlight(rawBlockCode, { language: blockLanguage }).value;
-                        } else {
-                            highlighted = hljs.highlightAuto(rawBlockCode).value;
+                    if (codeLanguage === 'mermaid') {
+                        // Gather mermaid content lines inside block (omitting wrapper fences)
+                        let mermaidCodeLines = blockLines.slice(1, blockLines.length - (j < lines.length ? 1 : 0));
+                        
+                        // פילטר חכם לניקוי שורות ריקות מובילות בתוך הדיאגרמה למניעת UnknownDiagramError
+                        let firstNonEmptyIndex = 0;
+                        while (firstNonEmptyIndex < mermaidCodeLines.length && mermaidCodeLines[firstNonEmptyIndex].trim() === '') {
+                            firstNonEmptyIndex++;
                         }
-                    } catch (e) {
-                        highlighted = escapeHtml(rawBlockCode);
+                        const cleanCodeLines = mermaidCodeLines.slice(firstNonEmptyIndex);
+                        
+                        // Safely escape inline semicolons (;) that are NOT statement terminators as HTML entities (&#59;) to prevent parsing errors
+                        const escapedCodeLines = cleanCodeLines.map(rowLine => rowLine.replace(/;(?!\s*$)/g, '&#59;'));
+                        const mermaidCode = escapedCodeLines.join('\n');
+                        
+                        blockHtml = `<div class="mermaid text-center overflow-x-auto select-none" dir="ltr" id="mermaid-render-${lineNumber}" data-code="${encodeURIComponent(mermaidCode)}"></div>`;
+                    } else {
+                        // Standard syntax highlighting code block (omitting wrapper fences for hljs parsing)
+                        let codeLines = blockLines.slice(1, blockLines.length - (j < lines.length ? 1 : 0));
+                        const blockContent = codeLines.join('\n');
+                        
+                        let highlighted = '';
+                        try {
+                            if (codeLanguage && hljs.getLanguage(codeLanguage)) {
+                                highlighted = hljs.highlight(blockContent, { language: codeLanguage }).value;
+                            } else {
+                                highlighted = hljs.highlightAuto(blockContent).value;
+                            }
+                        } catch (e) {
+                            highlighted = escapeHtml(blockContent);
+                        }
+                        
+                        blockHtml = `<pre><code class="hljs ${codeLanguage}">${highlighted || '&nbsp;'}</code></pre>`;
                     }
 
                     let dotIndicator = '';
@@ -1227,28 +1335,27 @@ Use nested bullet outlines for organizing files:
                     html += `
                         <div class="group relative flex items-start py-3 px-4 hover:bg-slate-100/30 dark:hover:bg-slate-900/10 rounded-lg transition-all duration-150 border-l-4 ${highlightClasses} border-b border-slate-100/40 dark:border-slate-800/20 cursor-pointer" 
                              data-line="${lineNumber}" data-line-span="${blockLineCount}">
-                            <!-- Line Metric column -->
                             <div class="w-14 flex items-center shrink-0 select-none mr-2 gap-1.5 justify-start">
                                 <span class="line-number-span text-xs font-mono text-slate-300 dark:text-slate-600 w-6 text-right">${lineNumber}</span>
                                 <div class="w-4 h-4 flex items-center justify-center shrink-0">
                                     ${dotIndicator}
                                 </div>
                             </div>
-                            <!-- Unified Code element block container -->
                             <div class="flex-1 min-w-0">
-                                <pre class="m-0 p-4 rounded-xl bg-slate-950 text-slate-100 overflow-x-auto"><code class="hljs ${blockLanguage} font-mono text-xs block whitespace-pre">${highlighted || '&nbsp;'}</code></pre>
+                                <div class="markdown-body text-slate-800 dark:text-slate-200" dir="auto">
+                                    ${blockHtml}
+                                </div>
                             </div>
                         </div>
                     `;
 
-                    // Advance loop index past closing block boundary
                     i = j < lines.length ? j : lines.length;
                     continue;
                 }
 
                 // GFM Table parsing logic - streamlined to prevent recursion
                 let isTable = false;
-                if (!inCodeBlock && i + 1 < lines.length) {
+                if (i + 1 < lines.length) {
                     const nextLine = lines[i+1].trim();
                     const isDelimiter = nextLine.startsWith('|') && /^\|[\|:\-\s]+$/.test(nextLine);
                     if (isTableLine(line) && isDelimiter) {
@@ -1338,7 +1445,7 @@ Use nested bullet outlines for organizing files:
                         });
 
                         table.querySelectorAll('thead th:not(:first-child)').forEach(th => {
-                            th.className = "px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200/45 dark:border-slate-800";
+                            th.className = "px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800";
                             th.setAttribute('dir', 'auto');
                         });
 
@@ -1348,7 +1455,7 @@ Use nested bullet outlines for organizing files:
                         });
 
                         const wrapperDiv = document.createElement('div');
-                        wrapperDiv.className = "my-4 overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm bg-white dark:bg-slate-950 select-none";
+                        wrapperDiv.className = "my-4 overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm bg-white dark:bg-slate-955 select-none";
                         wrapperDiv.appendChild(table);
 
                         html += wrapperDiv.outerHTML;
@@ -1417,7 +1524,7 @@ Use nested bullet outlines for organizing files:
                     mermaidDivs.forEach(div => {
                         div.innerHTML = `
                             <div class="p-4 text-xs text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center select-none font-medium flex items-center justify-center gap-2">
-                                <svg class="animate-spin h-3.5 w-3.5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg class="animate-spin h-3.5 w-3.5 text-indigo-500" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
@@ -1446,14 +1553,13 @@ Use nested bullet outlines for organizing files:
                         });
                         console.log("[NovaMD Debug] Mermaid block on line " + div.id + " rendered successfully.");
                     } catch (err) {
-                        // כתיבת השגיאה לקונסולה כפי שנתבקש
                         console.error("[NovaMD Mermaid Error for line " + div.id + "]:", err);
                         
                         // הצגת כרטיסיית שגיאה מעוצבת וחסינה במקום לשבור את הרינדור הכללי
                         div.innerHTML = `
                             <div class="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl text-red-600 dark:text-red-400 text-xs text-left font-mono my-2 select-text" dir="ltr">
                                 <div class="flex items-center gap-2 font-bold mb-1.5 text-red-700 dark:text-red-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
                                     <span>Mermaid Syntax Error Detected</span>
@@ -1471,10 +1577,401 @@ Use nested bullet outlines for organizing files:
             setTimeout(updateActiveHeadingContext, 50);
         }
 
-        // Set up collapsible Sidebar TOC configuration state (Default: Visible)
-        const savedSidebarTOC = localStorage.getItem('novamd-show-sidebar-toc');
-        // We will read and set sidebarTOC during app initialization
-        
+        // שינוי תצוגת מספרי השורות בשורה/הסתרה
+        function toggleLineNumbers() {
+            showLineNumbers = !showLineNumbers;
+            console.log("[NovaMD Debug] Toggled line numbers display. Now: " + showLineNumbers);
+            localStorage.setItem('novamd-show-linenums', showLineNumbers);
+            updateLineNumbersUI();
+        }
+
+        function updateLineNumbersUI() {
+            const previewEl = document.getElementById('preview');
+            const toggleBtn = document.getElementById('btn-toggle-linenums');
+            
+            if (showLineNumbers) {
+                previewEl.classList.add('show-line-numbers');
+                toggleBtn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+                toggleBtn.classList.remove('bg-slate-100', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400', 'border-slate-200', 'dark:border-slate-800');
+            } else {
+                previewEl.classList.remove('show-line-numbers');
+                toggleBtn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+                toggleBtn.classList.add('bg-slate-100', 'dark:bg-slate-900', 'text-slate-600', 'dark:text-slate-400', 'border-slate-200', 'dark:border-slate-800');
+            }
+        }
+
+        // סימון ובחירת שורה במסך התצוגה המקדימה
+        function selectLine(lineNumber) {
+            selectedLineNumber = lineNumber;
+            console.log("[NovaMD Debug] Selected Line: #" + lineNumber);
+            
+            document.querySelectorAll('[data-line]').forEach(el => {
+                const currentNum = parseInt(el.getAttribute('data-line'));
+                if (currentNum === selectedLineNumber) {
+                    el.classList.add('bg-indigo-50/40', 'dark:bg-indigo-950/20', 'border-indigo-500');
+                    el.classList.remove('border-transparent');
+                } else {
+                    el.classList.remove('bg-indigo-50/40', 'dark:bg-indigo-950/20', 'border-indigo-500');
+                    el.classList.add('border-transparent');
+                }
+            });
+
+            updateSelectedLineUI();
+        }
+
+        // עדכון כיתוב השורה הנוכחית בסרגל הכלים
+        function updateSelectedLineUI() {
+            selectedLineLabel.innerHTML = `Line <span class="text-indigo-600 dark:text-indigo-400 font-bold font-mono">#${selectedLineNumber}</span>`;
+        }
+
+        function commentSelectedLine() {
+            console.log("[NovaMD Debug] Commenting action triggered on selected line: #" + selectedLineNumber);
+            triggerAddComment(selectedLineNumber);
+        }
+
+        // הפעלת פאנל הוספת ההערה
+        function triggerAddComment(lineNum) {
+            activeInputLineNum = lineNum;
+            const existingComment = comments[lineNum] || '';
+            console.log("[NovaMD Debug] Displaying comment input modal for line #" + lineNum);
+            
+            promptSubtitle.innerText = `Add review comment / feedback for Line ${lineNum}`;
+            promptInput.value = existingComment;
+
+            if (existingComment.trim() !== '') {
+                promptBtnDelete.classList.remove('hidden');
+                promptBtnDelete.onclick = () => {
+                    triggerDeleteComment(lineNum);
+                    closePromptModal();
+                };
+            } else {
+                promptBtnDelete.classList.add('hidden');
+            }
+
+            // קביעת מיקום ממורכז התחלתי לחלון המרחף על גבי המסך בכל פתיחה
+            const cardWidth = Math.min(448, window.innerWidth - 32);
+            const cardHeight = 280; 
+            const initialLeft = (window.innerWidth - cardWidth) / 2;
+            const initialTop = (window.innerHeight - cardHeight) / 2;
+
+            promptCard.style.left = `${initialLeft}px`;
+            promptCard.style.top = `${initialTop}px`;
+
+            promptModal.classList.remove('hidden');
+            setTimeout(() => {
+                promptModal.classList.remove('opacity-0');
+                promptCard.classList.remove('scale-95');
+                promptCard.classList.add('scale-100');
+                promptInput.focus();
+                promptInput.select();
+            }, 15);
+        }
+
+        // Close the review comment popup
+        function closePromptModal() {
+            console.log("[NovaMD Debug] Closing comment input modal.");
+            promptModal.classList.add('opacity-0');
+            promptCard.classList.remove('scale-100');
+            promptCard.classList.add('scale-95');
+            setTimeout(() => {
+                promptModal.classList.add('hidden');
+            }, 180);
+            activeInputLineNum = null;
+        }
+
+        function savePromptModal() {
+            if (activeInputLineNum === null) return;
+            const value = promptInput.value;
+
+            if (value.trim() === '') {
+                delete comments[activeInputLineNum];
+                console.log("[NovaMD Debug] Cleared comment for line #" + activeInputLineNum);
+            } else {
+                comments[activeInputLineNum] = value;
+                console.log("[NovaMD Debug] Saved comment for line #" + activeInputLineNum + ": " + value);
+            }
+
+            localStorage.setItem('novamd-comments', JSON.stringify(comments));
+            renderMarkdown();
+            closePromptModal();
+            showToast("Comment saved!");
+        }
+
+        // מחיקת הערה
+        function triggerDeleteComment(lineNum) {
+            delete comments[lineNum];
+            console.log("[NovaMD Debug] Removed comment for line #" + lineNum);
+            localStorage.setItem('novamd-comments', JSON.stringify(comments));
+            renderMarkdown();
+            showToast("Comment removed.");
+        }
+
+        // פתיחת חלון האישור המותאם למחיקת כל ההערות במסמך (Acknowledge Confirm Modal)
+        function clearAllCommentsWithConfirm() {
+            console.log("[NovaMD Debug] Triggering Clear Comments custom confirm dialog.");
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                confirmModal.classList.remove('opacity-0');
+                confirmModal.querySelector('div').classList.remove('scale-95');
+                confirmModal.querySelector('div').classList.add('scale-100');
+            }, 15);
+        }
+
+        // סגירת מודאל אישור מחיקה
+        function closeConfirmModal() {
+            console.log("[NovaMD Debug] Closing Clear Comments custom confirm dialog.");
+            confirmModal.classList.add('opacity-0');
+            confirmModal.querySelector('div').classList.remove('scale-100');
+            confirmModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                confirmModal.classList.add('hidden');
+            }, 180);
+        }
+
+        function confirmClearAllComments() {
+            console.log("[NovaMD Debug] Confirmed: Clearing all review comments.");
+            comments = {};
+            localStorage.removeItem('novamd-comments');
+            renderMarkdown();
+            closeConfirmModal();
+            showToast("All review comments cleared.");
+        }
+
+        // העתקת תוכן השורה המבוקשת ללוח הגזירים
+        function copyLineContent(lineNum) {
+            const rawText = editor.value;
+            const lines = rawText.split(/\r?\n/);
+            
+            const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
+            if (targetEl && targetEl.hasAttribute('data-line-span')) {
+                const span = parseInt(targetEl.getAttribute('data-line-span'));
+                const blockLines = lines.slice(lineNum - 1, lineNum - 1 + span);
+                const blockContent = blockLines.join('\n');
+                console.log("[NovaMD Debug] Copying unified block content starting at line #" + lineNum);
+                executeCopy(blockContent, `Copied entire block starting at line ${lineNum}!`);
+                return;
+            }
+
+            const targetLine = lines[lineNum - 1] || '';
+            console.log("[NovaMD Debug] Copying raw text content of line #" + lineNum + ": " + targetLine);
+            executeCopy(targetLine, `Copied line ${lineNum} to clipboard!`);
+        }
+
+        function copySelectedLine() {
+            copyLineContent(selectedLineNumber);
+        }
+
+        // Genuinely reloads file directly from file picker's File handle stored in memory
+        function reloadCurrentFile() {
+            if (!lastLoadedFileReference) {
+                console.log("[NovaMD Debug] Reload triggered but no active File reference exists in-memory.");
+                showToast("No active file reference to reload! Select a file with 'Load File' first.");
+                return;
+            }
+
+            console.log(`[NovaMD Debug] Initializing hot reload sequence for file "${lastLoadedFileReference.name}"`);
+            const reader = new FileReader();
+
+            // Add reload spinning effect to icon
+            const btnReload = document.getElementById('btn-reload-file');
+            const svgIcon = btnReload.querySelector('svg');
+            svgIcon.classList.add('animate-spin');
+
+            reader.onload = function(e) {
+                const text = e.target.result;
+                console.log("[NovaMD Debug] File pointer re-read successfully. Syncing updates to editor workspace.");
+                
+                editor.value = text;
+                renderMarkdown();
+                localStorage.setItem('novamd-content', text);
+                
+                const loadTime = new Date().toLocaleTimeString();
+                localStorage.setItem('novamd-filename', lastLoadedFileReference.name);
+                localStorage.setItem('novamd-loadtime', loadTime);
+                updateHeaderTitle(lastLoadedFileReference.name, loadTime);
+
+                setTimeout(() => {
+                    svgIcon.classList.remove('animate-spin');
+                }, 400);
+
+                showToast(`Reloaded "${lastLoadedFileReference.name}" successfully!`);
+            };
+
+            reader.onerror = function() {
+                console.error("[NovaMD Debug] FileReader error on reload attempt:", reader.error);
+                svgIcon.classList.remove('animate-spin');
+                showToast("Failed to reload file from disk.");
+            };
+
+            reader.readAsText(lastLoadedFileReference);
+        }
+
+        // הדבקת טקסט מלוח הגזירים אל תוך העורך - מנקה קודם את הקיים לחלוטין (וחוסך הערות יתומות)
+        async function pasteFromClipboard() {
+            console.log("[NovaMD Debug] Paste and replace action triggered from system clipboard.");
+            try {
+                if (!navigator.clipboard || !navigator.clipboard.readText) {
+                    throw new Error("Clipboard reading is blocked or not supported by browser sandbox security.");
+                }
+                const text = await navigator.clipboard.readText();
+                if (text && text.trim() !== '') {
+                    // מחיקת כל תוכן ה-Markdown וההערות הישנות
+                    editor.value = '';
+                    comments = {};
+                    localStorage.removeItem('novamd-comments');
+                    console.log("[NovaMD Debug] Cleared old editor text and active review comments for replacement.");
+                    
+                    // הדבקה והחלה של הטקסט החדש
+                    editor.value = text;
+                    renderMarkdown();
+                    localStorage.setItem('novamd-content', text);
+                    selectLine(1);
+                    showToast("Workspace replaced with clipboard content!");
+                    console.log("[NovaMD Debug] Successfully replaced with " + text.length + " characters from clipboard.");
+
+                    // Update header title to signify pasted raw document flow
+                    const loadTime = new Date().toLocaleTimeString();
+                    localStorage.setItem('novamd-filename', 'Pasted Clipboard');
+                    localStorage.setItem('novamd-loadtime', loadTime);
+                    updateHeaderTitle('Pasted Clipboard', loadTime);
+
+                    // Reset loaded file handle reference on paste
+                    lastLoadedFileReference = null;
+                    updateReloadButtonUI();
+                } else {
+                    showToast("Clipboard is empty.");
+                    console.warn("[NovaMD Debug] Clipboard text read was empty.");
+                }
+            } catch (err) {
+                console.error("[NovaMD Debug] Clipboard paste failed:", err);
+                showToast("Sandbox blocked clipboard access. Use Ctrl+V inside editor instead.");
+            }
+        }
+
+        // מעבר מהיר לתחילת המסמך
+        function scrollToStart() {
+            console.log("[NovaMD Debug] Scrolling viewports back to start.");
+            editor.scrollTop = 0;
+            preview.scrollTop = 0;
+            selectLine(1);
+            showToast("Jumped to Start of document!");
+        }
+
+        // ניהול מודאל תוכן עניינים (TOC POPUP)
+        function toggleTOCModal() {
+            if (tocModal.classList.contains('hidden')) {
+                console.log("[NovaMD Debug] Generating and opening Table of Contents.");
+                generateTOC();
+                tocModal.classList.remove('hidden');
+                setTimeout(() => {
+                    tocModal.classList.remove('opacity-0');
+                    tocModal.querySelector('div').classList.remove('scale-95');
+                    tocModal.querySelector('div').classList.add('scale-100');
+                }, 15);
+            } else {
+                closeTOCModal();
+            }
+        }
+
+        function closeTOCModal() {
+            console.log("[NovaMD Debug] Closing Table of Contents modal.");
+            tocModal.classList.add('opacity-0');
+            tocModal.querySelector('div').classList.remove('scale-100');
+            tocModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                tocModal.classList.add('hidden');
+            }, 180);
+        }
+
+        // ייצור תוכן עניינים בצורה דינמית ותומכת סינון
+        function generateTOC() {
+            const text = editor.value;
+            const lines = text.split(/\r?\n/);
+            let html = '';
+            let headingCount = 0;
+
+            const searchInput = document.getElementById('toc-search');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+                const lineNum = i + 1;
+
+                if (trimmed.startsWith('# ')) {
+                    headingCount++;
+                    const headingText = trimmed.slice(2).trim();
+                    html += `
+                        <div onclick="jumpToLine(${lineNum})" data-toc-heading="${escapeHtml(headingText)}" class="py-2.5 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors border-l-4 border-indigo-500 pl-3">
+                            <span class="text-xs font-mono font-bold text-indigo-500/80 dark:text-indigo-400/80 shrink-0">#${lineNum}</span>
+                            <span class="text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
+                        </div>
+                    `;
+                } else if (trimmed.startsWith('## ')) {
+                    headingCount++;
+                    const headingText = trimmed.slice(3).trim();
+                    html += `
+                        <div onclick="jumpToLine(${lineNum})" data-toc-heading="${escapeHtml(headingText)}" class="py-2 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors pl-8">
+                            <span class="text-xs font-mono text-slate-450 dark:text-slate-500 shrink-0 font-bold font-mono">#${lineNum}</span>
+                            <span class="text-sm font-semibold text-slate-600 dark:text-slate-300 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
+                        </div>
+                    `;
+                } else if (trimmed.startsWith('### ')) {
+                    headingCount++;
+                    const headingText = trimmed.slice(4).trim();
+                    html += `
+                        <div onclick="jumpToLine(${lineNum})" data-toc-heading="${escapeHtml(headingText)}" class="py-1.5 px-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer flex items-center gap-2.5 transition-colors pl-12">
+                            <span class="text-xs font-mono text-slate-400 dark:text-slate-500 shrink-0 font-medium font-mono">#${lineNum}</span>
+                            <span class="text-xs font-normal text-slate-500 dark:text-slate-400 truncate flex-1" dir="auto">${escapeHtml(headingText)}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            if (headingCount === 0) {
+                html = `
+                    <div class="py-8 text-center text-slate-400 dark:text-slate-600">
+                        <p class="text-sm font-medium">No headings found in this document.</p>
+                    </div>
+                `;
+            }
+            tocList.innerHTML = html;
+        }
+
+        // סינון כותרות בתוך תוכן העניינים
+        function filterTOC(query) {
+            console.log("[NovaMD Debug] Filtering TOC list headings with query: '" + query + "'");
+            const normalizedQuery = query.toLowerCase().trim();
+            const tocItems = tocList.querySelectorAll('[data-toc-heading]');
+            let matchCount = 0;
+
+            tocItems.forEach(item => {
+                const headingText = item.getAttribute('data-toc-heading').toLowerCase();
+                if (headingText.includes(normalizedQuery)) {
+                    item.classList.remove('hidden');
+                    matchCount++;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            // ניהול מצב שאין תוצאות חיפוש
+            const emptyState = document.getElementById('toc-empty-search-state');
+            if (matchCount === 0 && normalizedQuery !== '') {
+                if (!emptyState) {
+                    const noMatchDiv = document.createElement('div');
+                    noMatchDiv.id = 'toc-empty-search-state';
+                    noMatchDiv.className = 'py-6 text-center text-slate-400 dark:text-slate-600 text-xs';
+                    noMatchDiv.innerHTML = `<p>No headings match "${escapeHtml(query)}"</p>`;
+                    tocList.appendChild(noMatchDiv);
+                }
+            } else if (emptyState) {
+                emptyState.remove();
+            }
+        }
+
         // Toggle Left-Side Sidebar TOC pane
         function toggleSidebarTOC() {
             const sidebar = document.getElementById('sidebar-toc');
@@ -1612,13 +2109,14 @@ Use nested bullet outlines for organizing files:
             localStorage.setItem('novamd-sidebar-width', newWidth);
         }
 
+        // End active drag
         function stopSidebarResize() {
             if (!isResizingSidebar) return;
             isResizingSidebar = false;
             console.log("[NovaMD Debug] User stopped dragging the sidebar TOC divider. Final width: " + sidebarWidth + "px");
 
             document.body.classList.remove('resizing-active');
-            sidebarDivider.classList.remove('bg-indigo-300', 'dark:bg-indigo-950/60');
+            sidebarDivider.classList.remove('bg-indigo-300', 'dark:bg-indigo-955/60');
 
             document.removeEventListener('mousemove', handleSidebarResize);
             document.removeEventListener('touchmove', handleSidebarResize);
@@ -1626,20 +2124,260 @@ Use nested bullet outlines for organizing files:
             document.removeEventListener('touchend', stopSidebarResize);
         }
 
-        // טעינה מחדש של קובץ המקור האחרון שנטען
-        function reloadLastFile() {
-            console.log("[NovaMD Debug] Reload last file action triggered.");
-            if (lastFileContent && lastFileName) {
-                // מחיקת שינויים והחזרת המקור
-                editor.value = lastFileContent;
-                renderMarkdown();
-                localStorage.setItem('novamd-content', lastFileContent);
-                selectLine(1);
-                showToast(`Reloaded "${lastFileName}" successfully!`);
-                console.log(`[NovaMD Debug] Successfully reloaded: "${lastFileName}"`);
+        // דילוג מהיר ומיידי למיקום שנבחר ללא גלילה מעכבת (Instant scroll)
+        function jumpToLine(lineNum) {
+            selectLine(lineNum);
+            console.log("[NovaMD Debug] TOC jump triggered to line #" + lineNum);
+            
+            const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'instant', block: 'start' });
+            }
+            
+            const lines = editor.value.split(/\r?\n/);
+            const textHeight = editor.scrollHeight;
+            const totalLines = lines.length;
+            const percentage = (lineNum - 1) / totalLines;
+            editor.scrollTop = percentage * textHeight - (editor.clientHeight / 3);
+            
+            closeTOCModal();
+            showToast(`Jumped to Heading #${lineNum}`);
+        }
+
+        // עדכון כותרת המדור הנוכחי בסרגל המיקום העליון
+        function updateActiveHeadingContext() {
+            const lineElements = preview.querySelectorAll('[data-line]');
+            let currentH1 = '';
+            let currentH2 = '';
+            const containerTop = preview.getBoundingClientRect().top;
+            
+            for (let el of lineElements) {
+                const rect = el.getBoundingClientRect();
+                if (rect.top - containerTop <= 110) { 
+                    const h1 = el.querySelector('h1');
+                    const h2 = el.querySelector('h2');
+                    if (h1) {
+                        currentH1 = h1.innerText;
+                        currentH2 = ''; 
+                    } else if (h2) {
+                        currentH2 = h2.innerText;
+                    }
+                } else {
+                    break; 
+                }
+            }
+            
+            if (!currentH1 && !currentH2) {
+                breadcrumbContent.innerHTML = `<span class="text-slate-400 dark:text-slate-500 italic">Document Start</span>`;
             } else {
-                showToast("No previously loaded file found to reload.");
-                console.warn("[NovaMD Debug] Reload triggered but no cached file exists.");
+                let breadcrumbHTML = '';
+                if (currentH1) {
+                    breadcrumbHTML += `<span class="text-indigo-600 dark:text-indigo-400 font-bold">${escapeHtml(currentH1)}</span>`;
+                }
+                if (currentH2) {
+                    breadcrumbHTML += `
+                        <span class="text-slate-300 dark:text-slate-700 font-bold">/</span>
+                        <span class="text-slate-700 dark:text-slate-250 font-semibold">${escapeHtml(currentH2)}</span>
+                    `;
+                }
+                breadcrumbContent.innerHTML = breadcrumbHTML;
+            }
+        }
+
+        // בניית מבנה ייצוא ההערות ללוח
+        function generateCommentsExportText() {
+            let exportBlocks = [];
+            const sortedLineNumbers = Object.keys(comments).map(Number).sort((a, b) => a - b);
+            const markdownLines = editor.value.split(/\r?\n/);
+            let commentIndex = 1;
+
+            for (let lineNum of sortedLineNumbers) {
+                const commentText = comments[lineNum];
+                // מניעת ייצוא שורות ריקות או שורות שסומנו אך לא נכתבה עבורן תגובה
+                if (commentText && commentText.trim() !== '') {
+                    const originalLine = markdownLines[lineNum - 1] || '';
+                    const block = `issue #${commentIndex}: line ${lineNum}\nOriginal text: ${originalLine}\nMy question/request: ${commentText}`;
+                    exportBlocks.push(block);
+                    commentIndex++;
+                }
+            }
+            console.log("[NovaMD Debug] Generated export output for " + exportBlocks.length + " non-empty comments.");
+            return exportBlocks.length > 0 ? exportBlocks.join('\n\n') + '\n' : '';
+        }
+
+        // העתקת כלל ההערות של ה-review ללוח
+        function copyAllComments() {
+            const commentsText = generateCommentsExportText();
+            if (commentsText.trim() === '') {
+                console.log("[NovaMD Debug] Copy comments triggered but no valid comments found.");
+                showToast("No comments have been added yet.");
+                return;
+            }
+            console.log("[NovaMD Debug] Copying all comments output to clipboard...");
+            executeCopy(commentsText, "Copied comments successfully!");
+        }
+
+        // חישוב נתונים כלליים (מילים, תווים, זמן קריאה)
+        function updateStats() {
+            const text = editor.value.trim();
+            const charCount = text.length;
+            const wordCount = text === "" ? 0 : text.split(/\s+/).filter(Boolean).length;
+            
+            statChars.innerText = charCount.toLocaleString();
+            statWords.innerText = wordCount.toLocaleString();
+            
+            const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
+            statRead.innerText = `${readMinutes} min`;
+        }
+
+        // מעבר תצוגות (פאנל עורך, חצוי, פריוויו בלבד)
+        function setView(mode) {
+            currentMode = mode;
+            console.log("[NovaMD Debug] Setting workspace view mode to: " + mode);
+            
+            const activeClass = ["bg-white", "dark:bg-slate-800", "text-indigo-600", "dark:text-indigo-400", "shadow-sm"];
+            const inactiveClass = ["text-slate-600", "dark:text-slate-400", "hover:text-slate-900", "dark:hover:text-white"];
+
+            [toggleEditor, toggleSplit, togglePreview].forEach(btn => {
+                if (btn) {
+                    activeClass.forEach(c => btn.classList.remove(c));
+                    inactiveClass.forEach(c => btn.classList.add(c));
+                }
+            });
+
+            const highlightTarget = (mode === 'editor') ? toggleEditor : (mode === 'preview' ? togglePreview : toggleSplit);
+            if (highlightTarget) {
+                highlightTarget.classList.add(...activeClass);
+                highlightTarget.classList.remove(...inactiveClass);
+            }
+
+            if (mode === 'editor') {
+                editorContainer.classList.remove('hidden');
+                editorContainer.style.width = '100%';
+                previewContainer.classList.add('hidden');
+                workspaceDivider.classList.add('hidden');
+            } 
+            else if (mode === 'preview') {
+                previewContainer.classList.remove('hidden');
+                previewContainer.style.width = '100%';
+                editorContainer.classList.add('hidden');
+                workspaceDivider.classList.add('hidden');
+                renderMarkdown(); // רינדור מחדש כדי להשלים דיאגרמות שהושהו
+            } 
+            else { 
+                editorContainer.classList.remove('hidden');
+                editorContainer.style.width = `${splitPercentage}%`;
+                previewContainer.classList.remove('hidden');
+                previewContainer.style.width = ''; 
+                workspaceDivider.classList.remove('hidden');
+                renderMarkdown(); // רינדור מחדש כדי להשלים דיאגרמות שהושהו
+            }
+        }
+
+        // סנכרון גלילה
+        function handleScroll(source, target) {
+            if (!syncScrollingActive) return;
+            if (isScrolling) {
+                isScrolling = false;
+                return;
+            }
+            
+            isScrolling = true;
+            const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
+            target.scrollTop = percentage * (target.scrollHeight - target.clientHeight);
+        }
+
+        // פקדי גרירה של חלוקת המסך
+        workspaceDivider.addEventListener('mousedown', startWorkspaceResize);
+        workspaceDivider.addEventListener('touchstart', startWorkspaceResize, { passive: true });
+
+        function startWorkspaceResize(e) {
+            if (currentMode !== 'split') return;
+            isResizing = true;
+            console.log("[NovaMD Debug] User began dragging the workspace divider pane.");
+            
+            document.body.classList.add('resizing-active');
+            workspaceDivider.classList.add('bg-indigo-200', 'dark:bg-indigo-950/60', 'border-indigo-500');
+
+            document.addEventListener('mousemove', handleWorkspaceResize);
+            document.addEventListener('touchmove', handleWorkspaceResize, { passive: false });
+            document.addEventListener('mouseup', stopWorkspaceResize);
+            document.addEventListener('touchend', stopWorkspaceResize);
+        }
+
+        function handleWorkspaceResize(e) {
+            if (!isResizing) return;
+            
+            let clientX;
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+            } else {
+                clientX = e.clientX;
+            }
+
+            const containerRect = workspace.getBoundingClientRect();
+            let percentage = ((clientX - containerRect.left) / containerRect.width) * 100;
+            
+            if (percentage < 15) percentage = 15;
+            if (percentage > 85) percentage = 85;
+
+            splitPercentage = percentage;
+            editorContainer.style.width = `${percentage}%`;
+            localStorage.setItem('novamd-split-percentage', percentage);
+        }
+
+        // Reset workspace resize styles
+        function stopWorkspaceResize() {
+            if (!isResizing) return;
+            isResizing = false;
+            console.log("[NovaMD Debug] User stopped dragging the workspace divider. Final split percentage: " + splitPercentage + "%");
+            
+            document.body.classList.remove('resizing-active');
+            workspaceDivider.classList.remove('bg-indigo-200', 'dark:bg-indigo-950/60', 'border-indigo-500');
+
+            document.removeEventListener('mousemove', handleWorkspaceResize);
+            document.removeEventListener('touchmove', handleWorkspaceResize);
+            document.removeEventListener('mouseup', stopWorkspaceResize);
+            document.removeEventListener('touchend', stopWorkspaceResize);
+        }
+
+        // חיווי הודעה קופצת
+        function showToast(message) {
+            toastMessage.innerText = message;
+            floatToast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            floatToast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                floatToast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
+                floatToast.classList.remove('opacity-100', 'translate-y-0');
+            }, 2500);
+        }
+
+        // מצב כהה
+        function enableDarkMode() {
+            console.log("[NovaMD Debug] Enabling dark theme mode.");
+            document.documentElement.classList.add('dark');
+            iconSun.classList.remove('hidden');
+            iconMoon.classList.add('hidden');
+            theme = 'dark';
+            localStorage.setItem('theme', 'dark');
+            if (window.mermaid) {
+                mermaid.initialize({ theme: 'dark' });
+                renderMarkdown();
+            }
+        }
+
+        // מצב בהיר
+        function disableDarkMode() {
+            console.log("[NovaMD Debug] Disabling dark theme mode.");
+            document.documentElement.classList.remove('dark');
+            iconSun.classList.add('hidden');
+            iconMoon.classList.remove('hidden');
+            theme = 'light';
+            localStorage.setItem('theme', 'light');
+            if (window.mermaid) {
+                mermaid.initialize({ theme: 'default' });
+                renderMarkdown();
             }
         }
 
@@ -1689,20 +2427,24 @@ Use nested bullet outlines for organizing files:
                 const text = e.target.result;
                 console.log("[NovaMD Debug] File content read successfully. Importing into source editor...");
                 
+                // Keep the file reference in local state to allow reloads
+                lastLoadedFileReference = file;
+                updateReloadButtonUI();
+
                 // עדכון העורך והרנדור
                 editor.value = text;
                 renderMarkdown();
                 localStorage.setItem('novamd-content', text);
-
-                // שמירה מקומית של פרטי הקובץ לטובת מנגנון ה-Reload
-                lastFileName = file.name;
-                lastFileContent = text;
-                localStorage.setItem('novamd-last-file-name', file.name);
-                localStorage.setItem('novamd-last-file-content', text);
                 
                 // איפוס בחירת השורה לשורה הראשונה כברירת מחדל
                 selectLine(1);
                 showToast(`Loaded "${file.name}" successfully!`);
+
+                // Capture, store, and display filename and loading timestamp
+                const loadTime = new Date().toLocaleTimeString();
+                localStorage.setItem('novamd-filename', file.name);
+                localStorage.setItem('novamd-loadtime', loadTime);
+                updateHeaderTitle(file.name, loadTime);
                 
                 // איפוס שדה הקלט כדי לאפשר טעינה חוזרת של אותו קובץ במידת הצורך
                 fileInput.value = '';
@@ -1717,114 +2459,89 @@ Use nested bullet outlines for organizing files:
             reader.readAsText(file);
         }
 
-        // אתחול האפליקציה בטעינה הראשונית
-        function initializeApp() {
-            console.log("[NovaMD Debug] Initializing review application core...");
-            
-            // בדיקת קיומן של פונקציות ערכת הנושא לפני הפעלה ומניעת קריסות ReferenceError
-            if (typeof enableDarkMode !== 'function' || typeof disableDarkMode !== 'function') {
-                console.error("[NovaMD Debug] Theme functions enableDarkMode/disableDarkMode are not loaded in the global scope!");
-                return;
-            }
-
-            if (localStorage.getItem('theme') === 'dark' || 
-                (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                console.log("[NovaMD Debug] Browser preferred or cached theme is dark.");
-                enableDarkMode();
+        // View Comments Panel Actions
+        function toggleCommentsModal() {
+            if (viewCommentsModal.classList.contains('hidden')) {
+                console.log("[NovaMD Debug] Opening Active Comments list modal.");
+                renderActiveCommentsList();
+                viewCommentsModal.classList.remove('hidden');
+                setTimeout(() => {
+                    viewCommentsModal.classList.remove('opacity-0');
+                    viewCommentsModal.querySelector('div').classList.remove('scale-95');
+                    viewCommentsModal.querySelector('div').classList.add('scale-100');
+                }, 15);
             } else {
-                console.log("[NovaMD Debug] Browser preferred or cached theme is light.");
-                disableDarkMode();
+                closeCommentsModal();
             }
+        }
 
-            if (window.mermaid) {
-                console.log("[NovaMD Debug] Initializing Mermaid subsystem...");
-                mermaid.initialize({
-                    startOnLoad: false,
-                    theme: theme === 'dark' ? 'dark' : 'default',
-                    securityLevel: 'loose'
-                });
-            }
+        // Fade out view comments list modal
+        function closeCommentsModal() {
+            console.log("[NovaMD Debug] Closing Active Comments list modal.");
+            viewCommentsModal.classList.add('opacity-0');
+            viewCommentsModal.querySelector('div').classList.remove('scale-100');
+            viewCommentsModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                viewCommentsModal.classList.add('hidden');
+            }, 180);
+        }
 
-            const savedContent = localStorage.getItem('novamd-content');
-            if (savedContent !== null) {
-                editor.value = savedContent;
-            } else {
-                editor.value = defaultSample;
-            }
+        function renderActiveCommentsList() {
+            const sortedLines = Object.keys(comments).map(Number).sort((a, b) => a - b);
+            const markdownLines = editor.value.split(/\r?\n/);
+            let html = '';
 
-            try {
-                const savedComments = localStorage.getItem('novamd-comments');
-                if (savedComments) {
-                    comments = JSON.parse(savedComments);
-                    console.log("[NovaMD Debug] Loaded " + Object.keys(comments).length + " saved comments from localStorage.");
+            let validCommentCount = 0;
+            for (let lineNum of sortedLines) {
+                const text = comments[lineNum];
+                if (text && text.trim() !== '') {
+                    validCommentCount++;
+                    const originalText = markdownLines[lineNum - 1] || '';
+                    html += `
+                        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col gap-2 relative group hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">Line #${lineNum}</span>
+                                <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="jumpToLine(${lineNum}); toggleCommentsModal();" class="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-850 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" title="Jump to Line">
+                                        <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                    <button onclick="triggerDeleteComment(${lineNum}); renderActiveCommentsList();" class="p-1 rounded hover:bg-red-50 text-slate-500 hover:text-red-650 transition-colors" title="Delete Comment">
+                                        <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-[11px] font-mono text-slate-400 dark:text-slate-500 truncate max-w-full bg-slate-100/60 dark:bg-slate-955/60 p-1.5 rounded-lg border border-slate-200/20" dir="auto">
+                                ${escapeHtml(originalText) || '<span class="italic text-slate-300">Empty or fence line</span>'}
+                            </div>
+                            <p class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-sans" dir="auto">
+                                ${escapeHtml(text)}
+                            </p>
+                        </div>
+                    `;
                 }
-            } catch (e) {
-                console.error("[NovaMD Debug] Could not parse saved comments", e);
             }
 
-            const savedTextSize = localStorage.getItem('novamd-text-size');
-            if (savedTextSize) {
-                document.documentElement.style.setProperty('--global-text-size', savedTextSize);
-                selectTextSize.value = savedTextSize;
-            }
-            
-            const savedEmptySize = localStorage.getItem('novamd-empty-size');
-            if (savedEmptySize) {
-                document.documentElement.style.setProperty('--empty-line-height', savedEmptySize);
-                selectEmptySize.value = savedEmptySize;
-            }
-
-            const savedSplitPercentage = localStorage.getItem('novamd-split-percentage');
-            if (savedSplitPercentage) {
-                splitPercentage = parseFloat(savedSplitPercentage);
+            if (validCommentCount === 0) {
+                html = `
+                    <div class="py-12 text-center text-slate-400 dark:text-slate-600 select-none">
+                        <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <p class="text-sm font-medium">No active review comments found in this session.</p>
+                    </div>
+                `;
             }
 
-            const savedLineNums = localStorage.getItem('novamd-show-linenums');
-            if (savedLineNums === 'true') {
-                showLineNumbers = true;
-            } else {
-                showLineNumbers = false;
-            }
+            modalCommentsList.innerHTML = html;
+        }
 
-            // Load saved Sidebar TOC panel width or default to 256px
-            const savedSidebarWidth = localStorage.getItem('novamd-sidebar-width');
-            if (savedSidebarWidth) {
-                sidebarWidth = parseInt(savedSidebarWidth);
-            } else {
-                sidebarWidth = 256;
-            }
-            sidebarTOC.style.width = `${sidebarWidth}px`;
-
-            // Initialize collapsible Sidebar TOC configuration state (Default: Visible)
-            const savedSidebarTOC = localStorage.getItem('novamd-show-sidebar-toc');
-            if (savedSidebarTOC === 'false') {
-                sidebarTOC.classList.add('hidden');
-                if (sidebarDivider) sidebarDivider.classList.add('hidden');
-                btnToggleSidebarTOC.classList.remove('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
-            } else {
-                sidebarTOC.classList.remove('hidden');
-                if (sidebarDivider) sidebarDivider.classList.remove('hidden');
-                btnToggleSidebarTOC.classList.add('bg-indigo-50', 'dark:bg-indigo-950/40', 'border-indigo-500');
-            }
-
-            // שחזור נתוני הקובץ האחרון שנטען
-            lastFileName = localStorage.getItem('novamd-last-file-name') || '';
-            lastFileContent = localStorage.getItem('novamd-last-file-content') || '';
-
-            if (window.innerWidth < 768) {
-                setView('editor');
-            } else {
-                setView('split');
-            }
-
-            setupCustomTooltipSystem();
-            renderMarkdown();
-            updateLineNumbersUI();
-            updateSelectedLineUI();
-            setupDraggableModal();
-            setupGlobalKeyListeners();
-            setupSidebarResizer();
-            console.log("[NovaMD Debug] Initialization finished successfully. Workspace mode: " + currentMode);
+        function copyAllCommentsFromModal() {
+            console.log("[NovaMD Debug] Copying comments from inside list modal.");
+            copyAllComments();
         }
 
         // מאזיני אירועים
@@ -1884,6 +2601,15 @@ Use nested bullet outlines for organizing files:
             showToast("Workspace and comments cleared.");
             editor.focus();
             console.log("[NovaMD Debug] Workspace and reviews cleared completely.");
+
+            // Clear stored filename metrics and reset headers
+            localStorage.removeItem('novamd-filename');
+            localStorage.removeItem('novamd-loadtime');
+            updateHeaderTitle(null, null);
+
+            // Clear loaded file references on total resets
+            lastLoadedFileReference = null;
+            updateReloadButtonUI();
         });
 
         btnTheme.addEventListener('click', () => {
