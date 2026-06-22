@@ -765,6 +765,38 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         </div>
     </div>
 
+    <!-- Browser Security Reload Recovery Modal -->
+    <div id="security-reload-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-955/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200">
+            <div class="flex items-start gap-3.5 mb-4">
+                <div class="bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 p-2.5 rounded-xl shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Browser Security Sandbox Shield</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium leading-relaxed">
+                        To protect your local privacy, modern browsers block web applications from reading files that have been modified externally without explicit user re-authorization.
+                    </p>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 font-semibold">
+                        Click below to safely re-authorize and instantly sync the updated content.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-2 shrink-0">
+                <button onclick="closeSecurityReloadModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors rounded-xl bg-slate-50 dark:bg-slate-800">Dismiss</button>
+                <button onclick="reauthorizeAndReload()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-colors flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Re-authorize & Sync
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Table of Contents (TOC) Modal Simulator -->
     <div id="toc-modal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-955/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-200 select-none">
         <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full mx-4 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 transform scale-95 transition-all duration-200 flex flex-col max-h-[75vh]">
@@ -847,6 +879,7 @@ NOVAMD CHANGELOG (GitHub Commit History Comment Block)
         const promptBtnDelete = document.getElementById('prompt-btn-delete');
 
         const confirmModal = document.getElementById('confirm-modal');
+        const securityReloadModal = document.getElementById('security-reload-modal');
 
         const selectedLineLabel = document.getElementById('selected-line-label');
         const toolbarBtnComment = document.getElementById('toolbar-btn-comment');
@@ -1246,6 +1279,9 @@ Use nested bullet outlines for organizing files:
                     }
                     if (confirmModal && !confirmModal.classList.contains('hidden')) {
                         closeConfirmModal();
+                    }
+                    if (securityReloadModal && !securityReloadModal.classList.contains('hidden')) {
+                        closeSecurityReloadModal();
                     }
                 }
             });
@@ -1737,28 +1773,29 @@ Use nested bullet outlines for organizing files:
             showToast("All review comments cleared.");
         }
 
-        // העתקת תוכן השורה המבוקשת ללוח הגזירים
-        function copyLineContent(lineNum) {
-            const rawText = editor.value;
-            const lines = rawText.split(/\r?\n/);
-            
-            const targetEl = preview.querySelector(`[data-line="${lineNum}"]`);
-            if (targetEl && targetEl.hasAttribute('data-line-span')) {
-                const span = parseInt(targetEl.getAttribute('data-line-span'));
-                const blockLines = lines.slice(lineNum - 1, lineNum - 1 + span);
-                const blockContent = blockLines.join('\n');
-                console.log("[NovaMD Debug] Copying unified block content starting at line #" + lineNum);
-                executeCopy(blockContent, `Copied entire block starting at line ${lineNum}!`);
-                return;
-            }
-
-            const targetLine = lines[lineNum - 1] || '';
-            console.log("[NovaMD Debug] Copying raw text content of line #" + lineNum + ": " + targetLine);
-            executeCopy(targetLine, `Copied line ${lineNum} to clipboard!`);
+        function showSecurityReloadModal(filename) {
+            console.log("[NovaMD Debug] Browser blocked file reload. Presenting security recovery dialogue.");
+            securityReloadModal.classList.remove('hidden');
+            setTimeout(() => {
+                securityReloadModal.classList.remove('opacity-0');
+                securityReloadModal.querySelector('div').classList.remove('scale-95');
+                securityReloadModal.querySelector('div').classList.add('scale-100');
+            }, 15);
         }
 
-        function copySelectedLine() {
-            copyLineContent(selectedLineNumber);
+        function closeSecurityReloadModal() {
+            console.log("[NovaMD Debug] Closing security recovery dialogue.");
+            securityReloadModal.classList.add('opacity-0');
+            securityReloadModal.querySelector('div').classList.remove('scale-100');
+            securityReloadModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                securityReloadModal.classList.add('hidden');
+            }, 180);
+        }
+
+        function reauthorizeAndReload() {
+            closeSecurityReloadModal();
+            triggerFileInput();
         }
 
         // Genuinely reloads file directly from file picker's File handle stored in memory
@@ -1798,9 +1835,16 @@ Use nested bullet outlines for organizing files:
             };
 
             reader.onerror = function() {
-                console.error("[NovaMD Debug] FileReader error on reload attempt:", reader.error);
+                const err = reader.error;
+                console.error("[NovaMD Debug] FileReader error on reload attempt:", err);
                 svgIcon.classList.remove('animate-spin');
-                showToast("Failed to reload file from disk.");
+                
+                if (err && (err.name === 'NotReadableError' || err.message.includes('permission') || err.message.includes('readable') || err.message.includes('changed'))) {
+                    console.warn("[NovaMD Debug] Security limitation triggered. Prompting guided file re-selection.");
+                    showSecurityReloadModal(lastLoadedFileReference.name);
+                } else {
+                    showToast("Failed to reload file from disk.");
+                }
             };
 
             reader.readAsText(lastLoadedFileReference);
