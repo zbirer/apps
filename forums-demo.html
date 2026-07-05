@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canopy Care — Community Forums</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #00A1B0;
+    --primary-dark: #33A2B3;
+    --secondary-bg: #E8F3F1;
+    --page-bg: #FBFBF9;
+    --card-bg: #FFFFFF;
+    --text-primary: #1E233E;
+    --text-secondary: #676A7B;
+    --border: #D6D6D6;
+    --divider: #E2E2E2;
+    --error: #FF3B30;
+    --warning: #FF9500;
+    --hero-gradient: linear-gradient(89.3deg, #D4EBDE 0%, #E8F3F1 100%);
+    --card-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--page-bg);
+    color: var(--text-primary);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1 { font-size: 32px; font-weight: 600; }
+  h2 { font-size: 24px; font-weight: 600; }
+  h3 { font-size: 18px; font-weight: 600; }
+  .container { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+
+  /* Header */
+  header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--divider);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header-inner {
+    max-width: 760px; margin: 0 auto; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .wordmark { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .wordmark span { color: var(--primary); font-weight: 600; }
+  nav { display: flex; gap: 20px; }
+  nav a {
+    color: var(--text-secondary); font-weight: 600; font-size: 15px;
+    padding: 6px 2px; border-bottom: 2px solid transparent;
+  }
+  nav a:hover { text-decoration: none; color: var(--text-primary); }
+  nav a.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* Hero */
+  .hero { background: var(--hero-gradient); padding: 36px 0 32px; }
+  .hero p { color: var(--text-secondary); margin-top: 8px; max-width: 560px; }
+
+  /* Safety banner */
+  .safety-banner {
+    background: #FFF4E5; border-left: 4px solid var(--warning);
+    border-radius: 12px; padding: 12px 16px; font-size: 14px;
+    color: var(--text-primary); margin: 16px 0;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card-bg); border-radius: 16px;
+    box-shadow: var(--card-shadow); padding: 20px; margin-bottom: 14px;
+  }
+  .forum-card { display: flex; gap: 16px; cursor: pointer; transition: all .2s ease-in-out; }
+  .forum-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.12); transform: translateY(-1px); }
+  .forum-icon { font-size: 28px; line-height: 1.2; }
+  .forum-card h3 { margin-bottom: 2px; }
+  .forum-card .desc { color: var(--text-secondary); font-size: 14px; }
+  .forum-card .meta { color: var(--text-secondary); font-size: 13px; margin-top: 8px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-block; border: none; cursor: pointer;
+    border-radius: 32px; height: 44px; padding: 0 24px;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    transition: all .2s ease-in-out;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-primary:disabled { background: var(--border); cursor: not-allowed; }
+  .btn-secondary { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-secondary:hover { background: var(--secondary-bg); }
+  .btn-small { height: 34px; padding: 0 16px; font-size: 13px; }
+
+  /* Inputs */
+  input[type="text"], textarea, select {
+    width: 100%; background: var(--page-bg);
+    border: 0.5px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-family: inherit; font-size: 15px;
+    color: var(--text-primary);
+    transition: border-color .2s ease-in-out, background-color .2s ease-in-out;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--primary);
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  .composer { border: 1px solid var(--divider); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--card-bg); }
+  .composer .row { margin-bottom: 10px; }
+  .composer label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+
+  /* Messages */
+  .breadcrumb { margin: 16px 0 4px; font-size: 14px; font-weight: 600; }
+  .forum-header { display: flex; gap: 12px; align-items: flex-start; margin: 8px 0 16px; }
+  .forum-header .desc { color: var(--text-secondary); font-size: 14px; }
+  .msg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff;
+  }
+  .author { font-weight: 600; font-size: 15px; }
+  .timestamp { color: var(--text-secondary); font-size: 13px; }
+  .badge-careteam {
+    background: var(--secondary-bg); color: #1C614C;
+    font-size: 12px; font-weight: 600; border-radius: 10px; padding: 2px 10px;
+  }
+  .tag-chip {
+    font-size: 12px; font-weight: 600; border-radius: 10px; padding: 2px 10px;
+    color: var(--text-primary); white-space: nowrap;
+  }
+  .msg-title { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .msg-body { font-size: 15px; }
+  .msg-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .replies { margin-top: 12px; border-left: 3px solid var(--divider); padding-left: 14px; }
+  .reply {
+    background: var(--page-bg); border-radius: 12px; padding: 12px 14px; margin-top: 8px; font-size: 14px;
+  }
+  .reply.careteam { background: var(--secondary-bg); }
+  .reply .msg-head { margin-bottom: 4px; }
+  .reply .avatar { width: 28px; height: 28px; font-size: 11px; }
+  .reply-composer { margin-top: 10px; display: none; }
+  .reply-composer.open { display: block; }
+  .reply-composer textarea { min-height: 60px; margin-bottom: 8px; }
+  .typing-indicator {
+    color: var(--text-secondary); font-size: 13px; font-style: italic;
+    margin-top: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .highlighted { outline: 2px solid var(--primary); }
+
+  /* AI panel */
+  .ai-panel {
+    background: var(--secondary-bg); border-radius: 12px;
+    padding: 14px 16px; margin-top: 12px; font-size: 14px;
+  }
+  .ai-panel.urgent { background: #fff; border: 2px solid var(--error); }
+  .ai-panel .ai-label { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .ai-panel.urgent .ai-label { color: var(--error); }
+  .ai-panel .ai-disclaimer { color: var(--text-secondary); font-size: 12px; margin-top: 10px; }
+  .chip {
+    display: inline-block; background: #fff; border: 1px solid var(--primary);
+    color: var(--primary); border-radius: 20px; padding: 5px 14px;
+    font-size: 13px; font-weight: 600; margin: 8px 8px 0 0;
+  }
+  .chip:hover { background: var(--secondary-bg); text-decoration: none; }
+  .dots { display: inline-flex; gap: 4px; padding: 4px 0; }
+  .dots span {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--primary);
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .dots span:nth-child(2) { animation-delay: .2s; }
+  .dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  /* Knowledge base */
+  .kb-toolbar { margin: 16px 0; }
+  .kb-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .kb-cat {
+    background: #fff; border: 1px solid var(--border); color: var(--text-secondary);
+    border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all .2s ease-in-out;
+  }
+  .kb-cat.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .article-card { cursor: pointer; transition: all .2s ease-in-out; }
+  .article-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+  .cat-chip {
+    display: inline-block; background: var(--secondary-bg); color: #1C614C;
+    font-size: 12px; font-weight: 600; border-radius: 10px; padding: 2px 10px; margin-bottom: 8px;
+  }
+  .article-card .summary { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+  .read-time { color: var(--text-secondary); font-size: 13px; margin-top: 8px; }
+  .article-body { margin-top: 12px; }
+  .article-body h3 { margin: 18px 0 6px; }
+  .article-body p { margin: 10px 0; }
+  .article-body ul { margin: 10px 0 10px 22px; }
+  .article-body li { margin-bottom: 6px; }
+  .byline { color: var(--text-secondary); font-size: 13px; margin-top: 6px; }
+  .callout {
+    background: var(--secondary-bg); border-left: 4px solid var(--primary);
+    border-radius: 12px; padding: 14px 16px; margin: 16px 0;
+  }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  footer {
+    border-top: 1px solid var(--divider); margin-top: 40px; padding: 20px 0 32px;
+    color: var(--text-secondary); font-size: 13px; text-align: center;
+  }
+  footer button {
+    background: none; border: none; color: var(--primary); font-family: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn:focus-visible, .kb-cat:focus-visible, .chip:focus-visible, a:focus-visible {
+    outline: 2px solid var(--primary); outline-offset: 2px;
+  }
+  @media (max-width: 480px) {
+    h1 { font-size: 26px; }
+    .header-inner { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="wordmark">Canopy <span>Care</span></div>
+    <nav aria-label="Main navigation">
+      <a href="#/" id="nav-forums">Forums</a>
+      <a href="#/kb" id="nav-kb">Knowledge Base</a>
+    </nav>
+  </div>
+</header>
+<div id="hero"></div>
+<main class="container" id="app"></main>
+<footer>
+  <div class="container">
+    This is a concept demo — no real patient data. This community doesn't replace medical advice.<br>
+    <button type="button" id="reset-demo">Reset demo</button>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+/* ============================= Seed data ============================= */
+
+const TAG_COLORS = {
+  'First chemo cycle': '#B4E08A',
+  'Brukinsa (oral)': '#FDD158',
+  'Radiation': '#FFAC7E',
+  'Immunotherapy': '#DEE2FD',
+  'Port placement': '#FFC2B5',
+  'Other': '#E2E2E2'
+};
+
+const SEED_FORUMS = [
+  {
+    id: 'f1', icon: '\u{1F33F}', name: 'Managing Chemotherapy Side Effects',
+    description: 'Nausea, fatigue, hair loss, mouth sores, neuropathy — share what’s helped you cope.',
+    messages: [
+      { id: 'f1m1', author: 'Maria G.', hoursAgo: 2, title: 'Nausea is worst on day 3 after infusion — anyone else?',
+        body: 'My first two days after infusion are okay, but day 3 hits me hard every cycle. I take the anti-nausea pills they gave me but I usually wait until I already feel sick. Is that normal timing for anyone else?',
+        replies: [
+          { id: 'f1m1r1', author: 'Tom R.', hoursAgo: 1, body: 'Same pattern for me, cycle after cycle. Two things helped: ginger tea in the morning and eating something small every couple of hours even when I don’t feel like it. An empty stomach makes it worse for me.' },
+          { id: 'f1m1r2', author: 'Priya S.', hoursAgo: 0.75, body: 'My infusion nurse drilled this into me: take the anti-nausea pills on the schedule you were given, before you feel sick — prevention works way better than rescue. It changed everything for me. I also record nausea in my weekly check-in so my team can adjust things if needed.' }
+        ] },
+      { id: 'f1m2', author: 'David L.', hoursAgo: 26, title: 'Tingling in my fingers and toes — is this neuropathy?',
+        body: 'Started noticing pins and needles in my fingertips this week, and my toes feel a little numb when I walk. Is this the neuropathy I was warned about? Does it go away?',
+        replies: [
+          { id: 'f1m2r1', author: 'Angela M.', hoursAgo: 24, body: 'Mine started exactly the same way. Report it right away — my nurse said catching it early matters, and after I did, my team adjusted my plan and it stopped getting worse. Meanwhile, protect your hands and feet: avoid very hot or cold water and be careful with sharp objects.' },
+          { id: 'f1m2r2', author: 'Priya S.', hoursAgo: 20, body: 'I’ve had it since cycle 4. Roomy shoes with cushioned soles made a big difference, and I stopped carrying hot mugs without a handle. Keep notes on when it happens — my doctor wanted the specifics at my next visit.' }
+        ] },
+      { id: 'f1m3', author: 'Susan K.', hoursAgo: 48, title: 'Mouth sores making it hard to eat anything',
+        body: 'I have three sores on the inside of my cheek and even soup hurts. Any tricks that actually work? I’m getting worried because I’m eating less and less.',
+        replies: [
+          { id: 'f1m3r1', author: 'Angela M.', hoursAgo: 44, body: 'Baking soda and salt rinse, several times a day — it’s boring but it works. Also chewing ice chips during my infusion seemed to prevent new ones. Skip anything acidic; tomato soup was a mistake I made once.' },
+          { id: 'f1m3r2', author: 'Robert P.', hoursAgo: 40, body: 'Skip anything with alcohol in it — regular mouthwash burned like crazy for me. My clinic prescribed a numbing rinse to use before meals and it gave me my dinners back; ask about it. And if it ever gets to where you can’t drink fluids, call your team the same day — I learned that one the hard way.' }
+        ] },
+      { id: 'f1m4', author: 'Robert P.', hoursAgo: 72, title: 'Fever of 100.6 tonight — should I wait until morning to call?',
+        body: 'I feel mostly fine, just warm and a bit shivery. My temp is 100.6°F. I don’t want to bother anyone at 9pm. Can it wait until the office opens?',
+        replies: [
+          { id: 'f1m4r1', author: 'Canopy Care Team', isCareTeam: true, hoursAgo: 71, body: 'Robert — please call your care team NOW, not in the morning. During treatment, a temperature of 100.4°F or higher is a fever that needs same-day attention, even at night. Practices have an after-hours line for exactly this. Don’t take fever reducers before you speak with them.' },
+          { id: 'f1m4r2', author: 'Robert P.', hoursAgo: 68, body: 'Update: I called, they had me come in, and I’m glad I did. Thank you for the push — lesson learned about the 100.4 rule.' }
+        ] },
+      { id: 'f1m5', author: 'Lena W.', hoursAgo: 120, title: 'Hair loss has started — tips for scalp care?',
+        body: 'Found a lot of hair on my pillow this morning. I knew it was coming but it still hit hard. What do you all do for scalp care and comfort?',
+        replies: [
+          { id: 'f1m5r1', author: 'Maria G.', hoursAgo: 96, body: 'A satin pillowcase stopped the itching for me, and soft cotton beanies at night. Cutting it short before it fell out made the process feel more on my terms. Sending you a hug — that morning is rough for everyone.' },
+          { id: 'f1m5r2', author: 'Nicole D.', hoursAgo: 96, body: 'One thing nobody warned me about: your scalp burns fast now. Sunscreen or a hat every single time you’re outside. And if you’re curious about cold capping for later cycles, ask your team whether it works with your treatment — a woman at my infusion center swears by it.' }
+        ] }
+    ]
+  },
+  {
+    id: 'f2', icon: '\u{1F48A}', name: 'Oral Cancer Medications',
+    description: 'Daily routines, missed doses, refills, and side effects of oral cancer medications.',
+    messages: [
+      { id: 'f2m1', author: 'James T.', hoursAgo: 4, title: 'Forgot my morning dose — should I double up tonight?',
+        body: 'Completely blanked this morning and only realized after lunch. Should I take two tonight to catch up, or just skip it? First time this has happened.',
+        replies: [
+          { id: 'f2m1r1', author: 'Diane F.', hoursAgo: 3, body: 'Don’t double up! My pharmacist’s rule: if it’s close to the next dose, skip the missed one and carry on as normal — but check what applies to your specific medication. I also log missed doses in my weekly check-in so it’s on my chart and nobody’s guessing.' },
+          { id: 'f2m1r2', author: 'Karen B.', hoursAgo: 2, body: 'Been there! A recurring phone alarm plus a weekly pill organizer ended my missed doses completely. I check the organizer at breakfast — if today’s slot is full, I know instantly.' }
+        ] },
+      { id: 'f2m2', author: 'Karen B.', hoursAgo: 24, title: 'What time of day do you take your pills?',
+        body: 'Curious what routines work for people. I take mine with breakfast so I never forget, but I’ve read some medications have food rules. How do you all time it?',
+        replies: [
+          { id: 'f2m2r1', author: 'James T.', hoursAgo: 22, body: 'Right after brushing my teeth in the morning — anchoring it to a habit I never skip was the trick for me.' },
+          { id: 'f2m2r2', author: 'Anna C.', hoursAgo: 20, body: 'Consistency is the whole game — same time every day. But read your medication guide: mine has to be on an empty stomach and my husband’s had to be with food. My pharmacist walked me through it in two minutes; worth the call.' }
+        ] },
+      { id: 'f2m3', author: 'Miguel A.', hoursAgo: 48, title: 'Refills through the specialty pharmacy take forever',
+        body: 'I almost ran out last month because the specialty pharmacy took nine days to ship my refill. Anyone found a way to make this less stressful?',
+        replies: [
+          { id: 'f2m3r1', author: 'Karen B.', hoursAgo: 46, body: 'Seven days before you run out — that’s the rule I live by after my own nine-day scare. Specialty pharmacies need time for prior authorizations. I flag the refill in my weekly Canopy check-in and the clinic gets it moving; haven’t cut it close since.' },
+          { id: 'f2m3r2', author: 'Diane F.', hoursAgo: 40, body: 'My pharmacy’s app lets me turn on auto-refill reminders and text alerts for shipping. Also, I keep a photo of my prescription label so I always have the Rx number handy when I call.' }
+        ] },
+      { id: 'f2m4', author: 'Diane F.', hoursAgo: 96, title: 'Mild diarrhea since starting my new medication',
+        body: 'About a week into my new pills and my stomach hasn’t settled. It’s manageable but annoying. Is this something that passes, and when should I actually worry?',
+        replies: [
+          { id: 'f2m4r1', author: 'James T.', hoursAgo: 94, body: 'Same thing my first three weeks. My nurse’s advice: drink a lot of fluids, report it in the check-in so they can track it, and call the same day if it’s more than four episodes in a day, there’s blood, or you feel dizzy. Mine settled down by week four.' },
+          { id: 'f2m4r2', author: 'Miguel A.', hoursAgo: 90, body: 'Bananas, rice, applesauce, toast — the BRAT foods — got me through the rough stretch. Hang in there.' }
+        ] },
+      { id: 'f2m5', author: 'Anna C.', hoursAgo: 144, title: 'How do you handle your meds when traveling?',
+        body: 'Visiting my daughter for a week. Nervous about taking my medication routine on the road. Any packing tips?',
+        replies: [
+          { id: 'f2m5r1', author: 'Karen B.', hoursAgo: 120, body: 'Always in my carry-on, never checked luggage, and always in the original labeled bottles. I also set my phone alarm to the schedule my doctor gave me.' },
+          { id: 'f2m5r2', author: 'Miguel A.', hoursAgo: 120, body: 'Pack a few extra days’ supply in case of delays, keep the pills at room temperature (not the glove box — I learned that in July), and carry a current medication list. And your weekly check-in works from anywhere, which honestly surprised me. Enjoy the visit!' }
+        ] }
+    ]
+  },
+  {
+    id: 'f3', icon: '\u{1F957}', name: 'Nutrition & Appetite During Treatment',
+    description: 'Eating when appetite is low, taste changes, food safety, and staying hydrated.',
+    messages: [
+      { id: 'f3m1', author: 'Tom R.', hoursAgo: 5, title: 'Everything tastes like metal — help',
+        body: 'Since my last cycle, water tastes like coins and my favorite foods are ruined. What actually helps with the metallic taste?',
+        replies: [
+          { id: 'f3m1r1', author: 'Susan K.', hoursAgo: 4, body: 'Plastic or bamboo utensils instead of metal forks — sounds silly, works immediately. Also lemon in everything, and marinated chicken instead of plain. Cold foods taste less metallic than hot ones for me.' },
+          { id: 'f3m1r2', author: 'Grace H.', hoursAgo: 3, body: 'Rinsing with a baking-soda solution before meals resets my palate a bit. And take heart — mine went back to normal a few weeks after treatment ended. If it starts cutting into how much you eat, mention it in your check-in so your team knows.' }
+        ] },
+      { id: 'f3m2', author: 'Grace H.', hoursAgo: 24, title: 'No appetite at all and I’m losing weight',
+        body: 'Food just doesn’t interest me anymore. I’ve lost 6 pounds in three weeks. My family is worried and honestly so am I.',
+        replies: [
+          { id: 'f3m2r1', author: 'Angela M.', hoursAgo: 22, body: 'Please tell your team about the 6 pounds — when I reported mine, they referred me to an oncology dietitian and she was a game changer. Her two rules: eat by the clock (something small every 2–3 hours, hunger won’t remind you), and make every bite high-protein and high-calorie.' },
+          { id: 'f3m2r2', author: 'Lena W.', hoursAgo: 19, body: 'Smoothies saved me during my worst stretch — banana, protein powder, peanut butter, whole milk. Drinking calories was so much easier than chewing them.' }
+        ] },
+      { id: 'f3m3', author: 'Ben O.', hoursAgo: 48, title: 'Is sushi or soft cheese safe during treatment?',
+        body: 'My anniversary dinner is coming up and my favorite restaurant is a sushi place. Am I being paranoid or is raw fish actually off the table right now?',
+        replies: [
+          { id: 'f3m3r1', author: 'Priya S.', hoursAgo: 46, body: 'I asked my nurse this exact question before our anniversary. When your counts are low, raw fish and unpasteurized cheeses are genuinely risky — so ask your team where your counts stand that week. Cooked options were green-lit for me and dinner was still special.' },
+          { id: 'f3m3r2', author: 'Grace H.', hoursAgo: 42, body: 'We hit this exact issue — I went with the tempura and cooked rolls and it was still a great night. There’s more on the cooked menu than you’d think.' }
+        ] },
+      { id: 'f3m4', author: 'Priya S.', hoursAgo: 72, title: 'Staying hydrated when water tastes awful',
+        body: 'I know I need to drink more but plain water is genuinely hard to get down right now. What are you all drinking?',
+        replies: [
+          { id: 'f3m4r1', author: 'Tom R.', hoursAgo: 70, body: 'Cucumber or berry infused water, watered-down apple juice, and popsicles. Frozen grapes too. Anything but plain water, basically.' },
+          { id: 'f3m4r2', author: 'Susan K.', hoursAgo: 66, body: 'My nurse’s tip: broth, gelatin, popsicles, and watery fruits all count toward your 8 cups a day. The one rule she was firm about: if you can’t keep fluids down for 24 hours, call the team that same day.' }
+        ] },
+      { id: 'f3m5', author: 'Angela M.', hoursAgo: 120, title: 'Meal prep ideas for infusion week?',
+        body: 'I’ve learned I have zero cooking energy for about five days after each infusion. How do you all prepare ahead?',
+        replies: [
+          { id: 'f3m5r1', author: 'Grace H.', hoursAgo: 96, body: 'The weekend before each cycle I cook a triple batch of something gentle — rice porridge, chicken soup — and freeze it in single portions. Future me is always grateful.' },
+          { id: 'f3m5r2', author: 'Ben O.', hoursAgo: 96, body: 'We do a family cooking day. Everyone makes one freezer-friendly dish, my freezer fills up, and honestly it’s become the nicest tradition to come out of all this.' }
+        ] }
+    ]
+  },
+  {
+    id: 'f4', icon: '\u{1F49A}', name: 'Emotional Wellbeing & Coping',
+    description: 'Anxiety, sleep, low days, family conversations — a space to be honest about the hard parts.',
+    messages: [
+      { id: 'f4m1', author: 'Nicole D.', hoursAgo: 3, title: 'Scan tomorrow and I can’t sleep (scanxiety is real)',
+        body: 'Every scan week is the same: fine all day, then 2am hits and my brain runs every scenario. Anyone found something that actually quiets the noise?',
+        replies: [
+          { id: 'f4m1r1', author: 'David L.', hoursAgo: 2, body: 'The 4-7-8 breathing pattern (in 4, hold 7, out 8) is the only thing that reliably slows my 2am brain. That and a boring podcast at low volume — something about giving my mind one dull thing to follow.' },
+          { id: 'f4m1r2', author: 'Rachel Y.', hoursAgo: 1, body: 'Scanxiety is so common it has its own name — that fact alone weirdly helped me. What helps most is having a plan for how I’ll get the results (who calls, and when), so my brain has fewer blanks to fill at 2am. And when the sleep loss piles up, I say so in my check-in.' }
+        ] },
+      { id: 'f4m2', author: 'Frank M.', hoursAgo: 24, title: 'Feeling down for a couple of weeks now',
+        body: 'It’s not one bad day anymore, it’s most days. I don’t have much interest in things I used to enjoy. I keep telling myself it’s just the treatment but I’m not sure.',
+        replies: [
+          { id: 'f4m2r1', author: 'Canopy Care Team', isCareTeam: true, hoursAgo: 22, body: 'Frank, thank you for saying this out loud — that takes courage. When low mood lasts most days for two weeks or more, it’s worth treating, not toughing out. Please tell your care team; they screen for this and can connect you with real support. And if you ever have thoughts of harming yourself, call or text 988 right away — someone is there around the clock.' },
+          { id: 'f4m2r2', author: 'Nicole D.', hoursAgo: 20, body: 'What you wrote could have been me last spring. Asking my team for a counselor referral was the best call I made all year. It didn’t fix everything, but I stopped carrying it alone.' }
+        ] },
+      { id: 'f4m3', author: 'Rachel Y.', hoursAgo: 48, title: 'How do I talk to my kids about my diagnosis?',
+        body: 'They’re 7 and 10. They know something is going on and I’m scared of saying too much or too little. How did you handle this?',
+        replies: [
+          { id: 'f4m3r1', author: 'Angela M.', hoursAgo: 46, body: 'Age-appropriate honesty worked for us: simple facts, reassurance about who will take care of them, and lots of room for their questions. A couple of good picture books helped my kids put words to it.' },
+          { id: 'f4m3r2', author: 'Frank M.', hoursAgo: 42, body: 'The oncology social worker at our clinic sat with my wife and me and planned the conversation for each kid’s age. I didn’t even know that service existed until I asked. One secure message to the care team got it set up — it’s a completely normal request.' }
+        ] },
+      { id: 'f4m4', author: 'David L.', hoursAgo: 96, title: 'Feeling guilty about how much I rest',
+        body: 'My family keeps saying rest is fine but I feel like a burden watching everyone do things I used to do. Anyone else fighting this guilt?',
+        replies: [
+          { id: 'f4m4r1', author: 'Frank M.', hoursAgo: 94, body: 'Every day. A nurse once told me “rest is part of the treatment protocol, not a break from it” and I repeat that to myself constantly. It helps a little more each time.' },
+          { id: 'f4m4r2', author: 'Lena W.', hoursAgo: 90, body: 'A nurse told me the same thing: fatigue is a documented side effect, and rest is literally how your body does the repair work. Pacing beats pushing — activity in your best hours, planned rest after. And letting people help is a gift to them; my sister was desperate for something concrete to do.' }
+        ] },
+      { id: 'f4m5', author: 'Nicole D.', hoursAgo: 144, title: 'Any small wins this week? Let’s share \u{1F49A}',
+        body: 'Rule: nothing is too small. I’ll start — I walked to the end of my street and back without stopping, first time since cycle 2.',
+        replies: [
+          { id: 'f4m5r1', author: 'Rachel Y.', hoursAgo: 120, body: 'Took the kids to the park and stayed the whole hour. Sat on a bench for most of it, but I was THERE.' },
+          { id: 'f4m5r2', author: 'Grace H.', hoursAgo: 120, body: 'Finished a whole book for the first time in months. My concentration is slowly coming back.' },
+          { id: 'f4m5r3', author: 'Maria G.', hoursAgo: 120, body: 'Adding mine: I cooked dinner for the first time in a month. This thread is the best thing on here — keep them coming \u{1F49A}' }
+        ] }
+    ]
+  },
+  {
+    id: 'f5', icon: '\u{1F4AC}', name: 'Treatment Experiences',
+    description: 'What it actually felt like — first-person stories, tagged by treatment, for anyone about to start.',
+    isExperiences: true,
+    messages: [
+      { id: 'f5m1', author: 'Maria G.', hoursAgo: 6, title: 'My first infusion, hour by hour', treatmentTag: 'First chemo cycle',
+        body: 'For anyone about to start: I was terrified of the unknown, so here’s my honest timeline. Arrival 8am, port hooked up, pre-meds made me sleepy. The infusion itself? I read a magazine and felt nothing. Home by 2pm, normal evening. Days 2–3 were the real thing — wiped out and queasy (anti-nausea pills on schedule saved me). Day 4 the fog started lifting, and by week 2 I felt close to normal. The fear before was worse than the day itself.',
+        replies: [
+          { id: 'f5m1r1', author: 'Rachel Y.', hoursAgo: 5, body: 'I start my first cycle on Monday and I’ve read this three times. You have no idea how much the hour-by-hour helped. Thank you.' },
+          { id: 'f5m1r2', author: 'Tom R.', hoursAgo: 4, body: 'Matches mine almost exactly, except my dip was days 3–4. Bring a blanket and a phone charger — the chairs are comfy but the day is long.' }
+        ] },
+      { id: 'f5m2', author: 'James T.', hoursAgo: 24, title: 'First month on Brukinsa, honestly', treatmentTag: 'Brukinsa (oral)',
+        body: 'Week 1: honestly anticlimactic — pills with breakfast, felt nothing. Week 2: bruising on my arms that looked scarier than it was (my team said watch and report, which I did in my check-in). Weeks 2–3: unsettled stomach, managed with fluids and boring food. Week 4: everything calmed down. The biggest adjustment wasn’t physical — it was building a routine so I never miss a dose. Phone alarm plus pill organizer, done.',
+        replies: [
+          { id: 'f5m2r1', author: 'Anna C.', hoursAgo: 20, body: 'Starting Brukinsa in two weeks and this is exactly what I needed to read. Did the bruising go away completely?' },
+          { id: 'f5m2r2', author: 'James T.', hoursAgo: 18, body: 'Mostly, yes — and my team was never worried once I reported it. Ask yours to walk you through what’s normal to see vs. what to call about.' }
+        ] },
+      { id: 'f5m3', author: 'Priya S.', hoursAgo: 48, title: 'Radiation weeks 1–4: what surprised me', treatmentTag: 'Radiation',
+        body: 'Surprise #1: the sessions themselves are painless and take about 15 minutes — the drive took longer. Surprise #2: the fatigue is cumulative. Week 1 I felt like a fraud for “not feeling anything”; by week 3 I needed a nap every afternoon. Surprise #3: skin care matters from day one — the cream my nurse recommended kept my skin calm until the very last week. Plan your naps and moisturize before you think you need to.',
+        replies: [
+          { id: 'f5m3r1', author: 'Frank M.', hoursAgo: 44, body: 'Halfway through mine and co-signing all three surprises, especially the naps. Nobody believes the 15-minute part until they see it.' },
+          { id: 'f5m3r2', author: 'Lena W.', hoursAgo: 40, body: 'Saving this — mine starts after my next scan. The skin-care tip is going straight onto my shopping list.' }
+        ] },
+      { id: 'f5m4', author: 'Ben O.', hoursAgo: 72, title: 'Port placement was way less scary than I imagined', treatmentTag: 'Port placement',
+        body: 'I lost sleep over this tiny procedure, so here’s the honest version. In and out the same morning, local anesthesia plus light sedation — I remember music playing. Sore like a pulled muscle for about four days (sleeping on the other side helped), then a small bump under the skin you stop noticing within weeks. And now? Blood draws and infusions with zero needle hunting. I’d do it again without the week of worry.',
+        replies: [
+          { id: 'f5m4r1', author: 'Grace H.', hoursAgo: 70, body: 'The “pulled muscle” description is perfect. Mine took about five days to settle. Best decision — infusion days got so much easier.' },
+          { id: 'f5m4r2', author: 'Susan K.', hoursAgo: 66, body: 'Mine is scheduled for Thursday and I’ve been dreading it. This thread genuinely brought my shoulders down from my ears. Thank you.' }
+        ] },
+      { id: 'f5m5', author: 'Grace H.', hoursAgo: 120, title: 'Three months of immunotherapy', treatmentTag: 'Immunotherapy',
+        body: 'Everyone told me “watch for side effects” and I didn’t know what that meant in practice, so here’s my version. Months 1–2: honestly mild — some tiredness after each infusion, gone in a day or two. Month 3: an itchy rash on my back that I almost dismissed. I reported it in my weekly check-in instead, my team called the same day, adjusted things, and it cleared. Lesson: with immunotherapy, “mild but new” is exactly the thing to report. The check-ins aren’t homework — they’re the safety net.',
+        replies: [
+          { id: 'f5m5r1', author: 'David L.', hoursAgo: 96, body: 'This is the first description of immunotherapy that made sense to me — “mild but new is the thing to report” should be on a poster.' },
+          { id: 'f5m5r2', author: 'Nicole D.', hoursAgo: 96, body: 'Starting my third month, and the rash paragraph just convinced me to report the thing I was about to shrug off. Thank you for writing this.' }
+        ] }
+    ]
+  }
+];
+
+const CALLOUT = (text) => '<div class="callout"><strong>When to call your care team</strong>' + text + '</div>';
+
+const ARTICLES = [
+  { id: 'kb-nausea', category: 'Side Effects', minutes: 3, relatedForumId: 'f1',
+    title: 'Managing Nausea and Vomiting During Chemotherapy',
+    summary: 'Anti-nausea medication timing, eating patterns, and when nausea needs a call.',
+    body: '<p>Nausea is one of the most common side effects of chemotherapy — and one of the most treatable. Modern anti-nausea medications work well, but they work best when used correctly.</p>' +
+      '<h3>Take your medication before you feel sick</h3><p>Anti-nausea medications are designed for prevention. Take them on the exact schedule your care team gave you, even on days you feel fine. Waiting until nausea starts makes them much less effective.</p>' +
+      '<h3>Know your pattern</h3><p>Many people feel worst on days 2–4 after an infusion (“delayed nausea”). Once you know your pattern, you can plan lighter days and pre-medicate as directed.</p>' +
+      '<h3>Eating tips that help</h3><ul><li>Small meals every 2–3 hours instead of three large ones — an empty stomach makes nausea worse.</li><li>Bland, cool, or room-temperature foods (crackers, toast, rice, bananas) produce fewer smells that trigger nausea.</li><li>Ginger — as tea, chews, or ginger ale made with real ginger — has real evidence behind it.</li><li>Sip fluids between meals rather than with them.</li><li>Avoid greasy, fried, spicy, or very sweet foods on treatment days.</li></ul>' +
+      '<p>Report nausea in your weekly check-in even when it’s mild. There are many anti-nausea medications, and if one isn’t working, your team can switch or add another.</p>' +
+      CALLOUT('<p>Call the same day if you can’t keep fluids down for 24 hours, vomit more than 3 times in a day, feel dizzy or lightheaded, or see blood in your vomit.</p>') },
+  { id: 'kb-fever', category: 'Side Effects', minutes: 3, relatedForumId: 'f1',
+    title: 'Fever During Cancer Treatment: When to Call Your Care Team',
+    summary: 'The 100.4°F rule — why fever during treatment is never “wait and see.”',
+    body: '<p>During cancer treatment, a fever is never “wait and see.” Treatment can lower your infection-fighting white blood cells, so an infection that would be minor for someone else can become serious quickly — and a fever is often the first and only warning sign.</p>' +
+      '<h3>The 100.4 rule</h3><p>A temperature of <strong>100.4°F (38°C) or higher</strong> counts as a fever during treatment. If you hit that number, call your care team <strong>right away — day or night</strong>. Every oncology practice has an after-hours line for exactly this situation. You are not bothering anyone; this is what the line is for.</p>' +
+      '<h3>What to do</h3><ul><li>Keep a working thermometer at home and check your temperature any time you feel warm, flushed, shivery, or just “off.”</li><li>If it’s 100.4°F or higher, call your care team immediately.</li><li><strong>Do not</strong> take acetaminophen (Tylenol) or ibuprofen before talking to your team — fever reducers can hide the one signal your team needs to see.</li><li>Be ready to tell them your temperature, your last treatment date, and any other symptoms.</li></ul>' +
+      '<p>Other infection signs to report the same day: shaking chills (even without a measured fever), a new cough or sore throat, burning with urination, redness or swelling around a port or wound.</p>' +
+      CALLOUT('<p>Temperature of 100.4°F (38°C) or higher — call immediately, at any hour. Shaking chills or feeling suddenly, severely unwell — call even if your temperature reads normal.</p>') },
+  { id: 'kb-missed-dose', category: 'Medications', minutes: 3, relatedForumId: 'f2',
+    title: 'What to Do If You Miss a Dose of Your Oral Cancer Medication',
+    summary: 'Never double up — and how to make missed doses rare.',
+    body: '<p>Missing a dose happens to nearly everyone at some point. What matters is what you do next.</p>' +
+      '<h3>Rule one: never double up</h3><p>Taking two doses to “catch up” can significantly increase side effects. One missed dose almost never affects your treatment; a double dose can genuinely hurt you.</p>' +
+      '<h3>The general guidance</h3><ul><li>If you remember <strong>soon</strong> after the scheduled time, take the missed dose.</li><li>If it’s <strong>close to your next dose</strong>, skip the missed one entirely and take the next dose at its normal time.</li><li>The exact cutoff differs by medication, so check your medication guide or ask your pharmacist or care team what applies to yours.</li></ul>' +
+      '<p>Log missed doses in your weekly Canopy check-in. This isn’t about being graded — dose timing affects how your team reads your progress and side effects.</p>' +
+      '<h3>Making missed doses rare</h3><ul><li>A recurring phone alarm at your dose time — the single most effective fix.</li><li>A weekly pill organizer: one glance tells you whether today’s dose is taken.</li><li>Anchor the dose to a habit you never skip (brushing teeth, morning coffee).</li><li>Keep a couple of doses in your bag for days you’re out unexpectedly.</li></ul>' +
+      CALLOUT('<p>If you miss more than one dose in a row, vomit shortly after taking a dose, or aren’t sure what to do — message or call before your next scheduled dose rather than guessing.</p>') },
+  { id: 'kb-appetite', category: 'Nutrition', minutes: 4, relatedForumId: 'f3',
+    title: 'Eating Well When You Have No Appetite',
+    summary: 'Mini-meals, calorie-dense foods, and working around taste changes.',
+    body: '<p>Treatment can switch off hunger, change how food tastes, and make eating feel like a chore. The goal during this stretch isn’t a perfect diet — it’s getting enough calories and protein to support your recovery.</p>' +
+      '<h3>Think small and often</h3><p>Three large meals can feel impossible. Six to eight small “mini-meals” — a handful of nuts, half a sandwich, a yogurt — every 2–3 hours usually add up to more nutrition with less struggle. Eat by the clock, not by hunger, because hunger signals may simply not come.</p>' +
+      '<h3>Make every bite count</h3><p>When volume is limited, choose calorie- and protein-dense foods: nut butters, full-fat yogurt and cheese, eggs, avocado, smoothies with protein powder, commercial nutrition shakes. Drinking calories is often much easier than chewing them.</p>' +
+      '<h3>Working around taste changes</h3><ul><li>Metallic taste: use plastic or bamboo utensils, choose cold or room-temperature foods, add lemon, citrus, or marinades.</li><li>Food smells triggering aversion: cold foods smell less; let someone else cook when possible.</li><li>Rinse your mouth with a baking-soda solution before meals to reset your palate.</li><li>Your old favorites may taste wrong right now — this is temporary for most people. Keep re-testing foods every couple of weeks.</li></ul>' +
+      '<p>Tell your care team about any ongoing weight loss. Many practices can refer you to an oncology dietitian, whose entire job is solving exactly this problem.</p>' +
+      CALLOUT('<p>Losing more than 2–3 pounds in a week, going a full day barely eating or drinking, or pain/sores that prevent eating — report the same week, not at your next visit.</p>') },
+  { id: 'kb-mouth-sores', category: 'Side Effects', minutes: 3, relatedForumId: 'f1',
+    title: 'Mouth Sores (Mucositis): Prevention and Relief',
+    summary: 'Baking-soda rinses, foods to avoid, and prescription options that help.',
+    body: '<p>Several cancer treatments can inflame the lining of the mouth, causing painful sores called mucositis. They typically appear about a week after treatment and heal within a couple of weeks — and there’s a lot you can do to prevent them and ease the pain.</p>' +
+      '<h3>Prevention</h3><ul><li>Rinse several times a day with a homemade solution: <strong>1 teaspoon baking soda + 1 teaspoon salt in 4 cups of water.</strong> Swish and spit; don’t swallow.</li><li>Use a very soft toothbrush and brush gently after meals.</li><li><strong>Avoid alcohol-based mouthwashes</strong> — they burn and slow healing.</li><li>Ask your team about chewing ice chips during certain infusions.</li></ul>' +
+      '<h3>When sores appear</h3><ul><li>Keep rinsing with the baking soda–salt solution.</li><li>Choose soft, mild, cool foods: smoothies, yogurt, eggs, mashed potatoes, oatmeal.</li><li>Avoid acidic (citrus, tomato), spicy, crunchy, and very hot foods and drinks.</li><li>Drink through a straw to route liquids past sore spots.</li><li>Ask your care team about prescription numbing rinses used before meals — these can make eating comfortable again.</li></ul>' +
+      '<p>Sores that keep you from eating or drinking are a medical issue, not just an annoyance — your team has stronger options than anything over the counter.</p>' +
+      CALLOUT('<p>Sores that prevent you from drinking fluids, pain not controlled by prescribed rinses, white patches in the mouth, or fever alongside mouth sores — call the same day.</p>') },
+  { id: 'kb-fatigue', category: 'Wellbeing', minutes: 3, relatedForumId: 'f4',
+    title: 'Coping with Cancer-Related Fatigue',
+    summary: 'Pacing, light activity, and why rest is part of the treatment.',
+    body: '<p>Cancer-related fatigue is not ordinary tiredness, and it isn’t fixed by one good night’s sleep. It’s a documented side effect of treatment — your body is doing enormous repair work — and it deserves to be managed like any other symptom, not pushed through.</p>' +
+      '<h3>Pace, don’t push</h3><ul><li>Identify your best hours of the day and schedule what matters most inside them.</li><li>Break tasks into pieces with planned rests between — planned rest beats collapse.</li><li>Prefer several short rest breaks over one long nap; naps longer than an hour can disrupt night sleep.</li></ul>' +
+      '<h3>Move a little — it genuinely helps</h3><p>It sounds backwards, but light activity is one of the best-proven treatments for cancer fatigue. A 10-minute walk most days can measurably improve energy over weeks. Start tiny and build slowly.</p>' +
+      '<h3>Accept and direct help</h3><p>Letting people cook, drive, or do laundry isn’t weakness — it’s energy management, and most loved ones are relieved to be given something concrete to do. Rest is part of the treatment protocol, not a break from it.</p>' +
+      '<p>Report your fatigue level in your weekly check-in — anemia, thyroid changes, poor sleep, low mood, and medication effects all cause fatigue and all have treatments.</p>' +
+      CALLOUT('<p>Fatigue that suddenly gets much worse, keeps you in bed most of the day, or comes with dizziness, shortness of breath, or a racing heart — report it promptly rather than at your next visit.</p>') },
+  { id: 'kb-infection', category: 'Side Effects', minutes: 4, relatedForumId: 'f1',
+    title: 'Understanding Infection Risk and How to Protect Yourself',
+    summary: 'Hand-washing, food safety while counts are low, and warning signs.',
+    body: '<p>Many cancer treatments temporarily lower your white blood cell count — the cells that fight infection. During those windows (often 7–14 days after treatment, but your team will tell you yours), infections are easier to catch and can escalate faster. A few habits dramatically lower the risk.</p>' +
+      '<h3>Everyday protection</h3><ul><li><strong>Wash your hands often</strong> — the single most effective measure.</li><li>Avoid close contact with people who are actively sick, and ask visiting family to postpone if they have colds or stomach bugs.</li><li>Ask your care team which vaccines you and your household should have.</li><li>Care for your skin: treat cuts promptly, keep your port site clean, moisturize to prevent cracking.</li></ul>' +
+      '<h3>Food safety while counts are low</h3><ul><li>Avoid raw or undercooked animal products: sushi/raw fish, runny eggs, rare meat.</li><li>Avoid unpasteurized milk, soft cheeses (brie, blue, queso fresco), and unpasteurized juice.</li><li>Wash fruits and vegetables well; skip buffets and salad bars where food sits out.</li><li>Cooked versions of favorite foods are almost always fine — ask your team where your counts stand before special occasions.</li></ul>' +
+      '<p>Because your immune response is dampened, an infection may show up as nothing more than a fever. That’s why the <strong>100.4°F rule</strong> exists: that temperature or higher means calling your care team immediately, at any hour.</p>' +
+      CALLOUT('<p>Fever of 100.4°F or higher, shaking chills, a new cough or sore throat, burning with urination, or redness/swelling around a port, wound, or IV site — same-day call, every time.</p>') },
+  { id: 'kb-mood', category: 'Wellbeing', minutes: 4, relatedForumId: 'f4',
+    title: 'Anxiety and Low Mood During Treatment: You’re Not Alone',
+    summary: 'Scanxiety, low weeks, and the support your care team can arrange.',
+    body: '<p>A cancer diagnosis is one of the most stressful events a person can experience. Worry, sadness, irritability, sleepless nights before scans (“scanxiety”) — these are normal responses, not weakness. And when they deepen, they are treatable.</p>' +
+      '<h3>What’s common</h3><ul><li>Waves of anxiety around scans, results, and treatment milestones.</li><li>Grief for your pre-diagnosis life and routines.</li><li>Trouble sleeping, especially the nights before appointments.</li><li>Mood dips during and after treatment cycles.</li></ul>' +
+      '<h3>What helps day to day</h3><ul><li>Slow breathing (try in-for-4, hold-for-7, out-for-8) calms the body’s alarm system within minutes.</li><li>Keep gentle routines — regular wake time, a short daily walk, one enjoyable thing per day.</li><li>Limit late-night symptom searching; write questions down for your team instead.</li><li>Say it out loud — to a friend, this community, or your care team. Isolation feeds anxiety.</li></ul>' +
+      '<h3>When it’s more than a rough patch</h3><p>If low mood or loss of interest lasts <strong>most days for two weeks or more</strong>, tell your care team. This is depression territory, it’s common during cancer treatment, and it responds to counseling, medication, or both. Oncology practices screen for this routinely and have social workers and referral networks ready.</p>' +
+      '<p><strong>If you have thoughts of harming yourself,</strong> call or text <strong>988</strong> (Suicide &amp; Crisis Lifeline) right away, any hour. Tell your care team as well — they will respond with support, not judgment.</p>' +
+      CALLOUT('<p>Low mood most days for 2+ weeks, anxiety that interferes with treatment or sleep, or any thoughts of self-harm (also call/text 988 immediately).</p>') },
+  { id: 'kb-appointments', category: 'Care Logistics', minutes: 3, relatedForumId: null,
+    title: 'Getting the Most Out of Your Oncology Appointments',
+    summary: 'Question lists, symptom notes, and reading patient-portal lab results calmly.',
+    body: '<p>Appointment time is short and it’s easy to walk out having forgotten the thing you most wanted to ask. A little preparation changes everything.</p>' +
+      '<h3>Before the visit</h3><ul><li>Keep a running question list on your phone — add questions the moment they occur to you, then bring the list.</li><li>Review your recent symptoms. Your Canopy check-in history is a ready-made symptom diary.</li><li>Bring a current medication list, including over-the-counter medicines and supplements.</li><li>Bring a second set of ears. A family member or friend catches details you’ll miss.</li></ul>' +
+      '<h3>During the visit</h3><ul><li>Hand over your question list at the <strong>start</strong>, so the doctor can pace the visit around it.</li><li>Ask for plain language: “Can you explain that without the medical terms?” is always a fair request.</li><li>Repeat back the plan in your own words to catch misunderstandings on the spot.</li></ul>' +
+      '<p>Good starter questions: What did my latest results show? What are we watching for before next time? Which symptoms should I report immediately versus mention at the next visit?</p>' +
+      '<p>About patient-portal lab results: flagged “high/low” values compare you to healthy reference ranges — during treatment, many flags are expected, and your team reviews every result. If one worries you, send a secure message instead of worrying until the next visit.</p>' +
+      CALLOUT('<p>Rescheduling needs (as early as possible — some treatments are time-sensitive between cycles), new symptoms before a scheduled visit, or confusion about your treatment plan.</p>') },
+  { id: 'kb-refills', category: 'Care Logistics', minutes: 4, relatedForumId: 'f2',
+    title: 'Managing Prescription Refills and Insurance Questions',
+    summary: 'The 7-day refill rule and the financial help most patients never hear about.',
+    body: '<p>Cancer medications often flow through <strong>specialty pharmacies</strong> with extra steps — prior authorizations, insurance reviews, scheduled shipping — so refills take longer than at a corner drugstore. A little lead time prevents most emergencies.</p>' +
+      '<h3>Refill rhythm</h3><ul><li>Request refills about <strong>7 days before you run out</strong>. Mark it on your calendar or set a recurring reminder.</li><li>You can flag a refill need in your weekly Canopy check-in — your care team will get it moving.</li><li>Keep your pharmacy’s phone number and your prescription number handy (a photo of the label works).</li><li>Turn on your pharmacy’s text or app alerts for shipping updates.</li><li>Before travel, request an early refill or vacation supply.</li></ul>' +
+      '<h3>When the cost is the problem</h3><p>Sticker shock on oncology medications is common — and more solvable than most people expect. <strong>Never skip doses because of cost without telling your team.</strong> Options your clinic’s financial counselor can arrange:</p>' +
+      '<ul><li><strong>Manufacturer copay cards</strong> — for commercially insured patients, these often reduce copays dramatically.</li><li><strong>Foundation grants</strong> — cover copays for specific diagnoses; financial counselors know which fund matches yours.</li><li><strong>Patient assistance programs</strong> — manufacturers provide many medications free to patients who qualify by income.</li><li><strong>Insurance appeals</strong> — denials are frequently overturned; your care team writes these letters routinely.</li></ul>' +
+      '<p>Ask your clinic for the <strong>financial counselor or navigator</strong> — this is their entire job, and one conversation often saves thousands of dollars.</p>' +
+      CALLOUT('<p>Down to your last 5 days of medication with no refill in motion, a denied prior authorization, or any situation where cost might cause you to skip doses.</p>') }
+];
+
+/* ============================= AI rules ============================= */
+
+const EXPERIENCE_LINKS = [
+  { re: /brukinsa/, messageId: 'f5m2' },
+  { re: /radiation/, messageId: 'f5m3' },
+  { re: /immunotherapy/, messageId: 'f5m5' },
+  { re: /\bport\b/, messageId: 'f5m4' },
+  { re: /chemo|infusion/, messageId: 'f5m1' }
+];
+
+const AI_RULES = [
+  { name: 'urgent', urgent: true,
+    re: /chest pain|can't breathe|cant breathe|trouble breathing|bleeding heavily|suicid|hurt myself/,
+    answer: 'This sounds like something your care team needs to know about right away. Please call your care team now, or if this is an emergency, call 911. If you are having thoughts of harming yourself, call or text 988 to reach the Suicide & Crisis Lifeline. You don’t have to handle this alone.' },
+  { name: 'fever', re: /fever|temperature|100\.4|chills/, articleId: 'kb-fever',
+    answer: 'A temperature of 100.4°F (38°C) or higher during cancer treatment is considered a fever and needs a call to your care team the same day — even at night. Don’t wait to see if it passes, and don’t take fever reducers before speaking with your team. Keep a working thermometer at home and check your temperature whenever you feel warm, flushed, or shivery.',
+    peerReply: { author: 'Robert P.', delaySeconds: 10, body: 'Call them NOW, please. I posted this exact question at 9pm with 100.6 and this community pushed me to call — the after-hours nurse had me come in, and I’m so glad I didn’t wait until morning.' } },
+  { name: 'missed-dose', re: /missed|forgot.*dose|skipped.*dose|double up/, articleId: 'kb-missed-dose',
+    answer: 'Don’t take a double dose to make up for a missed one. In general, if it’s close to your next scheduled dose, skip the missed one and continue as normal — but the right answer depends on your specific medication, so check with your care team or pharmacist. A daily phone alarm and a weekly pill organizer help most people stay on track.',
+    peerReply: { author: 'Karen B.', delaySeconds: 9, body: 'Been there! Whatever you do, don’t take two. A recurring phone alarm plus a weekly pill organizer ended my missed doses completely — one glance and I know if today’s slot is empty.' } },
+  { name: 'nausea', re: /nausea|vomit|throwing up|queasy|feel(ing)? (so )?sick|so sick/, articleId: 'kb-nausea',
+    answer: 'Nausea after treatment is very common and very treatable. Take your anti-nausea medication on the schedule you were given — before you feel sick, not after — and try small, bland meals every 2–3 hours instead of large ones. If you can’t keep fluids down for more than 24 hours, contact your care team.',
+    peerReply: { author: 'Tom R.', delaySeconds: 10, body: 'Day 3 used to flatten me too. Ginger tea, something small every couple of hours even when you don’t feel like it, and taking the anti-nausea pills on schedule instead of waiting — that combo turned it around for me.' } },
+  { name: 'mouth-sores', re: /mouth sore|mucositis|sores? in my mouth/, articleId: 'kb-mouth-sores',
+    answer: 'Mouth sores are a known side effect of several cancer treatments. Rinse several times a day with a solution of 1 tsp baking soda and 1 tsp salt in 4 cups of water, and avoid alcohol-based mouthwashes, spicy food, and very hot drinks. Tell your care team — they can prescribe rinses that ease the pain, and they need to know if sores keep you from eating or drinking.',
+    peerReply: { author: 'Angela M.', delaySeconds: 11, body: 'Baking soda + salt rinse several times a day, and nothing acidic. And ask your team about a numbing rinse to use before meals — mine gave me my dinners back.' } },
+  { name: 'appetite', re: /appetite|taste|metal|eating|weight loss/, articleId: 'kb-appetite',
+    answer: 'Appetite and taste changes are among the most common treatment side effects. Small frequent meals, high-protein shakes, plastic utensils (for metallic taste), and adding marinades or citrus can all help. Mention any ongoing weight loss to your care team — many practices can refer you to an oncology dietitian.',
+    peerReply: { author: 'Lena W.', delaySeconds: 9, body: 'Smoothies saved me — banana, protein powder, peanut butter, whole milk. Drinking calories is so much easier than chewing them. And plastic forks if it’s the metallic thing!' } },
+  { name: 'fatigue', re: /fatigue|tired|exhausted|no energy/, articleId: 'kb-fatigue',
+    answer: 'Cancer-related fatigue is real — it’s a side effect of treatment, not a lack of willpower. Pace your day around your best hours, take short planned rests instead of long naps, and try light activity like a short walk, which actually improves energy over time. Tell your care team if fatigue keeps you from daily activities; sometimes it has treatable causes like anemia.',
+    peerReply: { author: 'Frank M.', delaySeconds: 12, body: 'A nurse once told me “rest is part of the treatment, not a break from it.” Pace around your best hours and try a tiny daily walk — sounds backwards, but it slowly gave me energy back.' } },
+  { name: 'infection', re: /infection|germs|immune|sushi|\braw\b|unpasteurized/, articleId: 'kb-infection',
+    answer: 'Treatment can lower your white blood cell count, which makes infections easier to catch and harder to fight. Wash hands often, avoid raw or undercooked foods (sushi, runny eggs, unpasteurized cheese) when your counts are low, and stay away from people who are actively sick. Call your care team at the first sign of infection — fever, chills, or a new cough.',
+    peerReply: { author: 'Priya S.', delaySeconds: 10, body: 'I got strict about hand-washing and skipped sushi and soft cheese while my counts were low — my nurse said that window is when it matters most. Ask your team where your counts are this week.' } },
+  { name: 'mood', re: /anxious|anxiety|worried|scared|can't sleep|cant sleep|scanxiety|depress|feeling down|\bsad\b/, articleId: 'kb-mood',
+    answer: 'What you’re feeling is common, and it matters. Many patients find relief in breathing exercises, counseling, and simply telling their care team — practices have social workers and mental-health resources ready to help. If low mood lasts more than two weeks or you have thoughts of harming yourself, reach out to your care team today or call/text 988.',
+    peerReply: { author: 'Nicole D.', delaySeconds: 11, body: 'What you’re feeling has company here. Asking my team for a counselor referral was the best call I made all year. And for the 2am spirals: in-for-4, hold-7, out-8 breathing, on repeat.' } },
+  { name: 'appointments', re: /appointment|reschedul|follow-?up|\bvisit\b|results|\blabs\b/, articleId: 'kb-appointments',
+    answer: 'For scheduling changes, the fastest route is a secure message or a call to your clinic’s scheduling line. Before visits, jot down your questions and current symptoms — your Canopy check-in history is a great memory aid — and consider bringing someone with you. Flagged lab values are often expected during treatment, so ask your team before worrying.',
+    peerReply: { author: 'Ben O.', delaySeconds: 9, body: 'I keep a running question list on my phone and hand it over at the START of the visit. And my personal rule: no interpreting my own labs after 9pm — a two-line message to the nurse next morning beats a spiral.' } },
+  { name: 'refills', re: /refill|pharmacy|insurance|copay|\bcost\b|afford/, articleId: 'kb-refills',
+    answer: 'Request refills about 7 days before you run out — specialty pharmacies often need extra time. If cost is a barrier, ask your clinic about a financial counselor: manufacturer copay cards, foundation grants, and assistance programs cover many oncology medications. You should never skip doses because of cost without talking to your team first.',
+    peerReply: { author: 'Diane F.', delaySeconds: 10, body: 'A foundation grant covered almost all of mine — the clinic’s financial counselor did the application with me in one phone call. Ask for that person by name; it’s their whole job.' } },
+  { name: 'expect', experience: true,
+    re: /what should i expect|what to expect|starting (chemo|radiation|brukinsa|immunotherapy|treatment)|first (cycle|infusion)|about to start/,
+    answer: 'Every treatment feels different for every person, but hearing from patients who’ve already been through it helps more than almost anything. Here are first-person experiences from this community — real timelines of how it felt, week by week. Your care team can tell you what to expect for your specific plan.',
+    peerReply: { author: 'Maria G.', delaySeconds: 10, body: 'I wrote up my first infusion hour by hour in this forum — go read it, and ask me anything. The fear of the unknown was worse than the actual day, I promise.' } },
+  { name: 'fallback', re: /[\s\S]*/, kbHome: true,
+    answer: 'That’s a great question to bring to your care team — you can send them a secure message anytime, and they’ll usually respond within one business day. In the meantime, our Knowledge Base has plain-language guides on side effects, medications, nutrition, and more.',
+    peerReply: { author: 'Grace H.', delaySeconds: 10, body: 'No direct experience with this exact thing, but following — someone here will know. Sending support \u{1F49A} (And your care team answers secure messages within a day, in my experience.)' } }
+];
+
+/* ============================= State & persistence ============================= */
+
+const STORAGE_KEY = 'canopy-forums-demo';
+const NOW = Date.now();
+let state = null;
+let userStore = null;
+const pendingTimers = [];
+
+function loadUserStore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { return JSON.parse(raw); }
+  } catch (e) { /* corrupted store: start fresh */ }
+  return { messages: [], replies: [], aiShown: {} };
+}
+
+function saveUserStore() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(userStore));
+}
+
+function buildState() {
+  state = { forums: SEED_FORUMS.map((f) => ({
+    ...f,
+    messages: f.messages.map((m) => ({
+      ...m,
+      ts: NOW - m.hoursAgo * 3600 * 1000,
+      replies: m.replies.map((r) => ({ ...r, ts: NOW - r.hoursAgo * 3600 * 1000 }))
+    }))
+  })) };
+  userStore.messages.forEach((rec) => {
+    const forum = state.forums.find((f) => f.id === rec.forumId);
+    if (forum) { forum.messages.unshift({ ...rec.message, replies: [] }); }
+  });
+  userStore.replies.forEach((rec) => {
+    const forum = state.forums.find((f) => f.id === rec.forumId);
+    const msg = forum && forum.messages.find((m) => m.id === rec.messageId);
+    if (msg) { msg.replies.push({ ...rec.reply }); }
+  });
+}
+
+function findForum(forumId) { return state.forums.find((f) => f.id === forumId); }
+function findMessage(forumId, messageId) {
+  const forum = findForum(forumId);
+  return forum ? forum.messages.find((m) => m.id === messageId) : null;
+}
+
+/* ============================= Helpers ============================= */
+
+let uidCounter = 0;
+function newId(prefix) { return prefix + Date.now().toString(36) + '-' + (++uidCounter); }
+
+function esc(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function relTime(ts) {
+  const mins = Math.round((Date.now() - ts) / 60000);
+  if (mins < 1) { return 'Just now'; }
+  if (mins < 60) { return mins + 'm ago'; }
+  const hours = Math.round(mins / 60);
+  if (hours < 24) { return hours + 'h ago'; }
+  return Math.round(hours / 24) + 'd ago';
+}
+
+const AVATAR_COLORS = ['#37AE9A', '#4D60C9', '#CE569E', '#317ACE', '#895CD3', '#496F5D', '#C4713A'];
+function avatarHtml(name, isCareTeam) {
+  if (isCareTeam) {
+    return '<span class="avatar" style="background:#1C614C" aria-hidden="true">CC</span>';
+  }
+  const initials = name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) { hash = (hash * 31 + name.charCodeAt(i)) % 997; }
+  const color = AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  return '<span class="avatar" style="background:' + color + '" aria-hidden="true">' + esc(initials) + '</span>';
+}
+
+function matchRule(text) {
+  const normalized = text.toLowerCase().replace(/[’‘]/g, "'");
+  return AI_RULES.find((rule) => rule.re.test(normalized));
+}
+
+function experienceLinksFor(text) {
+  const normalized = text.toLowerCase();
+  const hits = EXPERIENCE_LINKS.filter((link) => link.re.test(normalized));
+  if (hits.length === 0) { return null; }
+  return hits.map((link) => {
+    const msg = findMessage('f5', link.messageId);
+    return { messageId: link.messageId, author: msg.author, title: msg.title };
+  });
+}
+
+/* ============================= AI panel ============================= */
+
+function linkifySecureMessage(escapedText) {
+  return escapedText.replace(/secure messages?/gi, (match) =>
+    '<a href="https://canopycare.us/" target="_blank" rel="noopener">' + match + '</a>');
+}
+
+function aiPanelContentHtml(rule, sourceText, auto) {
+  const urgentClass = rule.urgent ? ' urgent' : '';
+  let chips = '';
+  if (rule.articleId) {
+    const article = ARTICLES.find((a) => a.id === rule.articleId);
+    chips = '<a class="chip" href="#/kb/' + article.id + '">\u{1F4C4} ' + esc(article.title) + '</a>';
+  } else if (rule.experience) {
+    const links = experienceLinksFor(sourceText);
+    if (links) {
+      chips = links.map((l) =>
+        '<a class="chip" href="#/forum/f5/' + l.messageId + '">\u{1F4AC} Read how ' + esc(l.author) + ' felt — ' + esc(l.title) + '</a>'
+      ).join('');
+    } else {
+      chips = '<a class="chip" href="#/forum/f5">\u{1F4AC} Browse Treatment Experiences</a>';
+    }
+  } else if (rule.kbHome) {
+    chips = '<a class="chip" href="#/kb">\u{1F4DA} Browse the Knowledge Base</a>';
+  }
+  const header = auto
+    ? '✨ Canopy Assistant — while you wait for others to reply'
+    : '✨ Canopy Assistant';
+  return '<div class="ai-label' + urgentClass + '">' + header + '</div>' +
+    '<p>' + linkifySecureMessage(esc(rule.answer)) + '</p>' + chips +
+    '<div class="ai-disclaimer">AI-generated — always confirm with your care team.</div>';
+}
+
+function showAiPanel(forumId, msg, opts) {
+  const container = document.getElementById('ai-' + msg.id);
+  if (!container) { return; }
+  const shown = userStore.aiShown[msg.id];
+  const rule = matchRule(msg.title + ' ' + msg.body);
+  const panelClass = rule.urgent ? 'ai-panel urgent' : 'ai-panel';
+  if (shown && !opts.animate) {
+    container.innerHTML = '<div class="' + panelClass + '">' +
+      aiPanelContentHtml(rule, msg.title + ' ' + msg.body, shown.auto) + '</div>';
+    return;
+  }
+  container.innerHTML = '<div class="' + panelClass + '">' +
+    '<div class="ai-label">✨ Canopy Assistant</div>' +
+    '<div class="dots" aria-label="Canopy Assistant is thinking"><span></span><span></span><span></span></div></div>';
+  const timer = setTimeout(() => {
+    userStore.aiShown[msg.id] = { auto: !!opts.auto };
+    saveUserStore();
+    const el = document.getElementById('ai-' + msg.id);
+    if (el) {
+      el.innerHTML = '<div class="' + panelClass + '">' +
+        aiPanelContentHtml(rule, msg.title + ' ' + msg.body, !!opts.auto) + '</div>';
+    }
+  }, 1500);
+  pendingTimers.push(timer);
+}
+
+function schedulePeerReply(forumId, msg) {
+  const rule = matchRule(msg.title + ' ' + msg.body);
+  if (!rule.peerReply) { return; }
+  const peer = rule.peerReply;
+  pendingTimers.push(setTimeout(() => {
+    const list = document.getElementById('replies-' + msg.id);
+    if (list) {
+      const typing = document.createElement('div');
+      typing.className = 'typing-indicator';
+      typing.id = 'typing-' + msg.id;
+      typing.innerHTML = '<span class="dots"><span></span><span></span><span></span></span> ' + esc(peer.author) + ' is typing…';
+      list.appendChild(typing);
+    }
+  }, 4000));
+  pendingTimers.push(setTimeout(() => {
+    const reply = { id: newId('r'), author: peer.author, body: peer.body, ts: Date.now() };
+    const target = findMessage(forumId, msg.id);
+    if (target) { target.replies.push(reply); }
+    userStore.replies.push({ forumId: forumId, messageId: msg.id, reply: reply });
+    saveUserStore();
+    const typing = document.getElementById('typing-' + msg.id);
+    if (typing) { typing.remove(); }
+    const list = document.getElementById('replies-' + msg.id);
+    if (list) { list.insertAdjacentHTML('beforeend', replyHtml(reply)); }
+  }, peer.delaySeconds * 1000));
+}
+
+/* ============================= Rendering ============================= */
+
+const app = document.getElementById('app');
+const hero = document.getElementById('hero');
+
+function safetyBannerHtml() {
+  return '<div class="safety-banner" role="note">⚠️ This community doesn’t replace medical advice. ' +
+    'For urgent concerns, contact your care team right away.</div>';
+}
+
+function setNav(active) {
+  document.getElementById('nav-forums').classList.toggle('active', active === 'forums');
+  document.getElementById('nav-kb').classList.toggle('active', active === 'kb');
+}
+
+function renderHome() {
+  setNav('forums');
+  hero.innerHTML = '<div class="hero"><div class="container">' +
+    '<h1>Community Forums</h1>' +
+    '<p>Patients helping patients. Share what works, tell others what treatment really felt like, and get instant AI-suggested answers while you wait.</p>' +
+    '</div></div>';
+  const cards = state.forums.map((f) => {
+    const topicCount = f.messages.length;
+    const replyCount = f.messages.reduce((sum, m) => sum + m.replies.length, 0);
+    const lastTs = Math.max(...f.messages.map((m) => Math.max(m.ts, ...m.replies.map((r) => r.ts), 0)));
+    return '<div class="card forum-card" role="link" tabindex="0" data-forum="' + f.id + '">' +
+      '<div class="forum-icon" aria-hidden="true">' + f.icon + '</div>' +
+      '<div><h3>' + esc(f.name) + '</h3>' +
+      '<div class="desc">' + esc(f.description) + '</div>' +
+      '<div class="meta">' + topicCount + ' topics · ' + replyCount + ' replies · last activity ' + relTime(lastTs) + '</div>' +
+      '</div></div>';
+  }).join('');
+  app.innerHTML = safetyBannerHtml() + cards;
+  app.querySelectorAll('.forum-card').forEach((card) => {
+    const go = () => { location.hash = '#/forum/' + card.dataset.forum; };
+    card.addEventListener('click', go);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter') { go(); } });
+  });
+}
+
+function tagChipHtml(label) {
+  if (!label) { return ''; }
+  const color = TAG_COLORS[label] || TAG_COLORS.Other;
+  return '<span class="tag-chip" style="background:' + color + '">' + esc(label) + '</span>';
+}
+
+function replyHtml(reply) {
+  const cls = reply.isCareTeam ? 'reply careteam' : 'reply';
+  const badge = reply.isCareTeam ? '<span class="badge-careteam">Canopy Care Team ✓</span>' : '';
+  return '<div class="' + cls + '">' +
+    '<div class="msg-head">' + avatarHtml(reply.author, reply.isCareTeam) +
+    '<span class="author">' + esc(reply.author) + '</span>' + badge +
+    '<span class="timestamp">' + relTime(reply.ts) + '</span></div>' +
+    '<div>' + esc(reply.body) + '</div></div>';
+}
+
+function messageHtml(forum, msg) {
+  return '<article class="card" id="msg-' + msg.id + '">' +
+    '<div class="msg-head">' + avatarHtml(msg.author, msg.isCareTeam) +
+    '<span class="author">' + esc(msg.author) + '</span>' +
+    tagChipHtml(msg.treatmentTag) +
+    '<span class="timestamp">' + relTime(msg.ts) + '</span></div>' +
+    '<div class="msg-title">' + esc(msg.title) + '</div>' +
+    '<div class="msg-body">' + esc(msg.body) + '</div>' +
+    '<div class="msg-actions">' +
+    '<button type="button" class="btn btn-secondary btn-small" data-action="reply" data-msg="' + msg.id + '">Reply</button>' +
+    '<button type="button" class="btn btn-secondary btn-small" data-action="ai" data-msg="' + msg.id + '">✨ AI answer</button>' +
+    '</div>' +
+    '<div id="ai-' + msg.id + '"></div>' +
+    '<div class="replies" id="replies-' + msg.id + '">' + msg.replies.map(replyHtml).join('') + '</div>' +
+    '<div class="reply-composer" id="reply-composer-' + msg.id + '">' +
+    '<textarea placeholder="Write a supportive reply…" aria-label="Reply text"></textarea>' +
+    '<button type="button" class="btn btn-primary btn-small" data-action="post-reply" data-msg="' + msg.id + '" disabled>Post reply</button>' +
+    '</div></article>';
+}
+
+function composerHtml(forum) {
+  const treatmentRow = forum.isExperiences
+    ? '<div class="row"><label for="composer-tag">Treatment (optional)</label>' +
+      '<select id="composer-tag"><option value="">Choose a treatment…</option>' +
+      Object.keys(TAG_COLORS).map((t) => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('') +
+      '</select></div>'
+    : '';
+  return '<div class="composer" id="composer" hidden>' +
+    '<div class="row"><label for="composer-title">Title</label>' +
+    '<input type="text" id="composer-title" placeholder="What’s your question or story?"></div>' +
+    treatmentRow +
+    '<div class="row"><label for="composer-body">Message</label>' +
+    '<textarea id="composer-body" placeholder="Share as much detail as you’re comfortable with…"></textarea></div>' +
+    '<button type="button" class="btn btn-primary" id="composer-post" disabled>Post</button>' +
+    '</div>';
+}
+
+function renderForum(forumId, highlightId) {
+  const forum = findForum(forumId);
+  if (!forum) { location.hash = '#/'; return; }
+  setNav('forums');
+  hero.innerHTML = '';
+  app.innerHTML =
+    '<div class="breadcrumb"><a href="#/">← All forums</a></div>' +
+    '<div class="forum-header"><div class="forum-icon" aria-hidden="true">' + forum.icon + '</div>' +
+    '<div><h2>' + esc(forum.name) + '</h2><div class="desc">' + esc(forum.description) + '</div></div></div>' +
+    safetyBannerHtml() +
+    '<p style="margin-bottom:12px"><button type="button" class="btn btn-primary" id="new-message-btn">+ New message</button></p>' +
+    composerHtml(forum) +
+    forum.messages.map((m) => messageHtml(forum, m)).join('');
+
+  document.getElementById('new-message-btn').addEventListener('click', () => {
+    const composer = document.getElementById('composer');
+    composer.hidden = !composer.hidden;
+    if (!composer.hidden) { document.getElementById('composer-title').focus(); }
+  });
+
+  const titleInput = document.getElementById('composer-title');
+  const bodyInput = document.getElementById('composer-body');
+  const postBtn = document.getElementById('composer-post');
+  const validate = () => {
+    postBtn.disabled = !(titleInput.value.trim() && bodyInput.value.trim());
+  };
+  titleInput.addEventListener('input', validate);
+  bodyInput.addEventListener('input', validate);
+  postBtn.addEventListener('click', () => postMessage(forum));
+
+  app.onclick = onMessageAction;
+
+  // Restore cached AI panels
+  forum.messages.forEach((m) => {
+    if (userStore.aiShown[m.id]) { showAiPanel(forum.id, m, { animate: false }); }
+  });
+
+  if (highlightId) {
+    const el = document.getElementById('msg-' + highlightId);
+    if (el) {
+      el.classList.add('highlighted');
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      pendingTimers.push(setTimeout(() => el.classList.remove('highlighted'), 3000));
+    }
+  }
+}
+
+function onMessageAction(event) {
+  const btn = event.target.closest('button[data-action]');
+  if (!btn) { return; }
+  const msgId = btn.dataset.msg;
+  const forumId = currentForumId();
+  const msg = findMessage(forumId, msgId);
+  if (!msg) { return; }
+  if (btn.dataset.action === 'reply') {
+    const composer = document.getElementById('reply-composer-' + msgId);
+    composer.classList.toggle('open');
+    if (composer.classList.contains('open')) {
+      const area = composer.querySelector('textarea');
+      area.focus();
+      area.addEventListener('input', () => {
+        composer.querySelector('button').disabled = !area.value.trim();
+      });
+    }
+  } else if (btn.dataset.action === 'ai') {
+    showAiPanel(forumId, msg, { animate: true, auto: false });
+  } else if (btn.dataset.action === 'post-reply') {
+    const composer = document.getElementById('reply-composer-' + msgId);
+    const area = composer.querySelector('textarea');
+    const text = area.value.trim();
+    if (!text) { return; }
+    const reply = { id: newId('r'), author: 'You', body: text, ts: Date.now() };
+    msg.replies.push(reply);
+    userStore.replies.push({ forumId: forumId, messageId: msgId, reply: reply });
+    saveUserStore();
+    area.value = '';
+    composer.classList.remove('open');
+    document.getElementById('replies-' + msgId).insertAdjacentHTML('beforeend', replyHtml(reply));
+  }
+}
+
+function postMessage(forum) {
+  const titleInput = document.getElementById('composer-title');
+  const bodyInput = document.getElementById('composer-body');
+  const tagSelect = document.getElementById('composer-tag');
+  const title = titleInput.value.trim();
+  const body = bodyInput.value.trim();
+  if (!title || !body) { return; }
+  const msg = {
+    id: newId('m'), author: 'You', title: title, body: body, ts: Date.now(),
+    treatmentTag: tagSelect && tagSelect.value ? tagSelect.value : undefined,
+    replies: []
+  };
+  forum.messages.unshift(msg);
+  userStore.messages.push({ forumId: forum.id, message: { id: msg.id, author: msg.author, title: msg.title, body: msg.body, ts: msg.ts, treatmentTag: msg.treatmentTag } });
+  saveUserStore();
+  titleInput.value = '';
+  bodyInput.value = '';
+  if (tagSelect) { tagSelect.value = ''; }
+  document.getElementById('composer').hidden = true;
+  document.getElementById('composer').insertAdjacentHTML('afterend', messageHtml(forum, msg));
+  // Auto AI assist + simulated peer reply (once per message)
+  showAiPanel(forum.id, msg, { animate: true, auto: true });
+  schedulePeerReply(forum.id, msg);
+}
+
+/* ============================= Knowledge base ============================= */
+
+const KB_CATEGORIES = ['All', 'Side Effects', 'Medications', 'Nutrition', 'Wellbeing', 'Care Logistics'];
+let kbFilter = { category: 'All', search: '' };
+
+function renderKb() {
+  setNav('kb');
+  hero.innerHTML = '';
+  app.innerHTML =
+    '<div style="margin-top:20px"><h1>Knowledge Base</h1>' +
+    '<div class="byline">Plain-language guides reviewed by the Canopy clinical team.</div></div>' +
+    safetyBannerHtml() +
+    '<div class="kb-toolbar">' +
+    '<input type="text" id="kb-search" placeholder="Search articles…" aria-label="Search articles" value="' + esc(kbFilter.search) + '">' +
+    '<div class="kb-chips" role="group" aria-label="Filter by category">' +
+    KB_CATEGORIES.map((cat) =>
+      '<button type="button" class="kb-cat' + (kbFilter.category === cat ? ' active' : '') + '" data-cat="' + esc(cat) + '">' + esc(cat) + '</button>'
+    ).join('') +
+    '</div></div>' +
+    '<div id="kb-list"></div>';
+  document.getElementById('kb-search').addEventListener('input', (e) => {
+    kbFilter.search = e.target.value;
+    renderKbList();
+  });
+  app.querySelectorAll('.kb-cat').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      kbFilter.category = chip.dataset.cat;
+      app.querySelectorAll('.kb-cat').forEach((c) => c.classList.toggle('active', c === chip));
+      renderKbList();
+    });
+  });
+  renderKbList();
+}
+
+function renderKbList() {
+  const search = kbFilter.search.trim().toLowerCase();
+  const items = ARTICLES.filter((a) => {
+    const inCategory = kbFilter.category === 'All' || a.category === kbFilter.category;
+    const inSearch = !search || (a.title + ' ' + a.summary).toLowerCase().includes(search);
+    return inCategory && inSearch;
+  });
+  const list = document.getElementById('kb-list');
+  if (items.length === 0) {
+    list.innerHTML = '<p style="color:var(--text-secondary)">No articles match your search.</p>';
+    return;
+  }
+  list.innerHTML = items.map((a) =>
+    '<div class="card article-card" role="link" tabindex="0" data-article="' + a.id + '">' +
+    '<span class="cat-chip">' + esc(a.category) + '</span>' +
+    '<h3>' + esc(a.title) + '</h3>' +
+    '<div class="summary">' + esc(a.summary) + '</div>' +
+    '<div class="read-time">' + a.minutes + ' min read</div></div>'
+  ).join('');
+  list.querySelectorAll('.article-card').forEach((card) => {
+    const go = () => { location.hash = '#/kb/' + card.dataset.article; };
+    card.addEventListener('click', go);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter') { go(); } });
+  });
+}
+
+function renderArticle(articleId) {
+  const article = ARTICLES.find((a) => a.id === articleId);
+  if (!article) { location.hash = '#/kb'; return; }
+  setNav('kb');
+  hero.innerHTML = '';
+  const relatedForum = article.relatedForumId ? findForum(article.relatedForumId) : null;
+  const relatedLink = relatedForum
+    ? '<p style="margin-top:20px"><a href="#/forum/' + relatedForum.id + '">Discuss this in the ' + esc(relatedForum.name) + ' forum →</a></p>'
+    : '';
+  app.innerHTML =
+    '<div class="breadcrumb"><a href="#/kb">← Knowledge Base</a></div>' +
+    '<div class="card" style="margin-top:8px">' +
+    '<span class="cat-chip">' + esc(article.category) + '</span>' +
+    '<h1 style="font-size:26px">' + esc(article.title) + '</h1>' +
+    '<div class="byline">Reviewed by the Canopy clinical team · ' + article.minutes + ' min read</div>' +
+    '<div class="article-body">' + article.body + '</div>' +
+    relatedLink +
+    '</div>' + safetyBannerHtml();
+}
+
+/* ============================= Router ============================= */
+
+let currentRoute = '';
+function currentForumId() {
+  const match = location.hash.match(/^#\/forum\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+function route() {
+  const hash = location.hash || '#/';
+  currentRoute = hash;
+  const forumMatch = hash.match(/^#\/forum\/([^/]+)(?:\/([^/]+))?$/);
+  const articleMatch = hash.match(/^#\/kb\/([^/]+)$/);
+  if (forumMatch) {
+    renderForum(forumMatch[1], forumMatch[2] || null);
+  } else if (articleMatch) {
+    renderArticle(articleMatch[1]);
+  } else if (hash === '#/kb') {
+    renderKb();
+  } else {
+    renderHome();
+  }
+  window.scrollTo(0, 0);
+}
+
+document.getElementById('reset-demo').addEventListener('click', () => {
+  localStorage.removeItem(STORAGE_KEY);
+  userStore = loadUserStore();
+  buildState();
+  location.hash = '#/';
+  route();
+});
+
+window.addEventListener('hashchange', route);
+
+userStore = loadUserStore();
+buildState();
+route();
+</script>
+</body>
+</html>
