@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>התכנים של אופק</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000;
+    --surface:#1b1b1d;
+    --surface-2:#262628;
+    --surface-3:#323236;
+    --accent:#5b9bf8;
+    --accent-dim:#2f4d78;
+    --text:#fff;
+    --text-2:#9a9aa0;
+    --text-3:#6a6a70;
+    --radius:16px;
+    --radius-sm:11px;
+    --nav-h:76px;
+    --maxw:1100px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Heebo",-apple-system,"Segoe UI",Arial,sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:40;
+    background:rgba(0,0,0,.88);
+    backdrop-filter:saturate(150%) blur(14px);
+    padding:14px 0 10px;
+  }
+  .brandrow{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .brand{font-weight:900;font-size:20px;letter-spacing:-.2px}
+  .brand span{color:var(--accent)}
+  .count{margin-inline-start:auto;font-size:12px;color:var(--text-3);font-weight:500}
+
+  .segmented{
+    display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:2px;
+  }
+  .segmented button{
+    flex:1;padding:9px 6px;border-radius:999px;font-weight:700;font-size:15px;
+    color:var(--text-2);transition:background .18s ease,color .18s ease;
+  }
+  .segmented button[aria-selected="true"]{background:var(--accent);color:#04101f}
+  .segmented button[disabled]{color:var(--text-3);cursor:not-allowed}
+
+  .searchwrap{position:relative;margin-top:12px}
+  .searchwrap input{
+    width:100%;background:var(--surface-2);border:0;border-radius:12px;
+    padding:12px 44px 12px 14px;color:var(--text);font-size:15px;font-family:inherit;
+  }
+  .searchwrap input::placeholder{color:var(--text-3)}
+  .searchwrap svg{
+    position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);
+    width:18px;height:18px;fill:none;stroke:var(--text-3);stroke-width:2;pointer-events:none;
+  }
+
+  /* ---------- sub header (inside a collection) ---------- */
+  .subhead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .backbtn{
+    display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+    background:var(--surface-2);flex:none;
+  }
+  .backbtn svg{width:16px;height:16px;fill:none;stroke:var(--accent);stroke-width:2.4}
+  .subhead h1{margin:0;font-size:19px;font-weight:900;color:var(--accent);letter-spacing:-.2px}
+
+  /* ---------- content ---------- */
+  main{padding-top:18px}
+  .sectitle{
+    font-size:13px;font-weight:700;color:var(--text-3);letter-spacing:.4px;
+    margin:26px 0 10px;
+  }
+  .sectitle:first-child{margin-top:0}
+
+  .grid{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+  @media(min-width:720px){.grid{grid-template-columns:repeat(3,1fr);gap:18px}}
+  @media(min-width:980px){.grid{grid-template-columns:repeat(4,1fr)}}
+  @media(max-width:359px){.grid{grid-template-columns:1fr}}
+
+  .card{
+    background:var(--surface);border-radius:var(--radius);overflow:hidden;
+    display:flex;flex-direction:column;text-align:start;
+    transition:transform .16s ease,background .16s ease;
+  }
+  .card:hover,.card:focus-visible{background:var(--surface-2);transform:translateY(-2px)}
+  .thumb{
+    aspect-ratio:1/1;position:relative;display:grid;place-items:center;overflow:hidden;
+    background:linear-gradient(150deg,#1f2a3a,#0e1620);
+  }
+  .thumb.wide{aspect-ratio:16/9}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .glyph{font-size:40px;line-height:1;filter:saturate(1.1)}
+  .thumb .ring{
+    position:absolute;inset:14%;border:1.5px solid rgba(255,255,255,.14);border-radius:50%;
+  }
+  .play{
+    position:absolute;inset-block-end:8px;inset-inline-start:8px;
+    background:rgba(0,0,0,.65);border-radius:6px;padding:2px 7px;
+    font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;
+  }
+  .play svg{width:10px;height:10px;fill:#fff}
+  .cardbody{padding:11px 12px 13px}
+  .cardtitle{font-size:14.5px;font-weight:700;line-height:1.35}
+  .cardmeta{font-size:11.5px;color:var(--text-3);margin-top:5px;font-weight:500}
+  .badge{
+    display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;
+    background:var(--accent-dim);color:#bcd8ff;margin-inline-start:6px;vertical-align:1px;
+  }
+  .badge.warn{background:#4a3a1c;color:#f0cd8a}
+
+  .empty{
+    text-align:center;color:var(--text-3);padding:56px 20px;font-size:15px;
+  }
+  .empty strong{display:block;color:var(--text-2);font-weight:700;margin-bottom:6px;font-size:17px}
+
+  /* ---------- bottom nav ---------- */
+  .bottomnav{
+    position:fixed;inset-inline:0;bottom:0;z-index:50;
+    background:rgba(18,18,20,.96);backdrop-filter:blur(14px);
+    border-top:1px solid #232326;
+    display:flex;padding:8px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .bottomnav div{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-size:11px;font-weight:600;color:var(--text-3);
+  }
+  .bottomnav div.on{color:var(--text);font-weight:700}
+  .bottomnav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- detail sheet ---------- */
+  .sheet{
+    position:fixed;inset:0;z-index:60;background:#000;
+    display:flex;flex-direction:column;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+  }
+  .sheet.open{opacity:1;pointer-events:auto}
+  .sheet .close{
+    align-self:flex-start;margin:16px;display:grid;place-items:center;
+    width:40px;height:40px;
+  }
+  .sheet .close svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2}
+  .sheetbody{padding:8px 26px 40px;max-width:640px;width:100%;margin:0 auto}
+  .sheetbody h2{font-size:33px;font-weight:900;margin:22px 0 14px;line-height:1.2;letter-spacing:-.5px}
+  .sheetbody p{color:var(--text-2);font-size:17px;margin:0 0 22px;line-height:1.45}
+  .sheetdate{display:flex;align-items:center;gap:8px;color:var(--text-3);font-size:14.5px;margin-bottom:26px}
+  .sheetdate svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
+  .openlink{
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    background:var(--accent);color:#04101f;font-weight:700;font-size:19px;
+    padding:17px;border-radius:14px;transition:filter .15s ease;
+  }
+  .openlink:hover{filter:brightness(1.08)}
+  .openlink svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2}
+  .note{
+    margin-top:18px;background:#1d1a12;border:1px solid #3a3018;border-radius:12px;
+    padding:12px 14px;color:#e0c68f;font-size:13.5px;line-height:1.5;
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .card:hover{transform:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="brand">התכנים של <span>אופק</span></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="segmented" role="tablist" id="tabs">
+      <button role="tab" data-tab="guides" aria-selected="true">מדריכים</button>
+      <button role="tab" data-tab="recipes" aria-selected="false">מתכונים</button>
+      <button role="tab" data-tab="forms" aria-selected="false" disabled>טפסים</button>
+    </div>
+    <div class="searchwrap">
+      <input id="q" type="search" placeholder="חפש מדריך, סרטון או מתכון..." autocomplete="off" aria-label="חיפוש">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    </div>
+  </div>
+</div>
+
+<main class="wrap" id="view"></main>
+
+<nav class="bottomnav" aria-hidden="true">
+  <div><svg viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1z"/></svg>בית</div>
+  <div><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M4 10v4M20 10v4M6 12h12"/></svg>אימונים</div>
+  <div><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-7 4 14 2.5-7h5"/></svg>מדדים</div>
+  <div><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 3v2h6V3M9 10h6M9 14h4"/></svg>תזונה</div>
+  <div class="on"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>תכנים</div>
+</nav>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <button class="close" id="sheetClose" aria-label="סגירה">
+    <svg viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></svg>
+  </button>
+  <div class="sheetbody">
+    <h2 id="sheetTitle"></h2>
+    <p id="sheetDesc"></p>
+    <div class="sheetdate">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span id="sheetDate"></span>
+    </div>
+    <a class="openlink" id="sheetLink" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>
+      פתח קישור
+    </a>
+    <div class="note" id="sheetNote" hidden></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const S3 = "https://progress-data.s3.eu-central-1.amazonaws.com/docs/";
+const ADDED = "02.08.2026";
+
+/* ---- helpers to keep the data table short ---- */
+const vid = (id, title, sub) => ({kind:"video", id, title, sub:sub||"סרטון", url:"https://youtu.be/"+id, thumb:"https://i.ytimg.com/vi/"+id+"/hqdefault.jpg"});
+const pdf = (hash, title, sub, glyph, note) => ({kind:"pdf", title, sub, glyph:glyph||"📄", url:S3+hash+".pdf", note});
+const web = (url, title, sub, glyph) => ({kind:"link", title, sub, glyph:glyph||"🔗", url});
+
+/* =======================================================================
+   Collections. Order inside each one mirrors the order the links arrived.
+   ======================================================================= */
+const DATA = {
+guides:[
+  {
+    id:"foundations", title:"חוקי היסוד לתהליך מוצלח", glyph:"🎯",
+    sub:"עשרה שיעורי פתיחה שקובעים אם התהליך יחזיק לאורך זמן",
+    items:[
+      vid("u9wzDzYKpe0","ברוכים הבאים לקורס"),
+      vid("TbiHXY9NoWQ","מטרות"),
+      vid("5-qoki845lI","מחויבות"),
+      vid("rHSaJv2Y6W8","הרגלים ומוטיבציה"),
+      vid("KfrUIIIhxWg","מה הורס תהליך"),
+      vid("W7kL-dvVaGk","קלוריות"),
+      vid("6UkKVdIOwHQ","רעב"),
+      vid("PEppPPyWpTI","שינה"),
+      vid("3hVOSbRX6fU","עצימות"),
+      vid("GIRxaXqNW60","חלוקת אימון"),
+      vid("1yw7OuqpPmM","ציוד וחימום"),
+      pdf("111eccb7f579999d029dde628e0cc87fc0158ce3dce6fb7a2fb0b3f428c23ea6",
+          "די לעייפות: איך לישון כמו תינוק",
+          "אחד עשר פרו טיפים לשיפור איכות השינה","😴")
+    ]
+  },
+  {
+    id:"holidays", title:"מדריכים לחגים", glyph:"🕯️",
+    sub:"איך לעבור ארוחות חג בלי לצאת מהמסלול",
+    items:[
+      pdf("0f1f7d9ff0c5b3c613d19f9ce92a154e80bab36abfc39ede188faa69de595c6a",
+          "מדריך לראש השנה","עקרונות, ערכים קלוריים של הסימנים, וחלוקת הצלחת","🍎",
+          "לא הצלחתי לקרוא את הקובץ הזה בזמן הבנייה כי הוא גדול מ-20MB. התיאור מבוסס על המדריך המקביל באתר המטבח."),
+      pdf("03a0395238dbc097e78e78baff7dcbc96fa767b03d97fac37acb9b9cf90878e0",
+          "המדריך השלם לפסח","כלים להישאר על המסלול בחג, בין אם בחיטוב או במסה","🛑",
+          "הקובץ בנוי כולו מתמונות בלי שכבת טקסט. התיאור מבוסס על המדריך המקביל באתר המטבח."),
+      pdf("f252ab5d16a09708daaead541771fa887867d2ee3e22a0079a1fa2c31bfb28f5",
+          "מדריך ליום כיפור","מה לאכול לפני הצום ומה אחריו, כדי לחזור לתפריט בלי תופעות לוואי","🤍"),
+      pdf("0f2753c38b14417cd370a7ab9b273ce1105bfd5eb3bd91834ce4c629280466b7",
+          "מדריך לחנוכה","ערכים קלוריים של מאכלי החג, ועוד ארבעה מתכונים אפויים","🕎"),
+      pdf("32c5aeac7b81f87788a785560d42b3d9c0764434890ed7e307103b5c0f694d48",
+          "מדריך לשבועות","פשטידות וגבינות, חלוקת צלחת ושלושה מתכונים","🧀")
+    ]
+  },
+  {
+    id:"masterclass", title:"מאסטר קלאס", glyph:"🎓",
+    sub:"שיעור מלא לכל קבוצת שריר, טעויות נפוצות ודגשי ביצוע",
+    items:[
+      vid("YOucCP9KL5o","הסבר קצר לחימום כמו שצריך"),
+      vid("cOs5Fgj17pc","מאסטר קלאס לבטן"),
+      vid("5uOQ3nOeZnc","מאסטר קלאס ליד אחורית"),
+      vid("w3gnirzVoUo","מאסטר קלאס לחזה"),
+      vid("ZjmlWg2Aa0c","מאסטר קלאס לגב"),
+      vid("hcMCCqJhVVs","מאסטר קלאס לרגליים"),
+      vid("vvHs6Nl2Fqc","מאסטר קלאס ליד קדמית"),
+      vid("dTKqXQylgXc","מאסטר קלאס לכתפיים")
+    ]
+  },
+  {
+    id:"exercises", title:"ספריית תרגילים", glyph:"🏋️",
+    sub:"עשרים סרטוני טכניקה, מסודרים לפי קבוצת שריר",
+    groups:[
+      {name:"חזה", items:[
+        vid("ZS3x6104-Gw","לחיצות חזה עם משקולות 15 מעלות"),
+        vid("CnbPEIWnzqY","לחיצות חזה בסמית' 30 מעלות"),
+        vid("YJh4JIspwRQ","פרפר בקרוס"),
+        vid("ieubuiCYYL0","פרפר במכונה")
+      ]},
+      {name:"גב", items:[
+        vid("X8cymdyW3zM","משיכה בפולי יד אחת"),
+        vid("VPZ86hB07SE","חתירה במכונה")
+      ]},
+      {name:"רגליים וישבן", items:[
+        vid("_7blpVua2Tc","פשיטת ברך בישיבה"),
+        vid("4Bmnm3YLFBo","פשיטת ברך רגל אחת"),
+        vid("PopvqiFyc0w","כפיפת ברך בישיבה"),
+        vid("YfBYlacujHQ","כיסא רומי, דגש האמסטרינג"),
+        vid("yDZcBgcE_wM","לחיצת רגליים במכונה"),
+        vid("g-9CUEojv48","תאומים בסמית'")
+      ]},
+      {name:"כתפיים", items:[
+        vid("7kRGBOjwBR0","הרחקות כתפיים כנגד משקולות בעמידה"),
+        vid("wi9YAvYBrds","הרחקה אופקית, פרפר הפוך")
+      ]},
+      {name:"יד אחורית", items:[
+        vid("OrW-Nl98inc","פשיטת מרפק בקרוס עם מוט"),
+        vid("K4sUP8_sg-M","פשיטת מרפק בקרוס, קיק באק"),
+        vid("ziHqrcwSaAE","סקול קראשר אקצנטרי עם משקולות")
+      ]},
+      {name:"יד קדמית", items:[
+        vid("rxFmUeMG4fc","כפיפת מרפק עם מוט"),
+        vid("uoxhdx00fVA","פריצ'ר במכונה")
+      ]},
+      {name:"בטן", items:[
+        vid("xBSNU_SzrPg","כפיפות בטן על הברכיים בפולי")
+      ]}
+    ]
+  },
+  {
+    id:"programs", title:"מדריכי פיתוח", glyph:"📈",
+    sub:"תוכניות אימון מלאות עם עקרונות, מחקרים וסרטוני ביצוע בתוך הקובץ",
+    items:[
+      pdf("acc5466815e19c388748680e15c10230e4122a1a5b612a4d418be69669e098ce",
+          "המדריך המלא לידיים דומיננטיות",
+          "מנחים, טווחי תנועה, תדירות וכשל, ותוכנית אימון עם עשרה סרטונים","💪"),
+      pdf("40310b1ed20f45f77bfe5a11bb53a8cc7ffa9beaf0067cc9f8851bcf7da29927",
+          "המדריך לפיתוח החזה",
+          "מבנה החזה, מה אומרים המחקרים, ושתי תוכניות אימון","🫁"),
+      pdf("ed5b040fcb1d5ee60a8ea34abeacdf7b0d9de23b6267ae99e0250d5ed0674cc8",
+          "המדריך לפיתוח שרירי בטן",
+          "טווחי תנועה מלאים, תדירות, ופרק שלם על שריפת שומן ממוקדת","🎽"),
+      pdf("83a823bce58e76d5f107c1dbce0ccb835b3f09472fcb1066ec688e8c3adc6378",
+          "המדריך למסה",
+          "קצבי עלייה, מעקב אחרי הרכב הגוף, ויחס מסה מול חיטוב","📊")
+    ]
+  },
+  {
+    id:"nutrition", title:"מדריכי תזונה", glyph:"🥗",
+    sub:"שובע, קניות וקלוריות חופשיות",
+    items:[
+      pdf("98d4934a8e7ca6399152e497153f6ad34217cd273f98ef7d37550958fef5e615",
+          "רשימת מאכלים משביעים",
+          "הכנה מהירה ובטן מלאה, כולל ארוחות מוכנות ושייקים","🍲"),
+      pdf("51c6de66fd2ff8e5511d018f60fa0e2097a34c613ef6930c1dafecf5903856a7",
+          "עגלת חיסכון",
+          "ארבעה חוקי יסוד לקנייה בסופר, ורשימת מוצרים לחיטוב ולמסה","🛒"),
+      pdf("c9b5be2b66e3e6dafccc4330155ddbbcd4d3ae5314709c0366f0c8530a7690c1",
+          "השובע: להתגבר על תחושת רעב",
+          "מה באמת מייצר רעב, ומה אפשר לעשות עם זה","🧠"),
+      pdf("2e77895a7dfcdabadcbefcdfa84f8136bbb7053a1d467144f8e76fa9e58a577e",
+          "קלוריות חופשיות",
+          "דלי קלוריות מסודר, מהערך הנמוך לגבוה","🍫")
+    ]
+  },
+  {
+    id:"vacation", title:"מדריכים לחופשות", glyph:"✈️",
+    sub:"טיסות, מלונות והחזרה הביתה",
+    items:[
+      pdf("d847b4628af46bd3321497c2533b795b57faf2e0b5a74c3d7d56afadbff1f07d",
+          "טסים, נוסעים ונהנים",
+          "האמת על עלייה במשקל בחופשה, ואיך להיערך מראש","🧳",
+          "בכרטיס באפליקציה הכותרת היא ״טסים מתחטבים ונהנים״. בתוך הקובץ כתוב ״טסים, נוסעים ונהנים״.")
+    ]
+  },
+  {
+    id:"sites", title:"האתרים של אופק", glyph:"🌐",
+    sub:"שתי הפלטפורמות המלאות, מעבר לקבצים שכאן",
+    items:[
+      web("https://ofekzaramati-gym.lovable.app/","המכון של אופק",
+          "65 תרגילים בשבע קבוצות שריר, סרטוני העשרה ומדריכים","🏟️"),
+      web("https://ofek-recipe-collection.lovable.app/","המטבח של אופק",
+          "ספר מתכונים מלא, מדריכים, מסעדות והתאמה אישית","👨‍🍳"),
+      web("https://ofekzaramati-gym.lovable.app/muscle-group/chest","חזה","12 תרגילים במכון","💠"),
+      web("https://ofekzaramati-gym.lovable.app/muscle-group/back","גב","6 תרגילים במכון","💠"),
+      web("https://ofekzaramati-gym.lovable.app/muscle-group/legs","רגליים וישבן","24 תרגילים במכון","💠"),
+      web("https://ofekzaramati-gym.lovable.app/muscle-group/shoulders","כתפיים","8 תרגילים במכון","💠"),
+      web("https://ofekzaramati-gym.lovable.app/muscle-group/biceps","יד קדמית","5 תרגילים במכון","💠"),
+      web("https://ofekzaramati-gym.lovable.app/muscle-group/triceps","יד אחורית","4 תרגילים במכון","💠"),
+      web("https://ofekzaramati-gym.lovable.app/muscle-group/abs","בטן","6 תרגילים במכון","💠")
+    ]
+  }
+],
+
+recipes:[
+  {
+    id:"books", title:"ספרי מתכונים", glyph:"📕",
+    sub:"קבצים שאפשר לפתוח גם בלי חיבור לאתר",
+    items:[
+      pdf("48517da3f611af3089ae79a9283f7de7bddc08314b5fb021e7afe53760e22780",
+          "מתכוני פרו","לאכול טעים, להראות טוב. ארבעה עשר מתכונים מתוקים","🍰"),
+      pdf("5d7101534ed61342f78e04911a4d8c62ac5bc4b31f4667056f32892b51d7d7c1",
+          "חורף חלבוני","sweet & strong. שבעה מתכונים, עד חמישה מרכיבים וחמש דקות","☕"),
+      pdf("9332582af8ac99c967df91c992c9ea26edc0b0422c30551f347c6bd42ac8133b",
+          "הבסיס לגלידה מוצלחת","עשרה מתכוני נינג'ה קרימי בעברית","🍦"),
+      pdf("1b29e7239f4014bc0b1e15e9839952a6c2cdd100b7b060680b856caf4eeb7e3e",
+          "high protein ice creami","22 מתכוני נינג'ה קרימי. הקובץ כולו באנגלית","🍨"),
+      pdf("f1f394685410549d1c954830088ec7c30b347e35acf02fd8657a62e488f5d266",
+          "פרו","קובץ שלא הצלחתי לזהות","❓",
+          "הקובץ גדול מ-20MB ולא הצלחתי לקרוא אותו. הכותרת כאן היא התווית מהוואטסאפ ולא השם האמיתי.")
+    ]
+  },
+  {
+    id:"kitchen", title:"מתוך המטבח של אופק", glyph:"🍽️",
+    sub:"ארבע קטגוריות המתכונים באתר",
+    items:[
+      web("https://ofek-recipe-collection.lovable.app/","מתוקים וקינוחים","עוגות, עוגיות ומאפים","🍩"),
+      web("https://ofek-recipe-collection.lovable.app/","בשרי / דגים","עיקריות על בסיס חלבון","🥩"),
+      web("https://ofek-recipe-collection.lovable.app/","נינגה קרימי","גלידות חלבון במכשיר","🍧"),
+      web("https://ofek-recipe-collection.lovable.app/","צמחוני","בלי בשר ובלי דגים","🥑"),
+      web("https://ofek-recipe-collection.lovable.app/guides","טיפים ומדריכים","ידע שעובד בפועל","💡"),
+      web("https://ofek-recipe-collection.lovable.app/restaurant","מסעדות","איך להזמין בחוץ","🍴"),
+      web("https://ofek-recipe-collection.lovable.app/personalize","התאמה אישית","להתאים את התפריט","⚙️")
+    ]
+  }
+]
+};
+
+/* ---------- flatten for search & counters ---------- */
+function itemsOf(col){
+  return col.items || col.groups.reduce((a,g)=>a.concat(g.items),[]);
+}
+const ALL = {};
+for(const tab in DATA){
+  ALL[tab] = DATA[tab].reduce((a,c)=>a.concat(itemsOf(c).map(i=>Object.assign({_col:c.title}, i))), []);
+}
+
+/* ---------- rendering ---------- */
+const view = document.getElementById("view");
+const countEl = document.getElementById("count");
+let tab = "guides";
+let open = null;   // open collection id, or null
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function thumbHTML(it, wide){
+  if(it.kind === "video"){
+    return '<div class="thumb'+(wide?" wide":"")+'">'+
+      '<img loading="lazy" src="'+it.thumb+'" alt="" onerror="this.remove()">'+
+      '<span class="play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Video</span></div>';
+  }
+  return '<div class="thumb'+(wide?" wide":"")+'"><span class="ring"></span><span class="glyph">'+it.glyph+'</span></div>';
+}
+
+function cardHTML(it, idx, key){
+  const meta = it.kind==="pdf" ? "PDF" : it.kind==="link" ? "קישור" : "סרטון";
+  const warn = it.note ? '<span class="badge warn">לבדיקה</span>' : "";
+  return '<button class="card" data-open="'+key+':'+idx+'">'+
+    thumbHTML(it, it.kind==="video")+
+    '<div class="cardbody"><div class="cardtitle">'+esc(it.title)+warn+'</div>'+
+    '<div class="cardmeta">'+meta+(it.sub&&it.kind!=="video"?" · "+esc(it.sub.slice(0,42)):"")+'</div></div></button>';
+}
+
+function collectionCardHTML(col){
+  const n = itemsOf(col).length;
+  return '<button class="card" data-col="'+col.id+'">'+
+    '<div class="thumb"><span class="ring"></span><span class="glyph">'+col.glyph+'</span></div>'+
+    '<div class="cardbody"><div class="cardtitle">'+esc(col.title)+'</div>'+
+    '<div class="cardmeta">'+n+' פריטים</div></div></button>';
+}
+
+function render(){
+  const q = document.getElementById("q").value.trim();
+
+  /* search across the whole tab */
+  if(q){
+    const hits = ALL[tab].filter(i =>
+      i.title.includes(q) || (i.sub||"").includes(q) || i._col.includes(q));
+    countEl.textContent = hits.length + " תוצאות";
+    view.innerHTML = hits.length
+      ? '<div class="grid">'+hits.map((it,i)=>cardHTML(it,i,"search")).join("")+'</div>'
+      : '<div class="empty"><strong>אין תוצאות</strong>נסה מילה אחרת, או נקה את החיפוש כדי לחזור לרשימה.</div>';
+    window._search = hits;
+    return;
+  }
+
+  /* inside a collection */
+  if(open){
+    const col = DATA[tab].find(c=>c.id===open);
+    if(!col){ open=null; return render(); }
+    const items = itemsOf(col);
+    countEl.textContent = items.length + " פריטים";
+    let html = '<div class="subhead"><button class="backbtn" data-back aria-label="חזרה">'+
+      '<svg viewBox="0 0 24 24"><path d="M10 6l6 6-6 6"/></svg></button>'+
+      '<h1>'+esc(col.title)+'</h1></div>';
+    if(col.sub) html += '<div class="sectitle" style="margin:0 0 18px">'+esc(col.sub)+'</div>';
+    if(col.groups){
+      col.groups.forEach((g,gi)=>{
+        html += '<div class="sectitle">'+esc(g.name)+'</div><div class="grid">'+
+          g.items.map((it,i)=>cardHTML(it,i,"g"+gi)).join("")+'</div>';
+      });
+    } else {
+      html += '<div class="grid">'+col.items.map((it,i)=>cardHTML(it,i,"i")).join("")+'</div>';
+    }
+    view.innerHTML = html;
+    return;
+  }
+
+  /* collection index */
+  const cols = DATA[tab];
+  countEl.textContent = ALL[tab].length + " פריטים";
+  view.innerHTML = cols.length
+    ? '<div class="grid">'+cols.map(collectionCardHTML).join("")+'</div>'
+    : '<div class="empty"><strong>אין כאן תוכן עדיין</strong>כשיגיעו טפסים, הם יופיעו בלשונית הזאת.</div>';
+}
+
+/* ---------- detail sheet ---------- */
+const sheet = document.getElementById("sheet");
+let lastFocus = null;
+
+function openSheet(it){
+  lastFocus = document.activeElement;
+  document.getElementById("sheetTitle").textContent = it.title;
+  document.getElementById("sheetDesc").textContent = it.sub || "";
+  document.getElementById("sheetDate").textContent = "נוסף ב-" + ADDED;
+  document.getElementById("sheetLink").href = it.url;
+  const note = document.getElementById("sheetNote");
+  if(it.note){ note.textContent = it.note; note.hidden = false; }
+  else note.hidden = true;
+  sheet.classList.add("open");
+  document.body.style.overflow = "hidden";
+  document.getElementById("sheetClose").focus();
+}
+function closeSheet(){
+  sheet.classList.remove("open");
+  document.body.style.overflow = "";
+  if(lastFocus) lastFocus.focus();
+}
+
+function resolve(key, idx){
+  if(key === "search") return window._search[idx];
+  const col = DATA[tab].find(c=>c.id===open);
+  if(key === "i") return col.items[idx];
+  return col.groups[+key.slice(1)].items[idx];
+}
+
+/* ---------- events ---------- */
+document.getElementById("tabs").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-tab]");
+  if(!b || b.disabled) return;
+  document.querySelectorAll("#tabs button").forEach(x=>x.setAttribute("aria-selected", x===b));
+  tab = b.dataset.tab; open = null;
+  document.getElementById("q").value = "";
+  render(); window.scrollTo({top:0});
+});
+
+view.addEventListener("click", e=>{
+  const back = e.target.closest("[data-back]");
+  if(back){ open = null; render(); window.scrollTo({top:0}); return; }
+  const c = e.target.closest("[data-col]");
+  if(c){ open = c.dataset.col; render(); window.scrollTo({top:0}); return; }
+  const o = e.target.closest("[data-open]");
+  if(o){
+    const [key, idx] = o.dataset.open.split(":");
+    openSheet(resolve(key, +idx));
+  }
+});
+
+document.getElementById("q").addEventListener("input", render);
+document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape"){
+    if(sheet.classList.contains("open")) closeSheet();
+    else if(open){ open = null; render(); }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
