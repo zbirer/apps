@@ -22,6 +22,8 @@ https://zbirer.github.io/apps/encryptor.html
 
 https://zbirer.github.io/apps/markdown_preview.html
 
+https://zbirer.github.io/apps/ofek-zarmaty.html
+
 
 # prompt for json viewer
 
