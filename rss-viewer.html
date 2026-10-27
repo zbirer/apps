@@ -2,6 +2,11 @@
 ================================================================================
 CHANGELOG: RSS Feed Viewer
 ================================================================================
+v1.5.1 - 2026-06-11
+- Fixed: Removed duplicate feed URLs from the "flash" category to reduce redundant traffic.
+- Added: Gradual throttled feed fetching with concurrency limits and staggering delays to prevent 403 rate-limit blocks from rss2json.
+- Improved: Specific and detailed error messaging when feeds fail due to rate limits (HTTP 403 / CORS) or network issues.
+
 v1.5.0 - 2026-06-11
 - Changed: Default inner text (content) font size set to 20px on startup.
 
@@ -158,11 +163,11 @@ v1.0.0 - 2024-01-10
             width: 100%;
             box-sizing: border-box;
             overflow-x: auto;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
 
         .toolbar::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
+            display: none;
         }
 
         /* Category Tabs */
@@ -275,7 +280,7 @@ v1.0.0 - 2024-01-10
             width: 100%;
         }
 
-        /* Slick Condensed Article Cards */
+        /* Condensed Article Cards */
         .rss-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -375,7 +380,6 @@ v1.0.0 - 2024-01-10
             color: var(--text-primary);
         }
 
-        /* Secure override for embedded HTML content in the RSS description */
         .card-description * {
             line-height: 1.45;
         }
@@ -512,12 +516,13 @@ v1.0.0 - 2024-01-10
         }
 
         .toast-icon {
-            color: #10b981; /* Green success */
             display: flex;
             align-items: center;
         }
+        .toast-icon.success { color: #10b981; }
+        .toast-icon.error { color: #ef4444; }
 
-        /* Empty Feed state */
+        /* Empty Feed & Error states */
         .empty-state {
             grid-column: 1 / -1;
             text-align: center;
@@ -532,18 +537,28 @@ v1.0.0 - 2024-01-10
             margin-bottom: 12px;
         }
 
+        .empty-state.error svg {
+            color: #ef4444;
+        }
+
         .empty-state h3 {
             color: var(--text-primary);
             margin: 0 0 6px;
             font-size: 18px;
         }
 
-        /* Typography sizing modifiers (General / Card Titles) */
+        .empty-state p {
+            margin: 4px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Typography sizing modifiers */
         .font-normal .card-title { font-size: 14px; }
         .font-big .card-title { font-size: 16px; }
         .font-biggest .card-title { font-size: 19px; }
 
-        /* Content / Inner Text Typography Sizing Modifiers - Starting from 16px + 4 more options */
+        /* Content / Inner Text Typography */
         .inner-font-16 .card-description, 
         .inner-font-16 .card-description * { font-size: 16px !important; }
 
@@ -564,7 +579,6 @@ v1.0.0 - 2024-01-10
     <div class="app-wrapper">
         <header>
             <div class="toolbar">
-                <!-- Categorization custom pill tabs -->
                 <div class="category-tabs" id="category-tabs">
                     <button class="tab-btn" data-category="news">חדשות</button>
                     <button class="tab-btn" data-category="tech">טכנולוגיה</button>
@@ -605,9 +619,7 @@ v1.0.0 - 2024-01-10
         </header>
 
         <main class="main-content">
-            <div class="feed-grid" id="rss-content">
-                <!-- Javascript will inject Cards or Loader blocks here -->
-            </div>
+            <div class="feed-grid" id="rss-content"></div>
         </main>
     </div>
 
@@ -621,11 +633,11 @@ v1.0.0 - 2024-01-10
     <div class="toast-container" id="toast-container"></div>
 
     <script>
-        // Local state management - Defaulting category to 'flash'
         let loadedItems = [];
         const readItems = new Set();
         let selectedCategory = 'flash';
 
+        // רשימות פידים נקיות מכפילויות
         const feedUrls = {
             news: [
                 'https://rss.walla.co.il/feed/1?type=main',
@@ -648,14 +660,11 @@ v1.0.0 - 2024-01-10
                 'https://theverifier.co.il/rss'
             ],
             flash: [
+                // נוקו כפילויות של ynet/walla/maariv
                 'https://www.ynet.co.il/Integration/StoryRss1854.xml',
                 'https://rss.walla.co.il/feed/22',
                 'https://www.maariv.co.il/rss/rssfeedsmivzakichadashot',
-                'https://www.ynet.co.il/Integration/StoryRss2.xml',
-                'https://rss.walla.co.il/feed/1?type=main',
-                'https://www.maariv.co.il/Rss/RssChadashot',
                 'https://rcs.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',
-                'https://www.ynet.co.il/Integration/StoryRss2.xml',
                 'https://www.now14.co.il/feed/',
                 'https://www.inn.co.il/Rss.aspx?act=.1',
                 'https://www.makorrishon.co.il/rss',
@@ -663,7 +672,6 @@ v1.0.0 - 2024-01-10
             ]
         };
 
-        // UI Element Selectors
         const themeBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         const refreshBtn = document.getElementById('refresh');
@@ -674,11 +682,9 @@ v1.0.0 - 2024-01-10
         const innerFontSizeSelect = document.getElementById('inner-font-size');
         const imageSizeSelect = document.getElementById('image-size');
 
-        // Theme Toggle Logic with custom vector state toggles
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('light-mode');
             const isLight = document.body.classList.contains('light-mode');
-            
             if (isLight) {
                 themeIcon.innerHTML = `
                     <circle cx="12" cy="12" r="5"></circle>
@@ -698,7 +704,6 @@ v1.0.0 - 2024-01-10
             }
         });
 
-        // Trigger Category Pill-button switching (Full load with skeleton fallback)
         categoryTabsContainer.addEventListener('click', (e) => {
             const targetBtn = e.target.closest('.tab-btn');
             if (!targetBtn) return;
@@ -707,16 +712,14 @@ v1.0.0 - 2024-01-10
             targetBtn.classList.add('active');
             
             selectedCategory = targetBtn.dataset.category;
-            loadRSS(false); // Category switch gets full reload / clean skeletons
+            loadRSS(false);
         });
 
-        // Title Font size change logic
         fontSizeSelect.addEventListener('change', () => {
             document.body.classList.remove('font-normal', 'font-big', 'font-biggest');
             document.body.classList.add(`font-${fontSizeSelect.value}`);
         });
 
-        // Inner/Content Font size change logic
         innerFontSizeSelect.addEventListener('change', () => {
             document.body.classList.remove('inner-font-16', 'inner-font-18', 'inner-font-20', 'inner-font-24', 'inner-font-28');
             document.body.classList.add(`inner-font-${innerFontSizeSelect.value}`);
@@ -724,41 +727,29 @@ v1.0.0 - 2024-01-10
 
         imageSizeSelect.addEventListener('change', adjustImageSizes);
 
-        // Auto Refresh trigger (Silent background update)
         setInterval(() => {
-            console.log("Auto-refreshing active feeds...");
             loadRSS(true);
         }, 10 * 60 * 1000);
 
-        // Manual refresh trigger (Silent background update)
         refreshBtn.addEventListener('click', () => loadRSS(true));
 
-        // Relative time helper string builder in Hebrew
         function getRelativeTimeString(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
-            
             let interval = Math.floor(seconds / 31536000);
             if (interval >= 1) return `לפני ${interval} שנים`;
-            
             interval = Math.floor(seconds / 2592000);
             if (interval >= 1) return `לפני ${interval} חודשים`;
-            
             interval = Math.floor(seconds / 86400);
             if (interval >= 1) return interval === 1 ? 'אתמול' : `לפני ${interval} ימים`;
-            
             interval = Math.floor(seconds / 3600);
             if (interval >= 1) return `לפני ${interval} שעות`;
-            
             interval = Math.floor(seconds / 60);
             if (interval >= 1) return `לפני ${interval} דקות`;
-            
             return 'ממש עכשיו';
         }
 
-        // Display Skeleton Screen blocks as placehold loaders (used for empty/initial categories only)
         function showSkeletons() {
             rssContent.innerHTML = '';
-            
             for (let i = 0; i < 12; i++) {
                 const skeleton = document.createElement('div');
                 skeleton.className = 'skeleton-card';
@@ -775,16 +766,23 @@ v1.0.0 - 2024-01-10
             }
         }
 
-        // Custom Floating Alerts (Toast)
-        function triggerToast(message) {
+        function triggerToast(message, isError = false) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerHTML = `
-                <span class="toast-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
+                <span class="toast-icon ${isError ? 'error' : 'success'}">
+                    ${isError ? `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    ` : `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    `}
                 </span>
                 <span>${message}</span>
             `;
@@ -792,53 +790,107 @@ v1.0.0 - 2024-01-10
 
             setTimeout(() => {
                 toast.classList.add('hide');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, 3000);
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
         }
 
-        // Main parser feed aggregator
-        // isSilent parameter controls whether we preserve screen items or clear them for skeletons
-        function loadRSS(isSilent = false) {
+        // פונקציית עזר להשהיה
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // שליחת בקשות הדרגתית עם Concurrency מוגבל והשהיה
+        async function fetchFeedsThrottled(urls, concurrency = 2, delayMs = 350) {
+            const results = [];
+            let rateLimitHits = 0;
+            let generalErrors = 0;
+
+            // תור עיבוד
+            for (let i = 0; i < urls.length; i += concurrency) {
+                const batch = urls.slice(i, i + concurrency);
+                const batchPromises = batch.map(async (url) => {
+                    try {
+                        const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+                        
+                        if (response.status === 403) {
+                            rateLimitHits++;
+                            return { error: '403_rate_limit', items: [] };
+                        }
+                        if (!response.ok) {
+                            generalErrors++;
+                            return { error: `HTTP ${response.status}`, items: [] };
+                        }
+
+                        const data = await response.json();
+                        if (data.status !== 'ok') {
+                            generalErrors++;
+                            return { error: data.message || 'RSS Parse Error', items: [] };
+                        }
+                        return data;
+                    } catch (err) {
+                        // שגיאות CORS/רשת נובעות כמעט תמיד מחסימת 403 של השירות
+                        rateLimitHits++;
+                        return { error: 'network_or_cors', items: [] };
+                    }
+                });
+
+                const batchResults = await Promise.all(batchPromises);
+                results.push(...batchResults);
+
+                // השהיה בין מקבץ למקבץ כדי למנוע חסימת Rate Limit
+                if (i + concurrency < urls.length) {
+                    await sleep(delayMs);
+                }
+            }
+
+            return {
+                feeds: results,
+                rateLimitHits,
+                generalErrors,
+                totalFeeds: urls.length
+            };
+        }
+
+        // טעינת פידים ראשית
+        async function loadRSS(isSilent = false) {
             const urls = feedUrls[selectedCategory] || [];
-            
-            // Turn on the animated loading state on the refresh button
             refreshBtn.classList.add('loading');
 
-            // Only show skeletons if we explicitly want a full reload,
-            // or if there are no existing items rendered on screen yet.
             if (!isSilent || loadedItems.length === 0) {
                 showSkeletons();
             }
 
             const excludedWords = ['כדורגל', 'כדורסל', 'ספורט'];
 
-            Promise.all(urls.map(url =>
-                fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
-                    .then(response => response.json())
-                    .catch(() => ({ items: [] }))
-            ))
-            .then(feeds => {
-                // Stop toolbar button rotation animation
+            try {
+                // משיכה הדרגתית של הפידים
+                const { feeds, rateLimitHits, totalFeeds } = await fetchFeedsThrottled(urls, 2, 400);
                 refreshBtn.classList.remove('loading');
 
                 let itemsList = feeds.flatMap(feed => feed.items || []);
-                
-                // Exclude duplicate posts based on target guidelines
+
+                // בדיקה אם כל הפידים נחסמו בגלל מגבלות קצב
+                if (itemsList.length === 0 && rateLimitHits > 0) {
+                    renderRateLimitError();
+                    return;
+                }
+
+                // אם חלק מהפידים נכשלו אך חלק הצליחו
+                if (rateLimitHits > 0) {
+                    triggerToast(`התקבלו כתבות חלקיות (${rateLimitHits} מקורות נחסמו זמנית)`, true);
+                }
+
+                // סינון כפילויות
                 const uniqueItemsMap = new Map();
                 itemsList.forEach(item => {
                     uniqueItemsMap.set(item.guid || item.link || item.title, item);
                 });
                 itemsList = Array.from(uniqueItemsMap.values());
 
-                // Sort newest chronologically
+                // מיון כרונולוגי
                 itemsList.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-                // Primary filter out of key exclusions and future timestamps
+                // סינון מילים אסורות ותאריכים עתידיים
                 const now = new Date();
                 loadedItems = itemsList.filter(item => {
-                    // Check if item publish date is in the future
                     const itemDate = new Date(item.pubDate);
                     if (itemDate > now) return false;
 
@@ -847,31 +899,48 @@ v1.0.0 - 2024-01-10
                 });
 
                 renderFeedItems();
-            })
-            .catch(() => {
-                // Stop toolbar button rotation animation
+            } catch (err) {
                 refreshBtn.classList.remove('loading');
-
-                // If it failed and we had items, notify the user without wiping the page
                 if (isSilent && loadedItems.length > 0) {
-                    triggerToast('שגיאה בסנכרון הנתונים');
+                    triggerToast('שגיאה בסנכרון הנתונים', true);
                 } else {
-                    rssContent.innerHTML = `
-                        <div class="empty-state">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            <h3>שגיאה בחיבור לערוצי התוכן</h3>
-                            <p>אנא ודא את חיבור הרשת שלך ונסה שוב</p>
-                        </div>
-                    `;
+                    renderGeneralError();
                 }
-            });
+            }
         }
 
-        // Client-side rendering loops
+        // הצגת שגיאה ייעודית לחסימת Rate Limit / 403
+        function renderRateLimitError() {
+            rssContent.innerHTML = `
+                <div class="empty-state error">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <h3>נחסמה הגישה לשירות ה-RSS (שגיאה 403)</h3>
+                    <p>שרת <code>rss2json</code> הגביל זמנית את מספר הבקשות מהדפדפן שלך.</p>
+                    <p style="font-size: 13px; color: var(--accent); margin-top: 8px;">
+                        המתן דקה ונסה לרענן שוב, או הוסף API Key חינמי של rss2json להסרת המגבלה.
+                    </p>
+                </div>
+            `;
+        }
+
+        function renderGeneralError() {
+            rssContent.innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <h3>שגיאה בחיבור לערוצי התוכן</h3>
+                    <p>אנא ודא את חיבור הרשת שלך ונסה שוב מאוחר יותר.</p>
+                </div>
+            `;
+        }
+
         function renderFeedItems() {
             const filtered = loadedItems;
             rssContent.innerHTML = '';
@@ -885,7 +954,7 @@ v1.0.0 - 2024-01-10
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                         <h3>לא נמצאו כתבות</h3>
-                        <p>נסה להחליף קטגוריה</p>
+                        <p>נסה להחליף קטגוריה או לרענן מאוחר יותר</p>
                     </div>
                 `;
                 return;
@@ -896,10 +965,8 @@ v1.0.0 - 2024-01-10
                 const itemId = item.guid || item.link || item.title;
                 card.className = `rss-card${readItems.has(itemId) ? ' read' : ''}`;
                 
-                // Get clean visual provider name
                 const rawHost = item.link ? new URL(item.link).hostname.replace('www.', '') : 'RSS';
                 const parsedHost = translateHost(rawHost);
-
                 const pubDate = new Date(item.pubDate);
                 const relativeTime = getRelativeTimeString(pubDate);
 
@@ -927,7 +994,6 @@ v1.0.0 - 2024-01-10
                     </div>
                 `;
 
-                // Handle item expansions & read-status toggling
                 card.addEventListener('click', (e) => {
                     if (e.target.closest('.card-btn') || e.target.closest('a')) return;
 
@@ -935,7 +1001,6 @@ v1.0.0 - 2024-01-10
                     const isVisible = expander.style.display === 'block';
 
                     if (!isVisible) {
-                        // Collapse all other expanded cards
                         document.querySelectorAll('.rss-card').forEach(otherCard => {
                             if (otherCard !== card) {
                                 otherCard.classList.remove('active');
@@ -960,7 +1025,6 @@ v1.0.0 - 2024-01-10
             adjustImageSizes();
         }
 
-        // Image size dynamic scale handlers
         function adjustImageSizes() {
             const size = imageSizeSelect.value;
             let maxWidth, display;
@@ -979,12 +1043,6 @@ v1.0.0 - 2024-01-10
                 img.style.margin = "8px 0 0 0";
                 img.style.height = "auto";
             });
-        }
-
-        // Helper label dictionaries
-        function getCategoryName(key) {
-            const names = { news: 'חדשות', tech: 'טכנולוגיה', flash: 'מבזקים' };
-            return names[key] || '';
         }
 
         function translateHost(host) {
@@ -1006,7 +1064,6 @@ v1.0.0 - 2024-01-10
             return hosts[host] || host;
         }
 
-        // Float-to-top layout dynamic control listeners
         window.addEventListener('scroll', () => {
             if (window.scrollY > 300) {
                 toTopBtn.style.display = 'flex';
@@ -1019,9 +1076,8 @@ v1.0.0 - 2024-01-10
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
-            loadRSS(false); // Initial load performs full load with initial skeletons
+            loadRSS(false);
         });
     </script>
 </body>
